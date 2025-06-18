@@ -16,9 +16,9 @@ uv run pytest
 ```
 
 ### Running the application
-You can run the application locally with:
+You can run the application locally with hot reloading:
 ```sh
-uv run python -m datastore_api.main
+uv run python datastore_api/main.py 
 ```
 
 ## Built with
