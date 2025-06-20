@@ -1,0 +1,33 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: datastore-api
+  title: Datastore API 
+  description: |
+    API for microdata datastores
+  tags:
+    - python
+    - fast-api
+    - pyarrow
+  annotations:
+    github.com/project-slug: statisticsnorway/microdata-datastore-api
+spec:
+  type: service
+  system: microdata
+  owner: microdata-developers
+  lifecycle: production
+  providesApis:
+    - datastore-api-definition
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: datastore-api-definition
+  description: Datastore API definitions
+spec:
+  type: openapi
+  system: microdata
+  owner: microdata-developers
+  lifecycle: production
+  definition: 
+    $text: ""

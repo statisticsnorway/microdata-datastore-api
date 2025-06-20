@@ -1,0 +1,27 @@
+[project]
+name = "datastore-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115.13",
+    "gunicorn>=23.0.0",
+    "uvicorn>=0.34.3",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+    "ruff>=0.12.0",
+]
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+line-length = 80
+
+
