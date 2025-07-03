@@ -5,9 +5,7 @@ from pydantic import BaseModel, field_validator
 
 from datastore_api.exceptions.exceptions import RequestValidationException
 
-SEMVER_4_PARTS_REG_EXP = re.compile(
-    r"^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$"
-)
+SEMVER_4_PARTS_REG_EXP = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$")
 
 
 class MetadataQuery(BaseModel, extra="forbid", validate_assignment=True):
