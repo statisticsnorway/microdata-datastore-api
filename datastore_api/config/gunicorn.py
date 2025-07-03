@@ -22,7 +22,7 @@ class CustomLogger(glogging.Logger):
                     '"levelName": "%(levelname)s",'
                     '"schemaVersion": "v3",'
                     '"serviceVersion": "TODO",'
-                    '"serviceName": "metadata-service",'
+                    '"serviceName": "datastore-api",'
                     '"xRequestId": "TODO",'
                     '"message": "%(message)s}"'
                 ),

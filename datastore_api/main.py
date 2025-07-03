@@ -39,7 +39,7 @@ async def custom_http_exception_handler(_req, exc):
             content={
                 "code": 103,
                 "message": f"Error: {str(exc)}",
-                "service": "metadata-service",
+                "service": "datastore-api",
                 "type": "PATH_NOT_FOUND",
             },
             status_code=400,
@@ -48,7 +48,7 @@ async def custom_http_exception_handler(_req, exc):
         content={
             "code": 202,
             "message": f"Error: {str(exc)}",
-            "service": "metadata-service",
+            "service": "datastore-api",
             "type": "SYSTEM_ERROR",
         },
         status_code=500,
@@ -62,7 +62,7 @@ def handle_generic_exception(_req, exc):
         content={
             "code": 202,
             "message": f"Error: {str(exc)}",
-            "service": "metadata-service",
+            "service": "datastore-api",
             "type": "SYSTEM_ERROR",
         },
         status_code=500,

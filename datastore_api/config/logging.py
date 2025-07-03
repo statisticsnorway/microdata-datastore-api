@@ -49,7 +49,7 @@ class MicrodataJSONFormatter(logging.Formatter):
                 "method": method.get(""),
                 "responseTime": response_time_ms.get(""),
                 "schemaVersion": "v3",
-                "serviceName": "metadata-service",
+                "serviceName": "datastore-api",
                 "serviceVersion": self.commit_id,
                 "source_host": remote_host.get(""),
                 "statusCode": response_status.get(""),
@@ -75,7 +75,7 @@ def setup_logging(app, log_level=logging.INFO):
         request_start_time.set(perf_counter_ns())
         corr_id = request.headers.get("X-Request-ID", None)
         if corr_id is None:
-            correlation_id.set("metadata-service-" + str(uuid.uuid1()))
+            correlation_id.set("datastore-api-" + str(uuid.uuid1()))
         else:
             correlation_id.set(corr_id)
         method.set(request.method)

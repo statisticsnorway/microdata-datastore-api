@@ -4,7 +4,7 @@ class DataNotFoundException(Exception):
         self.message = {
             "type": "DATA_NOT_FOUND",
             "code": 105,
-            "service": "metadata-service",
+            "service": "datastore-api",
             "message": msg,
         }
 
@@ -18,7 +18,7 @@ class InvalidStorageFormatException(Exception):
         self.message = {
             "type": "SYSTEM_ERROR",
             "code": 202,
-            "service": "metadata-service",
+            "service": "datastore-api",
             "message": msg,
         }
 
@@ -32,7 +32,7 @@ class RequestValidationException(Exception):
         self.message = {
             "type": "REQUEST_VALIDATION_ERROR",
             "code": 101,
-            "service": "metadata-service",
+            "service": "datastore-api",
             "message": msg,
         }
 

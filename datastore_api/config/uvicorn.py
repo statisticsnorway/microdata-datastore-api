@@ -9,7 +9,7 @@ def setup_uvicorn_logging():
         '"levelName": "%(levelname)s",'
         '"schemaVersion": "v3",'
         '"serviceVersion": "TODO",'
-        '"serviceName": "metadata-service",'
+        '"serviceName": "datastore-api",'
         '"xRequestId": "",'
         '"message": "%(message)s"}'
     )
