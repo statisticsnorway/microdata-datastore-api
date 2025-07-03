@@ -1,0 +1,43 @@
+{
+  "name": "no.ssb.test",
+  "label": "Test data fra SSB",
+  "description": "Syntetiske registerdata som inngår i SSBs test",
+  "versions": [
+    {
+      "version": "2.0.0.0",
+      "description": "Dette er description til testversjon 2.0.0.0",
+      "releaseTime": 1607332762,
+      "languageCode": "no",
+      "dataStructureUpdates": [
+        {
+          "description": "Fjernet variabel",
+          "name": "TEST_PERSON_INCOME",
+          "operation": "REMOVE",
+          "releaseStatus": "DELETED"
+        }
+      ],
+      "updateType": "MAJOR"
+    },
+    {
+      "version": "1.0.0.0",
+      "description": "Dette er description til testversjon 1.0.0.0",
+      "releaseTime": 1607332752,
+      "languageCode": "no",
+      "dataStructureUpdates": [
+        {
+          "description": "Første publisering",
+          "name": "TEST_PERSON_INCOME",
+          "operation": "ADD",
+          "releaseStatus": "RELEASED"
+        },
+        {
+          "description": "Første publisering",
+          "name": "TEST_PERSON_PETS",
+          "operation": "ADD",
+          "releaseStatus": "RELEASED"
+        }
+      ],
+      "updateType": "MAJOR"
+    }
+  ]
+}
