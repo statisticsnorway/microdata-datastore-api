@@ -1,0 +1,364 @@
+openapi: 3.0.0
+info:
+  title: Datastore api
+  version: 1.0.0
+paths:
+  /metadata/data-store:
+    get:
+      summary: Get data store information
+      responses:
+        '200':
+          description: Data store versions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatastoreVersions'
+  /metadata/data-structures:
+    get:
+      summary: Get data structures
+      parameters:
+        - name: names
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: include_attributes
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: skip_code_lists
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Data structures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Metadata'
+  /metadata/data-structures/status:
+    get:
+      summary: Get current status of data structures
+      parameters:
+        - name: names
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Current status of data structures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+    post:
+      summary: Get current status of data structures
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NameParam'
+      responses:
+        '200':
+          description: Current status of data structures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /metadata/all-data-structures:
+    get:
+      summary: Get all data structures ever
+      responses:
+        '200':
+          description: All data structures ever
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /metadata/all:
+    get:
+      summary: Get all metadata
+      parameters:
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: skip_code_lists
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: All metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetadataAll'
+  /languages:
+    get:
+      summary: Get languages
+      responses:
+        '200':
+          description: Languages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LanguageInfo'
+  /health/alive:
+    get:
+      summary: Check if the service is alive
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            text/plain:
+              schema:
+                type: string
+  /health/ready:
+    get:
+      summary: Check if the service is ready
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    DataStructureUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        operation:
+          type: string
+        releaseStatus:
+          type: string
+    DatastoreVersion:
+      type: object
+      properties:
+        version:
+          type: string
+        description:
+          type: string
+        releaseTime:
+          type: integer
+        languageCode:
+          type: string
+        updateType:
+          type: string
+        dataStructureUpdates:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataStructureUpdate'
+    DatastoreVersions:
+      type: object
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatastoreVersion'
+    NameParam:
+      type: object
+      properties:
+        names:
+          type: array
+          items:
+            type: string
+    MetadataQuery:
+      type: object
+      properties:
+        names:
+          type: array
+          items:
+            type: string
+        version:
+          type: string
+        include_attributes:
+          type: boolean
+        skip_code_lists:
+          type: boolean
+    DataType:
+      type: string
+      enum:
+        - String
+        - Long
+        - Double
+        - Instant
+    TimePeriod:
+      type: object
+      properties:
+        start:
+          type: integer
+        stop:
+          type: integer
+    KeyType:
+      type: object
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+    CodeListItem:
+      type: object
+      properties:
+        category:
+          type: string
+        code:
+          type: string
+    DescribedValueDomain:
+      type: object
+      properties:
+        description:
+          type: string
+        unitOfMeasure:
+          type: string
+    EnumeratedValueDomain:
+      type: object
+      properties:
+        codeList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeListItem'
+        missingValues:
+          type: array
+          items:
+            type: string
+    ValueDomain:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/DescribedValueDomain'
+        - $ref: '#/components/schemas/EnumeratedValueDomain'
+    RepresentedVariable:
+      type: object
+      properties:
+        description:
+          type: string
+        validPeriod:
+          $ref: '#/components/schemas/TimePeriod'
+        valueDomain:
+          $ref: '#/components/schemas/ValueDomain'
+    Variable:
+      type: object
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        notPseudonym:
+          type: boolean
+        dataType:
+          type: string
+        format:
+          type: string
+        variableRole:
+          type: string
+        keyType:
+          $ref: '#/components/schemas/KeyType'
+        representedVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepresentedVariable'
+    Metadata:
+      type: object
+      properties:
+        name: 
+          type: string
+        temporality: 
+          type: string
+        languageCode: 
+          type: string
+        sensitivityLevel: 
+          type: string
+        populationDescription:
+          type: string
+        subjectFields:
+          type: array
+          items:
+            type: string
+        temporal_coverage:
+          $ref: '#/components/schemas/TimePeriod'
+        measureVariable:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variable'
+        identifier_variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variable'
+        attributeVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variable'
+        temporalStatusDates:
+          type: array
+          items:
+            type: integer
+    DataStoreInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        languageCode:
+          type: string
+    LanguageInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+    MetadataAll:
+      type: object
+      properties:
+        dataStore:
+          $ref: '#/components/schemas/DataStoreInfo'
+        dataStructures:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metadata'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageInfo'

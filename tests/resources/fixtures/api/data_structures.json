@@ -1,0 +1,306 @@
+[
+  {
+    "attributeVariables": [
+      {
+        "name": "END",
+        "label": "End",
+        "dataType": "Instant",
+        "representedVariables": [
+          {
+            "validPeriod": {
+              "start": 10957
+            },
+            "valueDomain": {
+              "missingValues": [],
+              "codeList": [
+                {
+                  "category": "0 - 19,9 timer",
+                  "code": "1"
+                },
+                {
+                  "category": "20 - 29,9 timer",
+                  "code": "2"
+                },
+                {
+                  "category": "30 timer og mer",
+                  "code": "3"
+                }
+              ]
+            },
+            "description": "Stoppdato for forløpsdata."
+          }
+        ],
+        "variableRole": "Stop",
+        "format": "yyyy-mm-dd"
+      },
+      {
+        "dataType": "Instant",
+        "label": "Start",
+        "name": "START",
+        "representedVariables": [
+          {
+            "validPeriod": {
+              "start": 10957
+            },
+            "valueDomain": {
+              "missingValues": [],
+              "codeList": [
+                {
+                  "category": "0 - 19,9 timer",
+                  "code": "1"
+                },
+                {
+                  "category": "20 - 29,9 timer",
+                  "code": "2"
+                },
+                {
+                  "category": "30 timer og mer",
+                  "code": "3"
+                }
+              ]
+            },
+            "description": "Startdato for forløpsdata eller måletidspunkt for statusdata/tverrsnittsdata."
+          }
+        ],
+        "variableRole": "Start",
+        "format": "yyyy-mm-dd"
+      }
+    ],
+    "identifierVariables": [
+      {
+        "label": "Fødselsnummer kryptert (HASH)",
+        "dataType": "Long",
+        "name": "FNR_HASH",
+        "keyType": {
+          "description": "Person",
+          "label": "Person",
+          "name": "PERSON"
+        },
+        "format": "RandomUInt64",
+        "representedVariables": [
+          {
+            "validPeriod": {
+              "start": 10957
+            },
+            "valueDomain": {
+              "missingValues": [],
+              "codeList": [
+                {
+                  "category": "0 - 19,9 timer",
+                  "code": "1"
+                },
+                {
+                  "category": "20 - 29,9 timer",
+                  "code": "2"
+                },
+                {
+                  "category": "30 timer og mer",
+                  "code": "3"
+                }
+              ]
+            },
+            "description": "Person identifisert med kryptert (HASH) fødselsnummer."
+          }
+        ],
+        "variableRole": "Identifier"
+      }
+    ],
+    "measureVariable": {
+      "dataType": "String",
+      "label": "Fødselsnummer",
+      "name": "FNR",
+      "keyType": {
+        "description": "Person",
+        "label": "Person",
+        "name": "PERSON"
+      },
+      "format": "RandomUInt64",
+      "representedVariables": [
+        {
+          "validPeriod": {
+            "start": 10957
+          },
+          "valueDomain": {
+            "missingValues": [],
+            "codeList": [
+              {
+                "category": "0 - 19,9 timer",
+                "code": "1"
+              },
+              {
+                "category": "20 - 29,9 timer",
+                "code": "2"
+              },
+              {
+                "category": "30 timer og mer",
+                "code": "3"
+              }
+            ]
+          },
+          "description": "Variabelen viser fødselsnummer, det vil si fødselsdag, -måned og -år (6 siffer) og personnummer (5 siffer)"
+        }
+      ],
+      "variableRole": "Measure"
+    },
+    "name": "FNR",
+    "temporality": "EVENT",
+    "temporalCoverage": {
+      "start": 10957,
+      "stop": 16435
+    },
+    "subjectFields": [
+      "ARBEID_LONN"
+    ],
+    "languageCode": "no"
+  },
+  {
+    "attributeVariables": [
+      {
+        "dataType": "Instant",
+        "label": "End",
+        "name": "END",
+        "representedVariables": [
+          {
+            "validPeriod": {
+              "start": 10957
+            },
+            "valueDomain": {
+              "missingValues": [],
+              "codeList": [
+                {
+                  "category": "0 - 19,9 timer",
+                  "code": "1"
+                },
+                {
+                  "category": "20 - 29,9 timer",
+                  "code": "2"
+                },
+                {
+                  "category": "30 timer og mer",
+                  "code": "3"
+                }
+              ]
+            },
+            "description": "Stoppdato for forløpsdata."
+          }
+        ],
+        "variableRole": "Stop"
+      },
+      {
+        "dataType": "Instant",
+        "label": "Start",
+        "name": "START",
+        "representedVariables": [
+          {
+            "validPeriod": {
+              "start": 10957
+            },
+            "valueDomain": {
+              "missingValues": [],
+              "codeList": [
+                {
+                  "category": "0 - 19,9 timer",
+                  "code": "1"
+                },
+                {
+                  "category": "20 - 29,9 timer",
+                  "code": "2"
+                },
+                {
+                  "category": "30 timer og mer",
+                  "code": "3"
+                }
+              ]
+            },
+            "description": "Startdato for forløpsdata eller måletidspunkt for statusdata/tverrsnittsdata."
+          }
+        ],
+        "variableRole": "Start"
+      }
+    ],
+    "identifierVariables": [
+      {
+        "dataType": "Long",
+        "label": "Fødselsnummer kryptert (HASH)",
+        "name": "FNR_HASH",
+        "keyType": {
+          "description": "Person",
+          "label": "Person",
+          "name": "PERSON"
+        },
+        "representedVariables": [
+          {
+            "validPeriod": {
+              "start": 10957
+            },
+            "valueDomain": {
+              "missingValues": [],
+              "codeList": [
+                {
+                  "category": "0 - 19,9 timer",
+                  "code": "1"
+                },
+                {
+                  "category": "20 - 29,9 timer",
+                  "code": "2"
+                },
+                {
+                  "category": "30 timer og mer",
+                  "code": "3"
+                }
+              ]
+            },
+            "description": "Person identifisert med kryptert (HASH) fødselsnummer."
+          }
+        ],
+        "variableRole": "Identifier"
+      }
+    ],
+    "measureVariable": {
+      "dataType": "String",
+      "label": "Arbeidsavklaringspenger",
+      "name": "AKT_ARBAP",
+      "keyType": {
+        "description": "Person",
+        "label": "Person",
+        "name": "PERSON"
+      },
+      "representedVariables": [
+        {
+          "validPeriod": {
+            "start": 10957
+          },
+          "valueDomain": {
+            "missingValues": [],
+            "codeList": [
+              {
+                "category": "0 - 19,9 timer",
+                "code": "1"
+              },
+              {
+                "category": "20 - 29,9 timer",
+                "code": "2"
+              },
+              {
+                "category": "30 timer og mer",
+                "code": "3"
+              }
+            ]
+          },
+          "description": "Stønad som skal sikre inntekt i perioder der en person på grunn av sykdom eller skade har behov for bistand fra NAV for å komme i arbeid (inkl. etterbetalinger fra tidligere år)."
+        }
+      ],
+      "variableRole": "Measure"
+    },
+    "name": "AKT_ARBAP",
+    "temporality": "EVENT",
+    "temporalCoverage": {
+      "start": 14610,
+      "stop": 16070
+    },
+    "subjectFields": [
+      "ARBEID_LONN"
+    ],
+    "languageCode": "no"
+  }
+]

@@ -1,0 +1,206 @@
+{
+  "dataStore": {
+    "name": "no.ssb.test",
+    "label": "Test data fra SSB",
+    "description": "Syntetiske registerdata som inngår i SSBs test",
+    "languageCode": "no"
+  },
+  "dataStructures": [
+    {
+      "attributeVariables": [
+        {
+          "name": "START",
+          "label": "Startdato",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 16801,
+                "stop": 18261
+              },
+              "description": "Startdato/måletidspunktet for hendelsen",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "dataType": "Instant",
+          "variableRole": "Start"
+        },
+        {
+          "name": "STOP",
+          "label": "Stoppdato",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 16801,
+                "stop": 18261
+              },
+              "description": "Stoppdato/sluttdato for hendelsen",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "dataType": "Instant",
+          "variableRole": "Stop"
+        }
+      ],
+      "identifierVariables": [
+        {
+          "name": "PERSON_ID_1",
+          "label": "Personidentifikator",
+          "dataType": "Long",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 16801,
+                "stop": 18261
+              },
+              "description": "Identifikator for person",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "keyType": {
+            "name": "PERSON",
+            "label": "Person",
+            "description": "Statistisk enhet er person (individ, enkeltmenneske)."
+          },
+          "format": "RandomUInt48",
+          "variableRole": "Identifier"
+        }
+      ],
+      "measureVariable": {
+        "name": "TEST_PERSON_INCOME",
+        "label": "Inntekt",
+        "dataType": "Long",
+        "representedVariables": [
+          {
+            "validPeriod": {
+              "start": 16801,
+              "stop": 18261
+            },
+            "description": "Personinntekt.",
+            "valueDomain": {
+              "description": "Personinntekt i norske kroner (NOK)."
+            }
+          }
+        ],
+        "variableRole": "Measure"
+      },
+      "name": "TEST_PERSON_INCOME",
+      "populationDescription": "Alle personer med inntekt.",
+      "temporality": "ACCUMULATED",
+      "temporalCoverage": {
+        "start": 16801,
+        "stop": 18261
+      },
+      "subjectFields": [
+        "Inntekt"
+      ],
+      "languageCode": "no"
+    },
+    {
+      "attributeVariables": [
+        {
+          "name": "START",
+          "label": "Startdato",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 5562,
+                "stop": 18579
+              },
+              "description": "Startdato/måletidspunktet for hendelsen",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "dataType": "Instant",
+          "variableRole": "Start"
+        },
+        {
+          "name": "STOP",
+          "label": "Stoppdato",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 5562,
+                "stop": 18579
+              },
+              "description": "Stoppdato/sluttdato for hendelsen",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "dataType": "Instant",
+          "variableRole": "Stop"
+        }
+      ],
+      "identifierVariables": [
+        {
+          "name": "PERSON_ID_1",
+          "label": "Personidentifikator",
+          "dataType": "Long",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 5562,
+                "stop": 18579
+              },
+              "description": "Identifikator for person",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "keyType": {
+            "name": "PERSON",
+            "label": "Person",
+            "description": "Statistisk enhet er person (individ, enkeltmenneske)."
+          },
+          "format": "RandomUInt48",
+          "variableRole": "Identifier"
+        }
+      ],
+      "measureVariable": {
+        "name": "TEST_PERSON_PETS",
+        "label": "Kjæledyr",
+        "dataType": "String",
+        "representedVariables": [
+          {
+            "description": "Mine kjæledyr.",
+            "validPeriod": {
+              "start": 0
+            },
+            "valueDomain": {
+              "codeList": [],
+              "missingValues": []
+            }
+          }
+        ],
+        "variableRole": "Measure"
+      },
+      "name": "TEST_PERSON_PETS",
+      "populationDescription": "Alle personer som eier et kjæledyr.",
+      "temporality": "EVENT",
+      "temporalCoverage": {
+        "start": 5562,
+        "stop": 18579
+      },
+      "subjectFields": [
+        "Befolkning"
+      ],
+      "languageCode": "no"
+    }
+  ]
+}

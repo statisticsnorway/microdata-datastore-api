@@ -30,4 +30,4 @@ spec:
   owner: microdata-developers
   lifecycle: production
   definition: 
-    $text: ""
+    $text: "./doc/openapi.yaml"
