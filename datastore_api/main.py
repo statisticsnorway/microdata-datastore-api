@@ -57,7 +57,7 @@ async def custom_http_exception_handler(_req, exc):
 @app.exception_handler(NotFoundException)
 def handle_data_not_found(_req, exc):
     logger.warning(exc, exc_info=True)
-    return JSONResponse(content=exc.to_dict(), status_code=404)
+    return JSONResponse(content={"message": "Not found"}, status_code=404)
 
 
 @app.exception_handler(InvalidDraftVersionException)
@@ -69,7 +69,7 @@ def handle_invalid_draft(_req, exc):
 @app.exception_handler(RequestValidationException)
 def handle_invalid_request(_req, exc):
     logger.warning(exc, exc_info=True)
-    return JSONResponse(content=exc.to_dict(), status_code=400)
+    return JSONResponse(content={"message": str(exc)}, status_code=400)
 
 
 @app.exception_handler(RequestValidationError)
@@ -84,7 +84,9 @@ async def validation_exception_handler(_req, e: RequestValidationError):
 @app.exception_handler(InvalidStorageFormatException)
 def handle_invalid_format(_req, exc):
     logger.exception(exc)
-    return JSONResponse(content=exc.to_dict(), status_code=500)
+    return JSONResponse(
+        content={"message": "Invalid storage format"}, status_code=500
+    )
 
 
 @app.exception_handler(ValidationError)
