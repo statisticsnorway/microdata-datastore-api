@@ -1,0 +1,56 @@
+{
+    "name": "no.jobmanager.test",
+    "label": "Test datastore",
+    "description": "Syntetiske data for unit testing av job-manager",
+    "versions": [
+      {
+        "version": "2.0.0.0",
+        "description": "Første release",
+        "releaseTime": 1635299291,
+        "languageCode": "no",
+        "dataStructureUpdates": [
+          {
+            "name": "INNTEKT",
+            "description": "Første publisering",
+            "operation": "REMOVE",
+            "releaseStatus": "DELETED"
+          }
+        ],
+        "updateType": "MAJOR"
+      },
+      {
+        "version": "1.0.0.0",
+        "description": "Første release",
+        "releaseTime": 1635299291,
+        "languageCode": "no",
+        "dataStructureUpdates": [
+          {
+            "name": "INNTEKT",
+            "description": "Første publisering",
+            "operation": "ADD",
+            "releaseStatus": "RELEASED"
+          },
+          {
+            "name": "SIVSTAND",
+            "description": "Første publisering",
+            "operation": "ADD",
+            "releaseStatus": "RELEASED"
+          },
+          {
+            "name": "KJOENN",
+            "description": "Første publisering",
+            "operation": "ADD",
+            "releaseStatus": "RELEASED"
+          },
+          {
+            "name": "FOEDSELSVEKT",
+            "description": "Første publisering",
+            "operation": "ADD",
+            "releaseStatus": "RELEASED"
+          }
+        ],
+        "updateType": "MAJOR"
+      }      
+    ]
+}
+  
