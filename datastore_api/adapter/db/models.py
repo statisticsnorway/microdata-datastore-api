@@ -131,4 +131,3 @@ class Target(CamelModel, use_enum_values=True, extra="forbid"):
     status: JobStatus
     last_updated_by: UserInfo
     action: list[str]
-
