@@ -11,9 +11,7 @@ from datastore_api.adapter import auth
 from datastore_api.domain import data
 
 FAKE_RESULT_FILE_NAME = "fake_result_file_name"
-MOCK_RESULT = pq.read_table(
-    "tests/resources/data_service/results/mocked_result.parquet"
-)
+MOCK_RESULT = pq.read_table("tests/resources/results/mocked_result.parquet")
 
 
 @pytest.fixture
@@ -32,10 +30,15 @@ def client(mock_auth_client: Mock):
 
 @pytest.fixture(autouse=True)
 def setup(monkeypatch: MonkeyPatch):
-    for temporality in ["status", "event", "fixed"]:
-        monkeypatch.setattr(
-            data, f"process_{temporality}_request", lambda _: MOCK_RESULT
-        )
+    monkeypatch.setattr(
+        data, f"process_status_request", lambda a, b, c, d, e: MOCK_RESULT
+    )
+    monkeypatch.setattr(
+        data, f"process_event_request", lambda a, b, c, d, e, f: MOCK_RESULT
+    )
+    monkeypatch.setattr(
+        data, f"process_fixed_request", lambda a, b, c, d: MOCK_RESULT
+    )
 
 
 def test_data_event_stream_result(client: TestClient):

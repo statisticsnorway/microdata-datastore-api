@@ -34,7 +34,14 @@ def stream_result_event(
     """
     logger.info(f"Entering /data/event/stream with input query: {input_query}")
     auth_client.authorize_user(authorization)
-    result_data = data.process_event_request(input_query)
+    result_data = data.process_event_request(
+        input_query.dataStructureName,
+        input_query.version,
+        input_query.population,
+        input_query.includeAttributes,
+        input_query.startDate,
+        input_query.stopDate,
+    )
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
@@ -54,7 +61,13 @@ def stream_result_status(
     """
     logger.info(f"Entering /data/status/stream with input query: {input_query}")
     auth_client.authorize_user(authorization)
-    result_data = data.process_status_request(input_query)
+    result_data = data.process_status_request(
+        input_query.dataStructureName,
+        input_query.version,
+        input_query.population,
+        input_query.includeAttributes,
+        input_query.date,
+    )
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
@@ -74,7 +87,12 @@ def stream_result_fixed(
     """
     logger.info(f"Entering /data/fixed/stream with input query: {input_query}")
     auth_client.authorize_user(authorization)
-    result_data = data.process_fixed_request(input_query)
+    result_data = data.process_fixed_request(
+        input_query.dataStructureName,
+        input_query.version,
+        input_query.population,
+        input_query.includeAttributes,
+    )
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())

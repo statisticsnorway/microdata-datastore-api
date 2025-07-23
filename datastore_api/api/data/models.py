@@ -10,17 +10,12 @@ class InputQuery(BaseModel):
     dataStructureName: str
     version: Version
     population: Optional[list] = None
-    includeAttributes: Optional[bool] = False
+    includeAttributes: bool = False
 
     @field_validator("version", mode="before")
     @classmethod
     def check_for_sem_ver(cls, version):
         if isinstance(version, str):
-            pattern = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$")
-            if not pattern.match(version):
-                raise ValueError(
-                    f"'{version}' is not a valid semantic version."
-                )
             return Version.from_str(version)
         if isinstance(version, Version):
             return version

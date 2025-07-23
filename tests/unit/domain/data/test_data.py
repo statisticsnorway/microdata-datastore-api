@@ -5,7 +5,7 @@ from pyarrow import Table, dataset
 from datastore_api.common.models import Version
 from datastore_api.domain import data
 from datastore_api.common.exceptions import DataNotFoundException
-from tests.resources.data_service import test_resources
+from tests.resources import test_resources
 
 ALL_COLUMNS = ["unit_id", "value", "start_epoch_days", "stop_epoch_days"]
 
@@ -32,8 +32,14 @@ FIND_BY_TIME_FILTER = (start_epoch_le_date & stop_missing) | (
 
 
 def test_valid_event_request():
+    payload = test_resources.VALID_EVENT_QUERY_PERSON_INCOME_ALL
     file_name = data.process_event_request(
-        test_resources.VALID_EVENT_QUERY_PERSON_INCOME_ALL
+        payload.dataStructureName,
+        payload.version,
+        payload.population,
+        payload.includeAttributes,
+        payload.startDate,
+        payload.stopDate,
     )
     assert parquet_table_to_csv_string(file_name) == (
         test_resources.PERSON_INCOME_ALL
@@ -41,8 +47,14 @@ def test_valid_event_request():
 
 
 def test_valid_event_request_partitioned():
+    payload = test_resources.VALID_EVENT_QUERY_TEST_STUDIEPOENG_ALL
     file_name = data.process_event_request(
-        test_resources.VALID_EVENT_QUERY_TEST_STUDIEPOENG_ALL
+        payload.dataStructureName,
+        payload.version,
+        payload.population,
+        payload.includeAttributes,
+        payload.startDate,
+        payload.stopDate,
     )
     assert parquet_table_to_csv_string(file_name) == (
         test_resources.TEST_STUDIEPOENG_ALL
@@ -50,8 +62,14 @@ def test_valid_event_request_partitioned():
 
 
 def test_event_request_causing_empty_result():
+    payload = test_resources.INVALID_EVENT_QUERY_INVALID_STOP_DATE
     result = data.process_event_request(
-        test_resources.INVALID_EVENT_QUERY_INVALID_STOP_DATE
+        payload.dataStructureName,
+        payload.version,
+        payload.population,
+        payload.includeAttributes,
+        payload.startDate,
+        payload.stopDate,
     )
     assert isinstance(result, Table)
     assert result.num_columns == 2
@@ -59,8 +77,13 @@ def test_event_request_causing_empty_result():
 
 
 def test_valid_status_request():
+    payload = test_resources.VALID_STATUS_QUERY_PERSON_INCOME_LAST_ROW
     file_name = data.process_status_request(
-        test_resources.VALID_STATUS_QUERY_PERSON_INCOME_LAST_ROW
+        payload.dataStructureName,
+        payload.version,
+        payload.population,
+        payload.includeAttributes,
+        payload.date,
     )
     assert parquet_table_to_csv_string(file_name) == (
         test_resources.PERSON_INCOME_LAST_ROW
@@ -68,9 +91,14 @@ def test_valid_status_request():
 
 
 def test_invalid_status_request():
+    payload = test_resources.INVALID_STATUS_QUERY_NOT_FOUND
     with pytest.raises(DataNotFoundException) as e:
         data.process_status_request(
-            test_resources.INVALID_STATUS_QUERY_NOT_FOUND
+            payload.dataStructureName,
+            payload.version,
+            payload.population,
+            payload.includeAttributes,
+            payload.date,
         )
     assert str(e.value) == (
         "No NOT_A_DATASET in data_versions file for version 1_0"
@@ -78,8 +106,12 @@ def test_invalid_status_request():
 
 
 def test_valid_fixed_request():
+    payload = test_resources.VALID_FIXED_QUERY_PERSON_INCOME_ALL
     file_name = data.process_fixed_request(
-        test_resources.VALID_FIXED_QUERY_PERSON_INCOME_ALL
+        payload.dataStructureName,
+        payload.version,
+        payload.population,
+        payload.includeAttributes,
     )
     assert parquet_table_to_csv_string(file_name) == (
         test_resources.PERSON_INCOME_ALL
@@ -87,8 +119,14 @@ def test_valid_fixed_request():
 
 
 def test_invalid_fixed_request():
+    payload = test_resources.INVALID_FIXED_QUERY_NOT_FOUND
     with pytest.raises(DataNotFoundException) as e:
-        data.process_fixed_request(test_resources.INVALID_FIXED_QUERY_NOT_FOUND)
+        data.process_fixed_request(
+            payload.dataStructureName,
+            payload.version,
+            payload.population,
+            payload.includeAttributes,
+        )
     assert str(e.value) == (
         "No NOT_A_DATASET in data_versions file for version 1_0"
     )
