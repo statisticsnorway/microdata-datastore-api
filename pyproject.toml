@@ -21,7 +21,6 @@ dev = [
     "pytest-asyncio>=1.0.0",
     "ruff>=0.12.0",
     "pytest-mock>=3.14.1",
-    "pytest-dotenv>=0.5.2",
     "pandas>=2.3.1",
 ]
 
