@@ -8,6 +8,7 @@ from datastore_api.api.data.models import (
     InputFixedQuery,
     InputQuery,
 )
+from datastore_api.common.models import Version
 
 
 def test_create_and_validate_minimal_input_time_period_query():
@@ -31,7 +32,7 @@ def test_create_and_validate_full_input_time_period_query():
     }
     actual = InputTimePeriodQuery.model_validate(data)
     assert actual.dataStructureName == "DATASET_NAME"
-    assert actual.version == "1.0.0.0"
+    assert actual.version == Version.from_str("1.0.0.0")
     assert actual.startDate == 1964
     assert actual.stopDate == 2056
     assert isinstance(actual.population, List)
