@@ -7,7 +7,9 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.13",
     "gunicorn>=23.0.0",
+    "pyarrow>=21.0.0",
     "pydantic>=2.11.7",
+    "pyjwt>=2.10.1",
     "uvicorn>=0.34.3",
 ]
 
@@ -20,6 +22,7 @@ dev = [
     "ruff>=0.12.0",
     "pytest-mock>=3.14.1",
     "pytest-dotenv>=0.5.2",
+    "pandas>=2.3.1",
 ]
 
 [tool.uv]
@@ -29,4 +32,5 @@ package = true
 line-length = 80
 target-version = "py313"
 
-
+[tool.pytest.ini_options]
+pythonpath = ["."]

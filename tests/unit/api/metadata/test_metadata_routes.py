@@ -3,7 +3,7 @@ import json
 from fastapi import testclient
 from httpx import Response
 from datastore_api.domain import metadata
-from datastore_api.domain.version import get_version_from_string
+from datastore_api.common.models import Version
 
 MOCKED_DATASTORE_VERSIONS = {
     "name": "SSB-RAIRD",
@@ -163,7 +163,7 @@ def test_get_data_structures(test_app: testclient.TestClient, mocker):
     )
 
     spy.assert_called_with(
-        ["FNR", "AKT_ARBAP"], get_version_from_string("3.2.1.0"), True, False
+        ["FNR", "AKT_ARBAP"], Version.from_str("3.2.1.0"), True, False
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_data_structures
@@ -215,7 +215,7 @@ def test_get_all_metadata(test_app: testclient.TestClient, mocker):
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with(get_version_from_string("3.2.1.0"), False)
+    spy.assert_called_with(Version.from_str("3.2.1.0"), False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_metadata_all
 
@@ -247,7 +247,7 @@ def test_get_all_metadata_long_version_numbers(
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with(get_version_from_string("1234.5678.9012.0"), False)
+    spy.assert_called_with(Version.from_str("1234.5678.9012.0"), False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_metadata_all
 
@@ -282,7 +282,7 @@ def test_get_all_metadata_skip_code_lists(
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with(get_version_from_string("3.2.1.0"), True)
+    spy.assert_called_with(Version.from_str("3.2.1.0"), True)
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_metadata_all
 
@@ -305,7 +305,7 @@ def test_get_data_structures_skip_code_lists(
         },
     )
     spy.assert_called_with(
-        ["FNR", "AKT_ARBAP"], get_version_from_string("3.2.1.0"), True, True
+        ["FNR", "AKT_ARBAP"], Version.from_str("3.2.1.0"), True, True
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_data_structures
