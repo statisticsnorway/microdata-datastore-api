@@ -1,0 +1,40 @@
+{
+    "jobs": [
+        {
+            "operation": "ADD",
+            "target": "MY_DATASET"
+        },
+        {
+            "operation": "SET_STATUS",
+            "target": "MY_DATASET",
+            "releaseStatus": "PENDING_RELEASE"
+        },
+        {
+            "operation": "REMOVE",
+            "target": "MY_DATASET",
+            "description": "Removed my dataset from datastore"
+        },
+        {
+            "operation": "BUMP",
+            "target": "DATASTORE",
+            "description": "Bump datastore version",
+            "bumpFromVersion": "1.0.0",
+            "bumpToVersion": "1.1.0",
+            "bumpManifesto": {
+                "version": "0.0.0.1634512323",
+                "description": "Draft",
+                "releaseTime": 1634512323,
+                "languageCode": "no",
+                "updateType": "MINOR",
+                "dataStructureUpdates": [
+                    {
+                        "name": "MY_DATASET",
+                        "description": "Første publisering",
+                        "operation": "ADD",
+                        "releaseStatus": "PENDING_RELEASE"
+                    }                   
+                ]
+            }
+        }
+    ]
+}
