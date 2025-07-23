@@ -1,5 +1,3 @@
-import re
-
 from pydantic import BaseModel, field_validator
 
 from datastore_api.common.models import Version

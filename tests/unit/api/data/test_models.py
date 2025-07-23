@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 
 from datastore_api.api.data.models import (
@@ -35,7 +33,7 @@ def test_create_and_validate_full_input_time_period_query():
     assert actual.version == Version.from_str("1.0.0.0")
     assert actual.startDate == 1964
     assert actual.stopDate == 2056
-    assert isinstance(actual.population, List)
+    assert isinstance(actual.population, list)
     assert actual.population == [1, 2, 3]
     assert actual.includeAttributes is True
 
