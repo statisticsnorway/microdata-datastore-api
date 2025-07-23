@@ -1,0 +1,114 @@
+[
+    {
+        "jobId": "123-123-123-123",
+        "status": "completed",
+        "parameters": {
+            "target": "MY_DATASET"
+        },
+        "createdAt": "2022-05-18T11:40:22.519222",
+        "createdBy": {
+            "userId": "123-123-123",
+            "firstName": "Data",
+            "lastName": "Admin"
+        }
+    },
+    {
+        "jobId": "123-123-123-123",
+        "status": "completed",
+        "parameters": {
+            "target": "DATASTORE",
+            "operation": "BUMP",
+            "bumpManifesto": {
+                "version": "0.0.0.1634512323",
+                "description": "Draft",
+                "releaseTime": 1634512323,
+                "languageCode": "no",
+                "updateType": "MINOR",
+                "dataStructureUpdates": [
+                    {
+                        "name": "MY_DATASET",
+                        "description": "Første publisering",
+                        "operation": "ADD",
+                        "releaseStatus": "PENDING_RELEASE"
+                    }                   
+                ]
+            },
+            "description": "Added MY_DATASET to datastore"
+        },
+        "createdAt": "2022-05-18T11:40:22.519222",
+        "createdBy": {
+            "userId": "123-123-123",
+            "firstName": "Data",
+            "lastName": "Admin"
+        }
+    },
+    {
+        "jobId": "123-123-123-123",
+        "status": "completed",
+        "parameters": {
+            "target": "MY_DATASET",
+            "operation": "SET_STATUS"
+        },
+        "createdAt": "2022-05-18T11:40:22.519222",
+        "createdBy": {
+            "userId": "123-123-123",
+            "firstName": "Data",
+            "lastName": "Admin"
+        }
+    },
+    {
+        "jobId": "123-123-123-123",
+        "status": "completed",
+        "parameters": {
+            "target": "MY_DATASET",
+            "operation": "ADD"
+        },
+        "createdAt": "2022-05-18T11:40:22.519222"
+    },
+    {
+        "jobId": "123-123-123-123",
+        "status": "completed",
+        "parameters": {
+            "target": "WRONG_TARGET",
+            "operation": "BUMP",
+            "bumpManifesto": {
+                "version": "0.0.0.1634512323",
+                "description": "Draft",
+                "releaseTime": 1634512323,
+                "languageCode": "no",
+                "updateType": "MINOR",
+                "dataStructureUpdates": [
+                    {
+                        "name": "MY_DATASET",
+                        "description": "Første publisering",
+                        "operation": "ADD",
+                        "releaseStatus": "PENDING_RELEASE"
+                    }                   
+                ]
+            },
+            "description": "Added MY_DATASET to datastore",
+            "bumpFromVersion": "1.0.0",
+            "bumpToVersion": "1.1.0"
+        },
+        "createdAt": "2022-05-18T11:40:22.519222",
+        "createdBy": {
+            "userId": "123-123-123",
+            "firstName": "Data",
+            "lastName": "Admin"
+        }
+    },
+    {
+        "jobId": "123-123-123-123",
+        "status": "completed",
+        "parameters": {
+            "target": "MY_DATASET",
+            "operation": "SET_STATUS",
+            "releaseStatus": "DRAFT"
+        },
+        "createdAt": "2022-05-18T11:40:22.519222",
+        "createdBy": {
+            "userId": "123-123-123",
+            "lastName": "Admin"
+        }
+    }
+]
