@@ -14,6 +14,9 @@ class Version:
     patch: str
     draft: str
 
+    def to_2_underscored(self):
+        return "_".join([self.major, self.minor])
+
     def to_3_underscored(self):
         return "_".join([self.major, self.minor, self.patch])
 
@@ -28,5 +31,12 @@ class Version:
 
     @staticmethod
     def from_str(version: str):
-        split = version.split(".")
-        return Version(split[0], split[1], split[2], split[3])
+        try:
+            split = version.split(".")
+            if len(split) != 4:
+                raise ValueError("Incorrect number of version parts")
+            for part in split:
+                int(part)
+            return Version(split[0], split[1], split[2], split[3])
+        except Exception as e:
+            raise ValueError(f"Incorrect version format: {version}") from e

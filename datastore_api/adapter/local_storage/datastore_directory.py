@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 from functools import lru_cache
@@ -58,3 +59,46 @@ def get_metadata_all(version: Version) -> dict:
         raise DataNotFoundException(
             f"metadata_all for version {version} not found"
         ) from e
+
+
+def get_draft_data_file_path(dataset_name: str) -> str | None:
+    dataset_dir = f"{DATASTORE_ROOT_DIR}/data/{dataset_name}"
+    partitioned_parquet_path = f"{dataset_dir}/{dataset_name}__DRAFT"
+    parquet_path = f"{partitioned_parquet_path}.parquet"
+    if os.path.isfile(parquet_path):
+        return parquet_path
+    elif os.path.isdir(partitioned_parquet_path):
+        return partitioned_parquet_path
+    else:
+        return None
+
+
+def get_data_path_from_data_versions(
+    dataset_name: str, version: Version
+) -> str:
+    file_version = version.to_2_underscored()
+    data_versions_file = (
+        f"{DATASTORE_ROOT_DIR}/datastore/data_versions__{file_version}.json"
+    )
+    with open(data_versions_file, encoding="utf-8") as f:
+        data_versions = json.load(f)
+    if dataset_name not in data_versions:
+        raise DataNotFoundException(
+            f"No {dataset_name} in data_versions file for version {file_version}"
+        )
+    file_name = data_versions[dataset_name]
+    full_path = f"{DATASTORE_ROOT_DIR}/data/{dataset_name}/{file_name}"
+    if not os.path.exists(full_path):
+        logger.error(f"{full_path} does not exist")
+        raise DataNotFoundException(
+            f"No file exists for {dataset_name} in version {version}"
+        )
+    return full_path
+
+
+def get_latest_version() -> Version:
+    datastore_versions = json.load(
+        open(f"{DATASTORE_ROOT_DIR}/datastore/datastore_versions.json")
+    )
+    version_list = datastore_versions.get("versions", [])
+    return Version.from_str((version_list[0] or {}).get("version", ""))
