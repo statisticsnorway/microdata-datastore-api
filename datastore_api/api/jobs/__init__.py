@@ -45,7 +45,9 @@ def new_job(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
 ):
-    parsed_user_info = auth_client.authorize_user(authorization, user_info)
+    parsed_user_info = auth_client.authorize_data_administrator(
+        authorization, user_info
+    )
     response_list = []
     for job_request in validated_body.jobs:
         try:
