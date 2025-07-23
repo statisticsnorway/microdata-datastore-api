@@ -149,7 +149,6 @@ def test_get_multiple_data_structure_status(
 def test_get_data_structures(test_app: testclient.TestClient, mocker):
     with open(DATA_STRUCTURES_FILE_PATH, encoding="utf-8") as f:
         mocked_data_structures = json.load(f)
-
     spy = mocker.patch.object(
         metadata, "find_data_structures", return_value=mocked_data_structures
     )
@@ -161,7 +160,6 @@ def test_get_data_structures(test_app: testclient.TestClient, mocker):
             "Accept": "application/json",
         },
     )
-
     spy.assert_called_with(
         ["FNR", "AKT_ARBAP"], Version.from_str("3.2.1.0"), True, False
     )
@@ -184,7 +182,6 @@ def test_get_all_data_structures_ever(test_app: testclient.TestClient, mocker):
             "Accept": "application/json",
         },
     )
-
     spy.assert_called()
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_data_structures
@@ -203,7 +200,6 @@ def test_get_all_metadata(test_app: testclient.TestClient, mocker):
         "languages": MOCKED_LANGUAGES,
         "dataStructures": mocked_data_structures,
     }
-
     spy = mocker.patch.object(
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
@@ -235,7 +231,6 @@ def test_get_all_metadata_long_version_numbers(
         "languages": MOCKED_LANGUAGES,
         "dataStructures": mocked_data_structures,
     }
-
     spy = mocker.patch.object(
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
@@ -270,7 +265,6 @@ def test_get_all_metadata_skip_code_lists(
 ):
     with open(METADATA_ALL_FILE_PATH, encoding="utf-8") as f:
         mocked_metadata_all = json.load(f)
-
     spy = mocker.patch.object(
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
@@ -292,7 +286,6 @@ def test_get_data_structures_skip_code_lists(
 ):
     with open(DATA_STRUCTURES_FILE_PATH, encoding="utf-8") as f:
         mocked_data_structures = json.load(f)
-
     spy = mocker.patch.object(
         metadata, "find_data_structures", return_value=mocked_data_structures
     )

@@ -1,31 +1,27 @@
-import re
-from typing import Optional
-
 from pydantic import BaseModel, field_validator
+
+from datastore_api.common.models import Version
 
 
 class InputQuery(BaseModel):
     dataStructureName: str
-    version: str
-    population: Optional[list] = None
-    includeAttributes: Optional[bool] = False
+    version: Version
+    population: list | None = None
+    includeAttributes: bool = False
 
-    @field_validator("version")
+    @field_validator("version", mode="before")
     @classmethod
-    def check_for_sem_ver(cls, version):  # pylint: disable=no-self-argument
-        pattern = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$")
-        if not pattern.match(version):
-            raise ValueError(f"'{version}' is not a valid semantic version.")
-        return version
-
-    def get_file_version(self) -> str:
-        version_numbers = self.version.split(".")
-        return f"{version_numbers[0]}_{version_numbers[1]}"
+    def check_for_sem_ver(cls, version):
+        if isinstance(version, str):
+            return Version.from_str(version)
+        if isinstance(version, Version):
+            return version
+        raise ValueError(f"'{version}' is not a valid semantic version.")
 
     def __str__(self) -> str:
         return (
             f"dataStructureName='{self.dataStructureName}' "
-            + f"version='{self.version}' "
+            + f"version='{str(self.version)}' "
             + f"population='<length: {len(self.population or [])}>' "
             + f"includeAttributes={self.includeAttributes}"
         )
