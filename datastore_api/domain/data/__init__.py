@@ -24,7 +24,7 @@ def process_event_request(
     include_attributes: bool,
     start_date: int,
     stop_date: int,
-) -> Union[Table, str]:
+) -> Table:
     table_filter = filters.generate_time_period_filter(
         start_date, stop_date, population
     )
@@ -43,7 +43,7 @@ def process_status_request(
     population: list | None,
     include_attributes: bool,
     date: int,
-) -> Union[Table, str]:
+) -> Table:
     table_filter = filters.generate_time_filter(date, population)
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
     return _read_parquet(
@@ -59,7 +59,7 @@ def process_fixed_request(
     version: Version,
     population: list | None,
     include_attributes: bool,
-) -> Union[Table, str]:
+) -> Table:
     table_filter = filters.generate_population_filter(population)
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
     return _read_parquet(
