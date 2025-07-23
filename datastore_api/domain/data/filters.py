@@ -1,5 +1,3 @@
-from typing import Union
-
 from pyarrow import dataset
 
 
@@ -44,7 +42,7 @@ def generate_time_filter(
 
 def generate_population_filter(
     population_filter: list | None = None,
-) -> Union[dataset.Expression, None]:
+) -> dataset.Expression | None:
     return (
         dataset.field("unit_id").isin(population_filter)
         if population_filter

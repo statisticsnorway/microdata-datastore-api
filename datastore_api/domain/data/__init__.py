@@ -1,5 +1,4 @@
 import logging
-from typing import Union
 
 from pyarrow import Table
 from pyarrow import dataset

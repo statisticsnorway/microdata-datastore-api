@@ -1,8 +1,5 @@
-import re
-from typing import List, Optional
-
 from fastapi import HTTPException, Query, status
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from datastore_api.common.models import Version
 
@@ -13,14 +10,14 @@ class MetadataQuery(BaseModel, extra="forbid", validate_assignment=True):
     include_attributes: bool = False
     skip_code_lists: bool = False
 
-    def names_as_list(self) -> List[str]:
+    def names_as_list(self) -> list[str]:
         return [] if self.names is None else self.names.split(",")
 
 
 class NameParam(BaseModel, extra="forbid"):
     names: str
 
-    def get_names_as_list(self) -> List[str]:
+    def get_names_as_list(self) -> list[str]:
         return self.names.split(",")
 
 

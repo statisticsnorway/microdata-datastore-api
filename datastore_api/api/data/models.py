@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
@@ -9,7 +8,7 @@ from datastore_api.common.models import Version
 class InputQuery(BaseModel):
     dataStructureName: str
     version: Version
-    population: Optional[list] = None
+    population: list | None = None
     includeAttributes: bool = False
 
     @field_validator("version", mode="before")
