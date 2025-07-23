@@ -6,7 +6,7 @@ from starlette.exceptions import HTTPException
 from datastore_api.api import include_routers
 from datastore_api.config.logging import setup_logging
 from datastore_api.common.exceptions import (
-    DataNotFoundException,
+    NotFoundException,
     InvalidStorageFormatException,
     RequestValidationException,
     InvalidDraftVersionException,
@@ -64,7 +64,7 @@ def handle_generic_exception(_req, exc):
     )
 
 
-@app.exception_handler(DataNotFoundException)
+@app.exception_handler(NotFoundException)
 def handle_data_not_found(_req, exc):
     logger.warning(exc, exc_info=True)
     return JSONResponse(content=exc.to_dict(), status_code=404)

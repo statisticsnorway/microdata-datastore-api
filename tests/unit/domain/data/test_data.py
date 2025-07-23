@@ -4,7 +4,7 @@ from pyarrow import Table, dataset
 
 from datastore_api.common.models import Version
 from datastore_api.domain import data
-from datastore_api.common.exceptions import DataNotFoundException
+from datastore_api.common.exceptions import NotFoundException
 from tests.resources import test_resources
 
 ALL_COLUMNS = ["unit_id", "value", "start_epoch_days", "stop_epoch_days"]
@@ -92,7 +92,7 @@ def test_valid_status_request():
 
 def test_invalid_status_request():
     payload = test_resources.INVALID_STATUS_QUERY_NOT_FOUND
-    with pytest.raises(DataNotFoundException) as e:
+    with pytest.raises(NotFoundException) as e:
         data.process_status_request(
             payload.dataStructureName,
             payload.version,
@@ -120,7 +120,7 @@ def test_valid_fixed_request():
 
 def test_invalid_fixed_request():
     payload = test_resources.INVALID_FIXED_QUERY_NOT_FOUND
-    with pytest.raises(DataNotFoundException) as e:
+    with pytest.raises(NotFoundException) as e:
         data.process_fixed_request(
             payload.dataStructureName,
             payload.version,

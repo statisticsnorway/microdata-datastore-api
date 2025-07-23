@@ -5,7 +5,7 @@ from functools import lru_cache
 
 from datastore_api.config import environment
 from datastore_api.common.models import Version
-from datastore_api.common.exceptions import DataNotFoundException
+from datastore_api.common.exceptions import NotFoundException
 
 DATASTORE_ROOT_DIR = environment.get("DATASTORE_ROOT_DIR")
 
@@ -56,7 +56,7 @@ def get_metadata_all(version: Version) -> dict:
             )
             return result
     except FileNotFoundError as e:
-        raise DataNotFoundException(
+        raise NotFoundException(
             f"metadata_all for version {version} not found"
         ) from e
 
@@ -83,14 +83,14 @@ def get_data_path_from_data_versions(
     with open(data_versions_file, encoding="utf-8") as f:
         data_versions = json.load(f)
     if dataset_name not in data_versions:
-        raise DataNotFoundException(
+        raise NotFoundException(
             f"No {dataset_name} in data_versions file for version {file_version}"
         )
     file_name = data_versions[dataset_name]
     full_path = f"{DATASTORE_ROOT_DIR}/data/{dataset_name}/{file_name}"
     if not os.path.exists(full_path):
         logger.error(f"{full_path} does not exist")
-        raise DataNotFoundException(
+        raise NotFoundException(
             f"No file exists for {dataset_name} in version {version}"
         )
     return full_path
