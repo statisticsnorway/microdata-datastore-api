@@ -31,13 +31,13 @@ def client(mock_auth_client: Mock):
 @pytest.fixture(autouse=True)
 def setup(monkeypatch: MonkeyPatch):
     monkeypatch.setattr(
-        data, f"process_status_request", lambda a, b, c, d, e: MOCK_RESULT
+        data, "process_status_request", lambda a, b, c, d, e: MOCK_RESULT
     )
     monkeypatch.setattr(
-        data, f"process_event_request", lambda a, b, c, d, e, f: MOCK_RESULT
+        data, "process_event_request", lambda a, b, c, d, e, f: MOCK_RESULT
     )
     monkeypatch.setattr(
-        data, f"process_fixed_request", lambda a, b, c, d: MOCK_RESULT
+        data, "process_fixed_request", lambda a, b, c, d: MOCK_RESULT
     )
 
 
