@@ -32,5 +32,3 @@ package = true
 line-length = 80
 target-version = "py313"
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
