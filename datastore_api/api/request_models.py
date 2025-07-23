@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel, field_validator
 
-from datastore_api.exceptions.exceptions import RequestValidationException
+from datastore_api.common.exceptions import RequestValidationException
 
 SEMVER_4_PARTS_REG_EXP = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$")
 

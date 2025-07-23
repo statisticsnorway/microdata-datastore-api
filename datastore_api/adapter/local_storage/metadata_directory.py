@@ -3,8 +3,8 @@ import logging
 from functools import lru_cache
 
 from datastore_api.config import environment
-from datastore_api.domain.version import Version
-from datastore_api.exceptions.exceptions import DataNotFoundException
+from datastore_api.common.models import Version
+from datastore_api.common.exceptions import DataNotFoundException
 
 DATASTORE_ROOT_DIR = environment.get("DATASTORE_ROOT_DIR")
 

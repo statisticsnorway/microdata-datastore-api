@@ -1,16 +1,15 @@
 from itertools import chain
-from typing import List, Union
-from datastore_api.adapter import datastore
-from datastore_api.domain.version import Version
-from datastore_api.exceptions.exceptions import (
+from datastore_api.adapter.local_storage import metadata_directory
+from datastore_api.common.models import Version
+from datastore_api.common.exceptions import (
     InvalidStorageFormatException,
     InvalidDraftVersionException,
 )
 
 
 def find_all_datastore_versions():
-    draft_version = datastore.get_draft_version()
-    datastore_versions = datastore.get_datastore_versions()
+    draft_version = metadata_directory.get_draft_version()
+    datastore_versions = metadata_directory.get_datastore_versions()
 
     if draft_version:
         datastore_versions["versions"].insert(0, draft_version)
@@ -19,8 +18,8 @@ def find_all_datastore_versions():
 
 
 def find_current_data_structure_status(
-    status_query_names: List[str],
-) -> dict[str, Union[dict, None]]:
+    status_query_names: list[str],
+) -> dict[str, dict | None]:
     datastore_versions = find_all_datastore_versions()
     datastructure_statuses = {}
     for version in datastore_versions["versions"]:
@@ -48,7 +47,7 @@ def find_data_structures(
 ):
     _validate_version(version)
     metadata = (
-        datastore.get_metadata_all(version)
+        metadata_directory.get_metadata_all(version)
         if not skip_code_lists
         else find_all_metadata_skip_code_list_and_missing_values(version)
     )
@@ -69,7 +68,7 @@ def find_data_structures(
 def find_all_metadata(version: Version, skip_code_lists: bool = False):
     _validate_version(version)
     return (
-        datastore.get_metadata_all(version)
+        metadata_directory.get_metadata_all(version)
         if not skip_code_lists
         else find_all_metadata_skip_code_list_and_missing_values(version)
     )
@@ -93,7 +92,7 @@ def find_languages():
 
 def find_all_metadata_skip_code_list_and_missing_values(version: Version):
     _validate_version(version)
-    metadata_all = datastore.get_metadata_all(version)
+    metadata_all = metadata_directory.get_metadata_all(version)
     if "dataStructures" in metadata_all:
         _clear_code_list_and_missing_values(metadata_all["dataStructures"])
     else:
@@ -137,7 +136,7 @@ def _clear_code_list_and_missing_values(data_structures: list[dict]):
 
 def _validate_version(version: Version):
     if version.is_draft() and version.draft != "0":
-        draft_version = datastore.get_draft_version()
+        draft_version = metadata_directory.get_draft_version()
         if draft_version["version"] != version.to_4_dotted():
             raise InvalidDraftVersionException(
                 f"Requested draft version {version}, "

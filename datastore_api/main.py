@@ -3,11 +3,9 @@ import logging
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI
 from starlette.exceptions import HTTPException
-from datastore_api.api.metadata_api import metadata_router
-from datastore_api.api.observability import observability_router
+from datastore_api.api import include_routers
 from datastore_api.config.logging import setup_logging
-from datastore_api.config.uvicorn import setup_uvicorn_logging
-from datastore_api.exceptions.exceptions import (
+from datastore_api.common.exceptions import (
     DataNotFoundException,
     InvalidStorageFormatException,
     RequestValidationException,
@@ -18,11 +16,8 @@ from datastore_api.exceptions.exceptions import (
 logger = logging.getLogger()
 
 app = FastAPI()
-app.include_router(observability_router)
-app.include_router(metadata_router)
-
 setup_logging(app)
-setup_uvicorn_logging()
+include_routers(app)
 
 
 @app.middleware("http")
