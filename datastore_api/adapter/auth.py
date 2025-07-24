@@ -1,4 +1,5 @@
 import logging
+from typing import Protocol
 
 import jwt
 from fastapi import HTTPException, status
@@ -21,7 +22,14 @@ USER_LAST_NAME_KEY = "user/lastName"
 USER_ID_KEY = "user/uuid"
 
 
-class AuthClient:
+class AuthClient(Protocol):
+    def authorize_user(self, authorization_header: str | None) -> str: ...
+    def authorize_data_administrator(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo: ...
+
+
+class MicrodataAuthClient:
     valid_aud: str
     jwks_client: PyJWKClient
 
@@ -37,9 +45,6 @@ class AuthClient:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
 
     def authorize_user(self, authorization_header: str | None) -> str:
-        if not environment.get("JWT_AUTH"):
-            logger.info('Auth toggled off. Returning "default" as user_id.')
-            return "default"
         if authorization_header is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -76,13 +81,6 @@ class AuthClient:
     def authorize_data_administrator(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
-        if not environment.get("JWT_AUTH"):
-            logger.warning("JWT_AUTH is turned off.")
-            return UserInfo(
-                user_id="1234-1234-1234-1234",
-                first_name="Test",
-                last_name="User",
-            )
         if authorization_cookie is None:
             raise AuthError("Unauthorized. No authorization token was provided")
         if user_info_cookie is None:
@@ -148,5 +146,24 @@ class AuthClient:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
 
+class DisabledAuthClient:
+    def authorize_user(self, authorization_header: str | None) -> str:
+        logger.info('Auth toggled off. Returning "default" as user_id.')
+        return "default"
+
+    def authorize_data_administrator(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo:
+        logger.warning("JWT_AUTH is turned off. Returning default UserInfo")
+        return UserInfo(
+            user_id="1234-1234-1234-1234",
+            first_name="Test",
+            last_name="User",
+        )
+
+
 def get_auth_client() -> AuthClient:
-    return AuthClient()
+    if not environment.get("JWT_AUTH"):
+        logger.info('Auth toggled off. Returning "default" as user_id.')
+        return DisabledAuthClient()
+    return MicrodataAuthClient()
