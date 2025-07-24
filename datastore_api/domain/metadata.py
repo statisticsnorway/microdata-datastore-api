@@ -85,12 +85,6 @@ def find_all_data_structures_ever() -> list[str]:
     return list(data_structures)
 
 
-def find_languages() -> list[dict]:
-    return [
-        {"code": "no", "label": "Norsk"},
-    ]
-
-
 def find_all_metadata_skip_code_list_and_missing_values(
     version: Version,
 ) -> dict:
