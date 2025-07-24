@@ -31,7 +31,7 @@ sqlite3.register_converter(
 class SqliteDbClient:
     db_path: Path
 
-    def __init__(self, db_url: str):
+    def __init__(self, db_url: str) -> None:
         self.db_path = Path(db_url.replace("sqlite://", ""))
         self._ensure_schema()
 
@@ -44,7 +44,7 @@ class SqliteDbClient:
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
 
-    def _ensure_schema(self):
+    def _ensure_schema(self) -> None:
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -189,7 +189,11 @@ class SqliteDbClient:
             where_conditions.append(
                 f"json_extract(parameters, '$.operation')  IN ({in_clause})"
             )
-
+        where_conditions = (
+            "WHERE " + " AND ".join(where_conditions)
+            if where_conditions
+            else ""
+        )
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -216,7 +220,7 @@ class SqliteDbClient:
                         ) AS job_log_row
                     ), '[]') AS logs_json
                 FROM job j
-                {"WHERE " + " AND ".join(where_conditions) if where_conditions else ""}
+                {where_conditions}
                 """,
             ).fetchall()
             if not job_rows:
@@ -306,7 +310,8 @@ class SqliteDbClient:
             cursor.execute(
                 """
                 SELECT 1 FROM job
-                WHERE target = ? AND datastore_id = ? AND status NOT IN ('completed', 'failed')
+                WHERE target = ? AND datastore_id = ?
+                AND status NOT IN ('completed', 'failed')
                 LIMIT 1
                 """,
                 (new_job.parameters.target, 1),
@@ -316,7 +321,14 @@ class SqliteDbClient:
                 cursor.execute(
                     """
                     INSERT INTO job
-                    (target, datastore_id, status, parameters, created_at, created_by)
+                    (
+                        target,
+                        datastore_id,
+                        status,
+                        parameters,
+                        created_at,
+                        created_by
+                    )
                     VALUES
                     ( ?, ?, ?, ?, ?, ?)
                     """,
@@ -372,7 +384,11 @@ class SqliteDbClient:
                 )
             if description is not None:
                 cursor.execute(
-                    "UPDATE job SET parameters = json_set(parameters, '$.description', ?) WHERE job_id = ?",
+                    """
+                    UPDATE job
+                    SET parameters = json_set(parameters, '$.description', ?)
+                    WHERE job_id = ?
+                    """,
                     (description, int(job_id)),
                 )
                 cursor.execute(
@@ -444,7 +460,12 @@ class SqliteDbClient:
                 timestamp = datetime.now().isoformat()
                 cursor.execute(
                     """
-                    INSERT INTO maintenance (datastore_id, msg, paused, timestamp)
+                    INSERT INTO maintenance (
+                        datastore_id,
+                        msg,
+                        paused,
+                        timestamp
+                    )
                     VALUES (?, ?, ?, ?)
                     """,
                     (
@@ -573,7 +594,13 @@ class SqliteDbClient:
             cursor = conn.cursor()
             target_rows = cursor.execute(
                 """
-                SELECT name, datastore_id, status, action, last_updated_at, last_updated_by
+                SELECT
+                    name,
+                    datastore_id,
+                    status,
+                    action,
+                    last_updated_at,
+                    last_updated_by
                 FROM target
                 WHERE datastore_id = ?
                 """,
@@ -605,7 +632,14 @@ class SqliteDbClient:
     ) -> None:
         cursor.execute(
             """
-                INSERT INTO target (name, datastore_id, status, last_updated_at, last_updated_by, action)
+                INSERT INTO target (
+                    name,
+                    datastore_id,
+                    status,
+                    last_updated_at,
+                    last_updated_by,
+                    action
+                )
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(name, datastore_id) DO UPDATE SET
                     status = excluded.status,
@@ -643,9 +677,14 @@ class SqliteDbClient:
         try:
             conn.execute("BEGIN IMMEDIATE")
             cursor = conn.cursor()
+            bump_manifesto = job.parameters.bump_manifesto
+            if bump_manifesto is None:
+                raise ValueError(
+                    "Can't update bump targets if bump_manifesto is None"
+                )
             updates = [
                 update
-                for update in job.parameters.bump_manifesto.data_structure_updates
+                for update in bump_manifesto.data_structure_updates
                 if update.release_status != "DRAFT"
             ]
             version = job.parameters.bump_to_version
