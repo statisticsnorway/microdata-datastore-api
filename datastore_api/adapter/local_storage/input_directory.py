@@ -14,7 +14,7 @@ from datastore_api.config import environment
 
 logger = logging.getLogger()
 
-INPUT_DIR = Path(environment.get("INPUT_DIR"))
+INPUT_DIR = Path(environment.input_dir)
 ARCHIVE_DIR = INPUT_DIR / "archive"
 
 

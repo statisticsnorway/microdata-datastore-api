@@ -23,9 +23,9 @@ response_time_ms: ContextVar[int] = ContextVar("response_time_ms")
 
 class MicrodataJSONFormatter(logging.Formatter):
     def __init__(self) -> None:
-        self.host = environment.get("DOCKER_HOST_NAME")
+        self.host = environment.docker_host_name
         self.command = json.dumps(sys.argv)
-        self.commit_id = environment.get("COMMIT_ID")
+        self.commit_id = environment.commit_id
 
     def format(self, record: logging.LogRecord) -> str:
         stack_trace = ""

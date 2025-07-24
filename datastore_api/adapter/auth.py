@@ -35,11 +35,9 @@ class MicrodataAuthClient:
 
     def __init__(self) -> None:
         self.valid_aud = (
-            "datastore-qa" if environment.get("STACK") == "qa" else "datastore"
+            "datastore-qa" if environment.stack == "qa" else "datastore"
         )
-        self.jwks_client = PyJWKClient(
-            environment.get("JWKS_URL"), lifespan=3000
-        )
+        self.jwks_client = PyJWKClient(environment.jwks_url, lifespan=3000)
 
     def _get_signing_key(self, jwt_token: str) -> PyJWK:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
@@ -163,7 +161,7 @@ class DisabledAuthClient:
 
 
 def get_auth_client() -> AuthClient:
-    if not environment.get("JWT_AUTH"):
+    if not environment.jwt_auth:
         logger.info('Auth toggled off. Returning "default" as user_id.')
         return DisabledAuthClient()
     return MicrodataAuthClient()

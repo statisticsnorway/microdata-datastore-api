@@ -13,7 +13,7 @@ from datastore_api.common.models import Version
 from datastore_api.config import environment
 from datastore_api.domain import metadata
 
-DATASTORE_ROOT_DIR = environment.get("DATASTORE_ROOT_DIR")
+DATASTORE_ROOT_DIR = environment.datastore_root_dir
 FIXTURES_DIR = "tests/resources/fixtures"
 METADATA_ALL_FILE_PATH = f"{FIXTURES_DIR}/domain/metadata_all.json"
 DATASTORE_VERSIONS_FILE_PATH = f"{FIXTURES_DIR}/domain/datastore_versions.json"
@@ -116,30 +116,28 @@ def test_find_current_data_structure_status(mocker):
         "get_draft_version",
         return_value=mocked_draft_version,
     )
-    actual_draft = metadata.find_current_data_structure_status(
-        ["TEST_PERSON_HOBBIES"]
-    )
-    actual_pending_release = metadata.find_current_data_structure_status(
-        ["TEST_PERSON_SAVINGS"]
-    )
-    actual_released = metadata.find_current_data_structure_status(
-        ["TEST_PERSON_PETS"]
-    )
-    actual_removed = metadata.find_current_data_structure_status(
-        ["TEST_PERSON_INCOME"]
-    )
-    actual_no_such_dataset = metadata.find_current_data_structure_status(
-        ["NO_SUCH_DATASET"]
-    )
-    actual_all = metadata.find_current_data_structure_status(
-        [
-            "TEST_PERSON_INCOME",
-            "TEST_PERSON_PETS",
-            "TEST_PERSON_SAVINGS",
-            "TEST_PERSON_HOBBIES",
-            "NO_SUCH_DATASET",
-        ]
-    )
+    actual_draft = metadata.find_current_data_structure_status([
+        "TEST_PERSON_HOBBIES"
+    ])
+    actual_pending_release = metadata.find_current_data_structure_status([
+        "TEST_PERSON_SAVINGS"
+    ])
+    actual_released = metadata.find_current_data_structure_status([
+        "TEST_PERSON_PETS"
+    ])
+    actual_removed = metadata.find_current_data_structure_status([
+        "TEST_PERSON_INCOME"
+    ])
+    actual_no_such_dataset = metadata.find_current_data_structure_status([
+        "NO_SUCH_DATASET"
+    ])
+    actual_all = metadata.find_current_data_structure_status([
+        "TEST_PERSON_INCOME",
+        "TEST_PERSON_PETS",
+        "TEST_PERSON_SAVINGS",
+        "TEST_PERSON_HOBBIES",
+        "NO_SUCH_DATASET",
+    ])
     expected_draft = {
         "TEST_PERSON_HOBBIES": {
             "operation": "ADD",
@@ -333,35 +331,27 @@ def _assert_code_list_and_missing_values(metadata_all):
             "representedVariables"
         ]
         represented_identifiers = list(
-            chain(
-                *[
-                    identifier["representedVariables"]
-                    for identifier in metadata_dict["identifierVariables"]
-                ]
-            )
+            chain(*[
+                identifier["representedVariables"]
+                for identifier in metadata_dict["identifierVariables"]
+            ])
         )
         represented_attributes = list(
-            chain(
-                *[
-                    attribute["representedVariables"]
-                    for attribute in metadata_dict["attributeVariables"]
-                ]
-            )
+            chain(*[
+                attribute["representedVariables"]
+                for attribute in metadata_dict["attributeVariables"]
+            ])
         )
         represented_variables += (
             represented_measure
             + represented_identifiers
             + represented_attributes
         )
-    assert all(
-        [
-            variable["valueDomain"].get("codeList", []) == []
-            for variable in represented_variables
-        ]
-    )
-    assert all(
-        [
-            variable["valueDomain"].get("missingValues", []) == []
-            for variable in represented_variables
-        ]
-    )
+    assert all([
+        variable["valueDomain"].get("codeList", []) == []
+        for variable in represented_variables
+    ])
+    assert all([
+        variable["valueDomain"].get("missingValues", []) == []
+        for variable in represented_variables
+    ])

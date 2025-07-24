@@ -7,7 +7,7 @@ from datastore_api.common.exceptions import NotFoundException
 from datastore_api.common.models import Version
 from datastore_api.config import environment
 
-DATASTORE_ROOT_DIR = environment.get("DATASTORE_ROOT_DIR")
+DATASTORE_ROOT_DIR = environment.datastore_root_dir
 
 logger = logging.getLogger()
 

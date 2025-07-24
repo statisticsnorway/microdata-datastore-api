@@ -26,18 +26,20 @@ JOB_LIST = [
     Job(
         job_id="123-123-123-123",
         status=JobStatus("completed"),
-        parameters=JobParameters.model_validate(
-            {"target": "MY_DATASET", "operation": "ADD"}
-        ),
+        parameters=JobParameters.model_validate({
+            "target": "MY_DATASET",
+            "operation": "ADD",
+        }),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
     ),
     Job(
         job_id="123-123-123-123",
         status=JobStatus("completed"),
-        parameters=JobParameters.model_validate(
-            {"target": "OTHER_DATASET", "operation": "ADD"}
-        ),
+        parameters=JobParameters.model_validate({
+            "target": "OTHER_DATASET",
+            "operation": "ADD",
+        }),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
     ),
@@ -170,7 +172,7 @@ def test_update_job_bad_request(client, mock_db_client):
 
 
 def test_update_job_disabled_bump(client):
-    environment._ENVIRONMENT_VARIABLES["BUMP_ENABLED"] = False
+    environment.bump_enabled = False
     response = client.post("/jobs", json=BUMP_JOB_REQUEST)
     assert response.status_code == 200
     assert response.json() == [

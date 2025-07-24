@@ -50,7 +50,7 @@ def new_job(
             if (
                 job_request.target == "DATASTORE"
                 and job_request.operation == "BUMP"
-                and environment.get("BUMP_ENABLED") is False
+                and environment.bump_enabled is False
             ):
                 raise BumpingDisabledException(
                     "Bumping the datastore is disabled"
