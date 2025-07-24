@@ -7,27 +7,27 @@ from datastore_api.api.metadata.models import (
 )
 from datastore_api.domain import metadata
 
-metadata_router = APIRouter()
+router = APIRouter()
 
 
-@metadata_router.get("/metadata/data-store")
+@router.get("/data-store")
 def get_data_store():
     return metadata.find_all_datastore_versions()
 
 
-@metadata_router.get("/metadata/data-structures/status")
+@router.get("/data-structures/status")
 def get_data_structure_current_status(query: NameParam = Depends()):
     return metadata.find_current_data_structure_status(
         query.get_names_as_list()
     )
 
 
-@metadata_router.post("/metadata/data-structures/status")
+@router.post("/data-structures/status")
 def get_data_structure_current_status_as_post(body: NameParam):
     return metadata.find_current_data_structure_status(body.get_names_as_list())
 
 
-@metadata_router.get("/metadata/data-structures")
+@router.get("/data-structures")
 def get_data_structures(query: MetadataQuery = Depends(get_metadata_query)):
     query.include_attributes = True
     return metadata.find_data_structures(
@@ -38,12 +38,12 @@ def get_data_structures(query: MetadataQuery = Depends(get_metadata_query)):
     )
 
 
-@metadata_router.get("/metadata/all-data-structures")
+@router.get("/all-data-structures")
 def get_all_data_structures_ever():
     return metadata.find_all_data_structures_ever()
 
 
-@metadata_router.get("/metadata/all")
+@router.get("/all")
 def get_all_metadata(
     query: MetadataQuery = Depends(get_metadata_query),
 ):
@@ -51,8 +51,3 @@ def get_all_metadata(
         query.version,
         query.skip_code_lists,
     )
-
-
-@metadata_router.get("/languages")
-def get_languages():
-    return metadata.find_languages()

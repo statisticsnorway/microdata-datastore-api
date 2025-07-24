@@ -9,7 +9,7 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("/importable-datasets")
+@router.get("/")
 def get_importable_datasets():
     datasets = input_directory.get_importable_datasets()
     return [
@@ -18,7 +18,7 @@ def get_importable_datasets():
     ]
 
 
-@router.delete("/importable-datasets/{dataset_name}")
+@router.delete("/{dataset_name}")
 def delete_importable_datasets(dataset_name: str):
     input_directory.delete_importable_datasets(dataset_name)
     return {"message": f"OK, {dataset_name} deleted"}

@@ -1,13 +1,13 @@
 from fastapi import APIRouter
 
-observability_router = APIRouter()
+router = APIRouter()
 
 
-@observability_router.get("/health/alive")
+@router.get("/alive")
 async def alive():
     return "I'm alive!"
 
 
-@observability_router.get("/health/ready")
+@router.get("/ready")
 async def ready():
     return "I'm ready!"

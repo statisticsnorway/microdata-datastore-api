@@ -7,14 +7,15 @@ from pydantic import ValidationError
 from starlette.exceptions import HTTPException
 
 from datastore_api.api import (
+    data,
     importable_datasets,
     jobs,
-    maintenance_status,
+    languages,
+    maintenance_statuses,
+    metadata,
+    observability,
     targets,
 )
-from datastore_api.api.data import data_router
-from datastore_api.api.metadata import metadata_router
-from datastore_api.api.observability import observability_router
 from datastore_api.common.exceptions import (
     InvalidDraftVersionException,
     InvalidStorageFormatException,
@@ -34,13 +35,18 @@ def setup_api(app: FastAPI):
 
 
 def _include_routers(app: FastAPI):
-    app.include_router(data_router)
-    app.include_router(metadata_router)
-    app.include_router(observability_router)
-    app.include_router(maintenance_status.router)
-    app.include_router(targets.router)
-    app.include_router(importable_datasets.router)
-    app.include_router(jobs.router)
+    app.include_router(data.router, prefix="/data")
+    app.include_router(metadata.router, prefix="/metadata")
+    app.include_router(observability.router, prefix="/health")
+    app.include_router(
+        maintenance_statuses.router, prefix="/maintenance-statuses"
+    )
+    app.include_router(targets.router, prefix="/targets")
+    app.include_router(
+        importable_datasets.router, prefix="/importable-datasets"
+    )
+    app.include_router(jobs.router, prefix="/jobs")
+    app.include_router(languages.router, prefix="/languages")
 
 
 def _include_middleware(app: FastAPI):

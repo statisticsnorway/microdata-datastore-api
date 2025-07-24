@@ -56,7 +56,7 @@ def client(mock_db_client):
 
 def test_set_maintenance_status(client, mock_db_client):
     response = client.post(
-        "/maintenance-status",
+        "/maintenance-statuses",
         json=MAINTENANCE_STATUS_REQUEST_VALID,
     )
     mock_db_client.set_maintenance_status.assert_called_once()
@@ -66,7 +66,7 @@ def test_set_maintenance_status(client, mock_db_client):
 
 def test_set_maintenance_status_with_no_msg(client, mock_db_client):
     response = client.post(
-        "/maintenance-status",
+        "/maintenance-statuses",
         json=MAINTENANCE_STATUS_REQUEST_NO_MSG,
     )
     mock_db_client.set_maintenance_status.assert_not_called()
@@ -76,7 +76,7 @@ def test_set_maintenance_status_with_no_msg(client, mock_db_client):
 
 def test_set_maintenance_status_with_invalid_paused(client, mock_db_client):
     response = client.post(
-        "/maintenance-status",
+        "/maintenance-statuses",
         json=MAINTENANCE_STATUS_REQUEST_INVALID_PAUSE_VALUE,
     )
     mock_db_client.set_maintenance_status.assert_not_called()
@@ -84,19 +84,15 @@ def test_set_maintenance_status_with_invalid_paused(client, mock_db_client):
     assert response.json().get("details") is not None
 
 
-def test_get_maintenance_status(client, mock_db_client, caplog):
-    response = client.get("/maintenance-status")
+def test_get_maintenance_status(client, mock_db_client):
+    response = client.get("/maintenance-statuses/latest")
     mock_db_client.get_latest_maintenance_status.assert_called_once()
     assert response.status_code == 200
     assert response.json() == RESPONSE_FROM_DB[0]
-    assert (
-        "GET /maintenance-status, paused: 1, "
-        "msg: Today is 2023-08-31, we need to upgrade again\n" in caplog.text
-    )
 
 
 def test_get_maintenance_history(client, mock_db_client):
-    response = client.get("/maintenance-history")
+    response = client.get("/maintenance-statuses")
     mock_db_client.get_maintenance_history.assert_called_once()
     assert response.status_code == 200
     assert response.json() == RESPONSE_FROM_DB

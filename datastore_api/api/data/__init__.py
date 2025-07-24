@@ -15,13 +15,11 @@ from datastore_api.api.data.models import (
 )
 from datastore_api.domain import data
 
-data_router = APIRouter()
+router = APIRouter()
 logger = logging.getLogger()
 
 
-@data_router.post(
-    "/data/event/stream", responses={404: {"model": ErrorMessage}}
-)
+@router.post("/event/stream", responses={404: {"model": ErrorMessage}})
 def stream_result_event(
     input_query: InputTimePeriodQuery,
     authorization: str = Header(None),
@@ -46,9 +44,7 @@ def stream_result_event(
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
 
 
-@data_router.post(
-    "/data/status/stream", responses={404: {"model": ErrorMessage}}
-)
+@router.post("/status/stream", responses={404: {"model": ErrorMessage}})
 def stream_result_status(
     input_query: InputTimeQuery,
     authorization: str = Header(None),
@@ -72,9 +68,7 @@ def stream_result_status(
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
 
 
-@data_router.post(
-    "/data/fixed/stream", responses={404: {"model": ErrorMessage}}
-)
+@router.post("/fixed/stream", responses={404: {"model": ErrorMessage}})
 def stream_result_fixed(
     input_query: InputFixedQuery,
     authorization: str = Header(None),

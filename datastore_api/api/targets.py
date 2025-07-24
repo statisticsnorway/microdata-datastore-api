@@ -8,7 +8,7 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("/targets")
+@router.get("/")
 def get_targets(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):
@@ -19,7 +19,7 @@ def get_targets(
     ]
 
 
-@router.get("/targets/{name}/jobs")
+@router.get("/{name}/jobs")
 def get_target_jobs(
     name: str,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
