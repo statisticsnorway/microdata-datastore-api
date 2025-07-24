@@ -1,29 +1,28 @@
-import os
 import json
+import os
 import sqlite3
 from datetime import datetime
 
 import pytest
 from pytest_mock import MockFixture
 
-from datastore_api.adapter.db.sqlite import (
-    JobAlreadyCompleteException,
-    NotFoundException,
-    SqliteDbClient,
-    JobExistsException,
-)
 from datastore_api.adapter.db.models import (
+    DatastoreVersion,
+    DataStructureUpdate,
     Job,
+    JobParameters,
     JobStatus,
     Operation,
-    UserInfo,
-    DataStructureUpdate,
-    DatastoreVersion,
-    JobParameters,
     Target,
+    UserInfo,
+)
+from datastore_api.adapter.db.sqlite import (
+    JobAlreadyCompleteException,
+    JobExistsException,
+    NotFoundException,
+    SqliteDbClient,
 )
 from datastore_api.api.jobs.models import NewJobRequest
-
 
 sqlite_file = "test.db"
 sqlite_client = SqliteDbClient(f"sqlite://{sqlite_file}")
@@ -71,7 +70,10 @@ TARGET_UPDATE_JOB = Job(
     job_id="123-123-123-123",
     status=JobStatus("queued"),
     parameters=JobParameters.model_validate(
-        {"target": "MY_DATASET", "operation": "ADD"}
+        {
+            "target": "MY_DATASET",
+            "operation": "ADD",
+        }
     ),
     created_at="2022-05-18T11:40:22.519222",
     created_by=USER_INFO,
@@ -80,7 +82,10 @@ NEW_TARGET_JOB = Job(
     job_id="123-123-123-123",
     status=JobStatus("queued"),
     parameters=JobParameters.model_validate(
-        {"target": "NEW_DATASET", "operation": "ADD"}
+        {
+            "target": "NEW_DATASET",
+            "operation": "ADD",
+        }
     ),
     created_at="2022-05-18T11:40:22.519222",
     created_by=USER_INFO,
@@ -157,7 +162,14 @@ def setup_function():
     )
     cursor.execute(
         """
-        INSERT INTO job (target, datastore_id, status, created_at, created_by, parameters)
+        INSERT INTO job (
+            target,
+            datastore_id,
+            status,
+            created_at,
+            created_by,
+            parameters
+        )
         VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
@@ -184,7 +196,14 @@ def setup_function():
         )
     cursor.execute(
         """
-        INSERT INTO job (target, datastore_id, status, created_at, created_by, parameters)
+        INSERT INTO job (
+            target,
+            datastore_id,
+            status,
+            created_at,
+            created_by,
+            parameters
+        )
         VALUES (?, ?, ?, ?, ?, ?)
     """,
         (
@@ -199,7 +218,13 @@ def setup_function():
     for target in TARGET_LIST:
         cursor.execute(
             """
-            INSERT INTO target (name, datastore_id, last_updated_at, status, action, last_updated_by)
+            INSERT INTO target (
+                name,
+                datastore_id,
+                last_updated_at,
+                status, action,
+                last_updated_by
+            )
             VALUES (?,  ?, ?, ?, ?, ?)
             """,
             (

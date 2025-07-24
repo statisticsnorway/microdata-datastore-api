@@ -6,28 +6,25 @@ import pyarrow.parquet as pq
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import PlainTextResponse
 
-from datastore_api.domain import data
+from datastore_api.adapter.auth import AuthClient, get_auth_client
 from datastore_api.api.data.models import (
     ErrorMessage,
+    InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
-    InputFixedQuery,
 )
-from datastore_api.adapter.auth import AuthClient, get_auth_client
+from datastore_api.domain import data
 
-
-data_router = APIRouter()
+router = APIRouter()
 logger = logging.getLogger()
 
 
-@data_router.post(
-    "/data/event/stream", responses={404: {"model": ErrorMessage}}
-)
+@router.post("/event/stream", responses={404: {"model": ErrorMessage}})
 def stream_result_event(
     input_query: InputTimePeriodQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-):
+) -> PlainTextResponse:
     """
     Create Result set of data with temporality type event,
     and stream result as response.
@@ -47,14 +44,12 @@ def stream_result_event(
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
 
 
-@data_router.post(
-    "/data/status/stream", responses={404: {"model": ErrorMessage}}
-)
+@router.post("/status/stream", responses={404: {"model": ErrorMessage}})
 def stream_result_status(
     input_query: InputTimeQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-):
+) -> PlainTextResponse:
     """
     Create result set of data with temporality type status,
     and stream result as response.
@@ -73,14 +68,12 @@ def stream_result_status(
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
 
 
-@data_router.post(
-    "/data/fixed/stream", responses={404: {"model": ErrorMessage}}
-)
+@router.post("/fixed/stream", responses={404: {"model": ErrorMessage}})
 def stream_result_fixed(
     input_query: InputFixedQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-):
+) -> PlainTextResponse:
     """
     Create result set of data with temporality type fixed,
     and stream result as response.

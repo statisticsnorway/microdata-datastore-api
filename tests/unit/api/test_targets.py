@@ -1,17 +1,17 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
+from fastapi.testclient import TestClient
+
 from datastore_api.adapter import db
 from datastore_api.adapter.db.models import (
     Job,
-    UserInfo,
-    JobStatus,
     JobParameters,
+    JobStatus,
     Target,
+    UserInfo,
 )
-from fastapi.testclient import TestClient
-
 from datastore_api.main import app
-
 
 JOB_ID = "123-123-123-123"
 USER_INFO_DICT = {

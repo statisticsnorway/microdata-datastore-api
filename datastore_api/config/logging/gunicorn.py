@@ -6,7 +6,7 @@ from gunicorn import glogging
 class CustomLogger(glogging.Logger):
     """Custom logger for Gunicorn log messages."""
 
-    def setup(self, cfg):
+    def setup(self, cfg) -> None:  # noqa
         """Configure Gunicorn application logging configuration."""
         super().setup(cfg)
 

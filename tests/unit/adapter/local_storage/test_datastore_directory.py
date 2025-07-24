@@ -1,7 +1,6 @@
 from datastore_api.adapter.local_storage import datastore_directory
 from datastore_api.common.models import Version
 
-
 TEST_DIR = "tests/resources/test_datastore"
 TEST_DATA_DIR = f"{TEST_DIR}/data"
 TEST_PERSON_INCOME_PATH = (

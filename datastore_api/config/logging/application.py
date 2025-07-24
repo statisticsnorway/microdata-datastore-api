@@ -1,17 +1,16 @@
+import datetime
+import json
+import logging
 import re
 import sys
 import uuid
-import json
-import logging
-import datetime
+from contextvars import ContextVar
 from time import perf_counter_ns
 from typing import Callable
 
-from fastapi import Request
-from contextvars import ContextVar
+from fastapi import FastAPI, Request, Response
 
 from datastore_api.config import environment
-
 
 request_start_time: ContextVar[int] = ContextVar("request_start_time")
 correlation_id: ContextVar[str] = ContextVar("correlation_id")
@@ -23,10 +22,10 @@ response_time_ms: ContextVar[int] = ContextVar("response_time_ms")
 
 
 class MicrodataJSONFormatter(logging.Formatter):
-    def __init__(self):
-        self.host = environment.get("DOCKER_HOST_NAME")
+    def __init__(self) -> None:
+        self.host = environment.docker_host_name
         self.command = json.dumps(sys.argv)
-        self.commit_id = environment.get("COMMIT_ID")
+        self.commit_id = environment.commit_id
 
     def format(self, record: logging.LogRecord) -> str:
         stack_trace = ""
@@ -60,7 +59,7 @@ class MicrodataJSONFormatter(logging.Formatter):
         )
 
 
-def setup_logging(app, log_level=logging.INFO):
+def setup_logging(app: FastAPI, log_level: int = logging.INFO) -> None:
     logger = logging.getLogger()
     logger.setLevel(log_level)
 
@@ -71,7 +70,9 @@ def setup_logging(app, log_level=logging.INFO):
     logger.addHandler(stream_handler)
 
     @app.middleware("http")
-    async def add_process_time_header(request: Request, call_next: Callable):
+    async def add_process_time_header(
+        request: Request, call_next: Callable
+    ) -> Response:
         request_start_time.set(perf_counter_ns())
         corr_id = request.headers.get("X-Request-ID", None)
         if corr_id is None:

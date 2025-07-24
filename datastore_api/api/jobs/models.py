@@ -3,14 +3,16 @@ from typing import List, Optional
 
 from pydantic import model_validator
 
-from datastore_api.common.models import CamelModel
-from datastore_api.adapter.db.models import JobStatus, Operation, ReleaseStatus
 from datastore_api.adapter.db.models import (
     DatastoreVersion,
     Job,
     JobParameters,
+    JobStatus,
+    Operation,
+    ReleaseStatus,
     UserInfo,
 )
+from datastore_api.common.models import CamelModel
 
 
 class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
@@ -23,7 +25,7 @@ class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
     bump_to_version: Optional[str] = None
 
     @model_validator(mode="after")
-    def check_command_type(self: "NewJobRequest"):
+    def check_command_type(self: "NewJobRequest") -> "NewJobRequest":
         operation = self.operation
         if operation in ["REMOVE", "BUMP"]:
             if self.description is None:

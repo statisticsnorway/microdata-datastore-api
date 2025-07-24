@@ -1,13 +1,14 @@
 from itertools import chain
+
 from datastore_api.adapter.local_storage import datastore_directory
-from datastore_api.common.models import Version
 from datastore_api.common.exceptions import (
-    InvalidStorageFormatException,
     InvalidDraftVersionException,
+    InvalidStorageFormatException,
 )
+from datastore_api.common.models import Version
 
 
-def find_all_datastore_versions():
+def find_all_datastore_versions() -> dict:
     draft_version = datastore_directory.get_draft_version()
     datastore_versions = datastore_directory.get_datastore_versions()
 
@@ -44,7 +45,7 @@ def find_data_structures(
     version: Version,
     include_attributes: bool,
     skip_code_lists: bool = False,
-):
+) -> list[dict]:
     _validate_version(version)
     metadata = (
         datastore_directory.get_metadata_all(version)
@@ -65,7 +66,7 @@ def find_data_structures(
     return matched
 
 
-def find_all_metadata(version: Version, skip_code_lists: bool = False):
+def find_all_metadata(version: Version, skip_code_lists: bool = False) -> dict:
     _validate_version(version)
     return (
         datastore_directory.get_metadata_all(version)
@@ -74,7 +75,7 @@ def find_all_metadata(version: Version, skip_code_lists: bool = False):
     )
 
 
-def find_all_data_structures_ever():
+def find_all_data_structures_ever() -> list[str]:
     all_datastore_versions = find_all_datastore_versions()
     datastore_versions = [ver for ver in all_datastore_versions["versions"]]
     data_structures = set()
@@ -84,13 +85,9 @@ def find_all_data_structures_ever():
     return list(data_structures)
 
 
-def find_languages():
-    return [
-        {"code": "no", "label": "Norsk"},
-    ]
-
-
-def find_all_metadata_skip_code_list_and_missing_values(version: Version):
+def find_all_metadata_skip_code_list_and_missing_values(
+    version: Version,
+) -> dict:
     _validate_version(version)
     metadata_all = datastore_directory.get_metadata_all(version)
     if "dataStructures" in metadata_all:
@@ -100,7 +97,7 @@ def find_all_metadata_skip_code_list_and_missing_values(version: Version):
     return metadata_all
 
 
-def _clear_code_list_and_missing_values(data_structures: list[dict]):
+def _clear_code_list_and_missing_values(data_structures: list[dict]) -> None:
     represented_variables = []
     for metadata in data_structures:
         represented_measure = metadata["measureVariable"][
@@ -134,7 +131,7 @@ def _clear_code_list_and_missing_values(data_structures: list[dict]):
             represented_variable["valueDomain"]["missingValues"].clear()
 
 
-def _validate_version(version: Version):
+def _validate_version(version: Version) -> None:
     if version.is_draft() and version.draft != "0":
         draft_version = datastore_directory.get_draft_version()
         if draft_version["version"] != version.to_4_dotted():

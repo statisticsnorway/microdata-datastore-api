@@ -1,20 +1,20 @@
 import logging
 import os
-import tarfile
 import string
+import tarfile
 from pathlib import Path
 from tarfile import ReadError
 
-from datastore_api.config import environment
-from datastore_api.common.models import CamelModel
 from datastore_api.common.exceptions import (
-    NotFoundException,
     NameValidationError,
+    NotFoundException,
 )
+from datastore_api.common.models import CamelModel
+from datastore_api.config import environment
 
 logger = logging.getLogger()
 
-INPUT_DIR = Path(environment.get("INPUT_DIR"))
+INPUT_DIR = Path(environment.input_dir)
 ARCHIVE_DIR = INPUT_DIR / "archive"
 
 
@@ -87,7 +87,7 @@ def get_importable_datasets() -> list[ImportableDataset]:
     return datasets
 
 
-def delete_importable_datasets(dataset_name):
+def delete_importable_datasets(dataset_name: str) -> None:
     if not _validate_dataset_name(dataset_name):
         raise NameValidationError(
             f'"{dataset_name}" contains invalid characters. '

@@ -1,7 +1,7 @@
 from uvicorn.config import LOGGING_CONFIG
 
 
-def setup_uvicorn_logging():
+def setup_uvicorn_logging() -> None:
     fmt = (
         '{"@timestamp": "%(asctime)s",'
         '"pid": "%(process)d", '

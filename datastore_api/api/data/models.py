@@ -11,7 +11,7 @@ class InputQuery(BaseModel):
 
     @field_validator("version", mode="before")
     @classmethod
-    def check_for_sem_ver(cls, version):
+    def check_for_sem_ver(cls, version: str | Version | None) -> Version:
         if isinstance(version, str):
             return Version.from_str(version)
         if isinstance(version, Version):

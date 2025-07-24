@@ -1,24 +1,24 @@
+import json
+import logging
+import sqlite3
 from datetime import datetime
 from pathlib import Path
-import logging
-import json
 
-import sqlite3
-
+from datastore_api.adapter.db.models import (
+    Job,
+    JobParameters,
+    JobStatus,
+    Log,
+    MaintenanceStatus,
+    Operation,
+    Target,
+    UserInfo,
+)
 from datastore_api.common.exceptions import (
     JobAlreadyCompleteException,
     JobExistsException,
     NotFoundException,
 )
-from datastore_api.adapter.db.models import (
-    Job,
-    JobStatus,
-    Operation,
-    UserInfo,
-    Log,
-    Target,
-)
-
 
 logger = logging.getLogger()
 
@@ -31,7 +31,7 @@ sqlite3.register_converter(
 class SqliteDbClient:
     db_path: Path
 
-    def __init__(self, db_url: str):
+    def __init__(self, db_url: str) -> None:
         self.db_path = Path(db_url.replace("sqlite://", ""))
         self._ensure_schema()
 
@@ -44,7 +44,7 @@ class SqliteDbClient:
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
 
-    def _ensure_schema(self):
+    def _ensure_schema(self) -> None:
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -155,9 +155,13 @@ class SqliteDbClient:
             return Job(
                 job_id=str(job_row["job_id"]),
                 status=job_row["status"],
-                parameters=json.loads(job_row["parameters"]),
+                parameters=JobParameters.model_validate(
+                    json.loads(job_row["parameters"])
+                ),
                 created_at=job_row["created_at"].isoformat(),
-                created_by=json.loads(job_row["created_by"]),
+                created_by=UserInfo.model_validate(
+                    json.loads(job_row["created_by"])
+                ),
                 log=[
                     Log(at=row["at"], message=row["message"])
                     for row in json.loads(job_row["logs_json"])
@@ -185,7 +189,11 @@ class SqliteDbClient:
             where_conditions.append(
                 f"json_extract(parameters, '$.operation')  IN ({in_clause})"
             )
-
+        where_conditions = (
+            "WHERE " + " AND ".join(where_conditions)
+            if where_conditions
+            else ""
+        )
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -212,7 +220,7 @@ class SqliteDbClient:
                         ) AS job_log_row
                     ), '[]') AS logs_json
                 FROM job j
-                {"WHERE " + " AND ".join(where_conditions) if where_conditions else ""}
+                {where_conditions}
                 """,
             ).fetchall()
             if not job_rows:
@@ -302,7 +310,8 @@ class SqliteDbClient:
             cursor.execute(
                 """
                 SELECT 1 FROM job
-                WHERE target = ? AND datastore_id = ? AND status NOT IN ('completed', 'failed')
+                WHERE target = ? AND datastore_id = ?
+                AND status NOT IN ('completed', 'failed')
                 LIMIT 1
                 """,
                 (new_job.parameters.target, 1),
@@ -312,7 +321,14 @@ class SqliteDbClient:
                 cursor.execute(
                     """
                     INSERT INTO job
-                    (target, datastore_id, status, parameters, created_at, created_by)
+                    (
+                        target,
+                        datastore_id,
+                        status,
+                        parameters,
+                        created_at,
+                        created_by
+                    )
                     VALUES
                     ( ?, ?, ?, ?, ?, ?)
                     """,
@@ -368,7 +384,11 @@ class SqliteDbClient:
                 )
             if description is not None:
                 cursor.execute(
-                    "UPDATE job SET parameters = json_set(parameters, '$.description', ?) WHERE job_id = ?",
+                    """
+                    UPDATE job
+                    SET parameters = json_set(parameters, '$.description', ?)
+                    WHERE job_id = ?
+                    """,
                     (description, int(job_id)),
                 )
                 cursor.execute(
@@ -426,7 +446,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def initialize_maintenance(self) -> dict:
+    def initialize_maintenance(self) -> MaintenanceStatus:
         """
         Inserts an initial maintenance status row if table is empty
         """
@@ -440,7 +460,12 @@ class SqliteDbClient:
                 timestamp = datetime.now().isoformat()
                 cursor.execute(
                     """
-                    INSERT INTO maintenance (datastore_id, msg, paused, timestamp)
+                    INSERT INTO maintenance (
+                        datastore_id,
+                        msg,
+                        paused,
+                        timestamp
+                    )
                     VALUES (?, ?, ?, ?)
                     """,
                     (
@@ -462,18 +487,18 @@ class SqliteDbClient:
                 (1,),
             )
             row = cursor.fetchone()
-            return {
-                "msg": row["msg"],
-                "paused": bool(row["paused"]),
-                "timestamp": row["timestamp"],
-            }
+            return MaintenanceStatus(
+                msg=row["msg"],
+                paused=bool(row["paused"]),
+                timestamp=str(row["timestamp"]),
+            )
         except Exception as e:
             conn.rollback()
             raise e
         finally:
             conn.close()
 
-    def get_latest_maintenance_status(self) -> dict:
+    def get_latest_maintenance_status(self) -> MaintenanceStatus:
         """
         Retrieves the latest maintenance status, initializing if necessary
         """
@@ -494,15 +519,15 @@ class SqliteDbClient:
             if row is None:
                 return self.initialize_maintenance()
 
-            return {
-                "msg": row["msg"],
-                "paused": bool(row["paused"]),
-                "timestamp": row["timestamp"],
-            }
+            return MaintenanceStatus(
+                msg=row["msg"],
+                paused=bool(row["paused"]),
+                timestamp=str(row["timestamp"]),
+            )
         finally:
             conn.close()
 
-    def get_maintenance_history(self) -> list:
+    def get_maintenance_history(self) -> list[MaintenanceStatus]:
         """
         Returns full history of maintenance entries, initializing if needed.
         """
@@ -520,11 +545,11 @@ class SqliteDbClient:
             rows = cursor.fetchall()
             if rows:
                 return [
-                    {
-                        "msg": row["msg"],
-                        "paused": bool(row["paused"]),
-                        "timestamp": row["timestamp"],
-                    }
+                    MaintenanceStatus(
+                        msg=row["msg"],
+                        paused=bool(row["paused"]),
+                        timestamp=str(row["timestamp"]),
+                    )
                     for row in rows
                 ]
             else:
@@ -532,7 +557,9 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def set_maintenance_status(self, msg: str, paused: bool) -> dict:
+    def set_maintenance_status(
+        self, msg: str, paused: bool
+    ) -> MaintenanceStatus:
         """
         Inserts a new maintenance status record.
         """
@@ -567,7 +594,13 @@ class SqliteDbClient:
             cursor = conn.cursor()
             target_rows = cursor.execute(
                 """
-                SELECT name, datastore_id, status, action, last_updated_at, last_updated_by
+                SELECT
+                    name,
+                    datastore_id,
+                    status,
+                    action,
+                    last_updated_at,
+                    last_updated_by
                 FROM target
                 WHERE datastore_id = ?
                 """,
@@ -596,10 +629,17 @@ class SqliteDbClient:
         timestamp: datetime,
         created_by: str,
         action: str,
-    ):
+    ) -> None:
         cursor.execute(
             """
-                INSERT INTO target (name, datastore_id, status, last_updated_at, last_updated_by, action)
+                INSERT INTO target (
+                    name,
+                    datastore_id,
+                    status,
+                    last_updated_at,
+                    last_updated_by,
+                    action
+                )
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(name, datastore_id) DO UPDATE SET
                     status = excluded.status,
@@ -637,9 +677,14 @@ class SqliteDbClient:
         try:
             conn.execute("BEGIN IMMEDIATE")
             cursor = conn.cursor()
+            bump_manifesto = job.parameters.bump_manifesto
+            if bump_manifesto is None:
+                raise ValueError(
+                    "Can't update bump targets if bump_manifesto is None"
+                )
             updates = [
                 update
-                for update in job.parameters.bump_manifesto.data_structure_updates
+                for update in bump_manifesto.data_structure_updates
                 if update.release_status != "DRAFT"
             ]
             version = job.parameters.bump_to_version

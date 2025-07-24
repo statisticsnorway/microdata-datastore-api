@@ -1,7 +1,7 @@
-from enum import StrEnum
 from datetime import datetime
+from enum import StrEnum
 
-from pydantic import model_validator, field_serializer
+from pydantic import field_serializer, model_validator
 
 from datastore_api.common.models import CamelModel
 
@@ -72,7 +72,7 @@ class JobParameters(CamelModel, use_enum_values=True):
     bump_to_version: str | None = None
 
     @model_validator(mode="after")
-    def validate_job_type(self: "JobParameters"):
+    def validate_job_type(self: "JobParameters") -> "JobParameters":
         operation: Operation = self.operation
         if operation == Operation.BUMP and (
             self.bump_manifesto is None
@@ -96,7 +96,7 @@ class Log(CamelModel, extra="forbid"):
     message: str
 
     @field_serializer("at")
-    def serialize_dt(self, at: datetime):
+    def serialize_dt(self, at: datetime) -> str:
         return at.isoformat()
 
 
@@ -131,3 +131,9 @@ class Target(CamelModel, use_enum_values=True, extra="forbid"):
     status: JobStatus
     last_updated_by: UserInfo
     action: list[str]
+
+
+class MaintenanceStatus(CamelModel):
+    paused: bool
+    msg: str
+    timestamp: str

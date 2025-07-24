@@ -4,8 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from datastore_api.adapter.db.models import Job, UserInfo
-from datastore_api.api.jobs.models import NewJobsRequest, NewJobRequest
-
+from datastore_api.api.jobs.models import NewJobRequest, NewJobsRequest
 
 RESOURCE_DIR = "tests/resources/models"
 VALID_JOB_REQUESTS_PATH = f"{RESOURCE_DIR}/valid_job_requests.json"

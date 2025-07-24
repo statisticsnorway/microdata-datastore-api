@@ -1,19 +1,19 @@
 import logging
+from typing import Protocol
 
-from fastapi import HTTPException, status
 import jwt
-from jwt import MissingRequiredClaimError, PyJWKClient
+from fastapi import HTTPException, status
+from jwt import MissingRequiredClaimError, PyJWK, PyJWKClient
 from jwt.exceptions import (
-    InvalidSignatureError,
+    DecodeError,
     ExpiredSignatureError,
     InvalidAudienceError,
-    DecodeError,
+    InvalidSignatureError,
 )
 
-from datastore_api.config import environment
-from datastore_api.common.exceptions import AuthError, InternalServerError
 from datastore_api.adapter.db.models import UserInfo
-
+from datastore_api.common.exceptions import AuthError, InternalServerError
+from datastore_api.config import environment
 
 logger = logging.getLogger()
 
@@ -22,25 +22,27 @@ USER_LAST_NAME_KEY = "user/lastName"
 USER_ID_KEY = "user/uuid"
 
 
-class AuthClient:
+class AuthClient(Protocol):
+    def authorize_user(self, authorization_header: str | None) -> str: ...
+    def authorize_data_administrator(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo: ...
+
+
+class MicrodataAuthClient:
     valid_aud: str
     jwks_client: PyJWKClient
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.valid_aud = (
-            "datastore-qa" if environment.get("STACK") == "qa" else "datastore"
+            "datastore-qa" if environment.stack == "qa" else "datastore"
         )
-        self.jwks_client = PyJWKClient(
-            environment.get("JWKS_URL"), lifespan=3000
-        )
+        self.jwks_client = PyJWKClient(environment.jwks_url, lifespan=3000)
 
-    def _get_signing_key(self, jwt_token: str):
+    def _get_signing_key(self, jwt_token: str) -> PyJWK:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
 
     def authorize_user(self, authorization_header: str | None) -> str:
-        if not environment.get("JWT_AUTH"):
-            logger.info('Auth toggled off. Returning "default" as user_id.')
-            return "default"
         if authorization_header is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -77,13 +79,6 @@ class AuthClient:
     def authorize_data_administrator(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
-        if not environment.get("JWT_AUTH"):
-            logger.warning("JWT_AUTH is turned off.")
-            return UserInfo(
-                user_id="1234-1234-1234-1234",
-                first_name="Test",
-                last_name="User",
-            )
         if authorization_cookie is None:
             raise AuthError("Unauthorized. No authorization token was provided")
         if user_info_cookie is None:
@@ -149,5 +144,24 @@ class AuthClient:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
 
+class DisabledAuthClient:
+    def authorize_user(self, authorization_header: str | None) -> str:
+        logger.info('Auth toggled off. Returning "default" as user_id.')
+        return "default"
+
+    def authorize_data_administrator(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo:
+        logger.warning("JWT_AUTH is turned off. Returning default UserInfo")
+        return UserInfo(
+            user_id="1234-1234-1234-1234",
+            first_name="Test",
+            last_name="User",
+        )
+
+
 def get_auth_client() -> AuthClient:
-    return AuthClient()
+    if not environment.jwt_auth:
+        logger.info('Auth toggled off. Returning "default" as user_id.')
+        return DisabledAuthClient()
+    return MicrodataAuthClient()

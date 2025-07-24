@@ -2,8 +2,9 @@ import json
 
 from fastapi import testclient
 from httpx import Response
-from datastore_api.domain import metadata
+
 from datastore_api.common.models import Version
+from datastore_api.domain import metadata
 
 MOCKED_DATASTORE_VERSIONS = {
     "name": "SSB-RAIRD",
@@ -245,19 +246,6 @@ def test_get_all_metadata_long_version_numbers(
     spy.assert_called_with(Version.from_str("1234.5678.9012.0"), False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_metadata_all
-
-
-def test_get_languages(test_app: testclient.TestClient, mocker):
-    spy = mocker.patch.object(
-        metadata, "find_languages", return_value=MOCKED_LANGUAGES
-    )
-    response: Response = test_app.get(
-        "/languages",
-        headers={"X-Request-ID": "test-123"},
-    )
-    spy.assert_called()
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.json() == MOCKED_LANGUAGES
 
 
 def test_get_all_metadata_skip_code_lists(
