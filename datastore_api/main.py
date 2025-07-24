@@ -111,7 +111,7 @@ def handle_invalid_name(_req, e: NameValidationError):
 def handle_generic_exception(_req, exc):
     logger.exception(exc)
     return JSONResponse(
-        status_code=400, content={"message": "Internal Server Error"}
+        status_code=500, content={"message": "Internal Server Error"}
     )
 
 
