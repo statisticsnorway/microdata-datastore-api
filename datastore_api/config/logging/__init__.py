@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from datastore_api.config.logging import uvicorn, application
+
+from datastore_api.config.logging import application, uvicorn
 
 
 def setup_logging(app: FastAPI):

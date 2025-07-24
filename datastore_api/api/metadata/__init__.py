@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 
 from datastore_api.api.metadata.models import (
-    NameParam,
     MetadataQuery,
+    NameParam,
     get_metadata_query,
 )
 from datastore_api.domain import metadata

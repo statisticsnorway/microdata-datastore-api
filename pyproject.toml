@@ -30,4 +30,4 @@ package = true
 [tool.ruff]
 line-length = 80
 target-version = "py313"
-
+lint.select = ["I"] # Enable import sorting

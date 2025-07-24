@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
+
 from datastore_api.api.data.models import (
+    InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
-    InputFixedQuery,
 )
-
 
 valid_jwt_payload = {
     "aud": "datastore",

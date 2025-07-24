@@ -1,10 +1,11 @@
 from itertools import chain
+
 from datastore_api.adapter.local_storage import datastore_directory
-from datastore_api.common.models import Version
 from datastore_api.common.exceptions import (
-    InvalidStorageFormatException,
     InvalidDraftVersionException,
+    InvalidStorageFormatException,
 )
+from datastore_api.common.models import Version
 
 
 def find_all_datastore_versions():

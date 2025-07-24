@@ -2,9 +2,9 @@
 import pytest
 from pyarrow import Table, dataset
 
+from datastore_api.common.exceptions import NotFoundException
 from datastore_api.common.models import Version
 from datastore_api.domain import data
-from datastore_api.common.exceptions import NotFoundException
 from tests.resources import test_resources
 
 ALL_COLUMNS = ["unit_id", "value", "start_epoch_days", "stop_epoch_days"]

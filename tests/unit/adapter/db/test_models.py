@@ -4,7 +4,6 @@ import pytest
 
 from datastore_api.adapter.db.models import Job
 
-
 RESOURCE_DIR = "tests/resources/models"
 with open(f"{RESOURCE_DIR}/valid_jobs.json", encoding="utf-8") as f:
     VALID_JOBS = json.load(f)

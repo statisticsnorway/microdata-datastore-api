@@ -3,14 +3,16 @@ from typing import List, Optional
 
 from pydantic import model_validator
 
-from datastore_api.common.models import CamelModel
-from datastore_api.adapter.db.models import JobStatus, Operation, ReleaseStatus
 from datastore_api.adapter.db.models import (
     DatastoreVersion,
     Job,
     JobParameters,
+    JobStatus,
+    Operation,
+    ReleaseStatus,
     UserInfo,
 )
+from datastore_api.common.models import CamelModel
 
 
 class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):

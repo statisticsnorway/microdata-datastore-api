@@ -1,17 +1,16 @@
+import datetime
+import json
+import logging
 import re
 import sys
 import uuid
-import json
-import logging
-import datetime
+from contextvars import ContextVar
 from time import perf_counter_ns
 from typing import Callable
 
 from fastapi import Request
-from contextvars import ContextVar
 
 from datastore_api.config import environment
-
 
 request_start_time: ContextVar[int] = ContextVar("request_start_time")
 correlation_id: ContextVar[str] = ContextVar("correlation_id")

@@ -1,20 +1,18 @@
-import pytest
-
 from unittest.mock import Mock
 
+import pytest
 from fastapi.testclient import TestClient
 
-from datastore_api.main import app
-from datastore_api.adapter import db, auth
-from datastore_api.config import environment
-from datastore_api.common.exceptions import NotFoundException
+from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import (
     Job,
+    JobParameters,
     JobStatus,
     UserInfo,
-    JobParameters,
 )
-
+from datastore_api.common.exceptions import NotFoundException
+from datastore_api.config import environment
+from datastore_api.main import app
 
 NOT_FOUND_MESSAGE = "Not found"
 JOB_ID = "123-123-123-123"

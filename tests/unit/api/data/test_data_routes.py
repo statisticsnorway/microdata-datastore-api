@@ -1,14 +1,14 @@
 from unittest.mock import Mock
 
-import pytest
-from pytest import MonkeyPatch
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 from fastapi.testclient import TestClient
+from pytest import MonkeyPatch
 
-from datastore_api.main import app
 from datastore_api.adapter import auth
 from datastore_api.domain import data
+from datastore_api.main import app
 
 FAKE_RESULT_FILE_NAME = "fake_result_file_name"
 MOCK_RESULT = pq.read_table("tests/resources/results/mocked_result.parquet")

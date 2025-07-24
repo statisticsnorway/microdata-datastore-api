@@ -5,13 +5,13 @@ from typing import List
 import pytest
 
 from datastore_api.adapter.local_storage import datastore_directory
+from datastore_api.common.exceptions import (
+    InvalidDraftVersionException,
+    InvalidStorageFormatException,
+)
+from datastore_api.common.models import Version
 from datastore_api.config import environment
 from datastore_api.domain import metadata
-from datastore_api.common.models import Version
-from datastore_api.common.exceptions import (
-    InvalidStorageFormatException,
-    InvalidDraftVersionException,
-)
 
 DATASTORE_ROOT_DIR = environment.get("DATASTORE_ROOT_DIR")
 FIXTURES_DIR = "tests/resources/fixtures"

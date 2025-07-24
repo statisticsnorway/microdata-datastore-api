@@ -1,19 +1,18 @@
 import logging
 
-from fastapi import HTTPException, status
 import jwt
+from fastapi import HTTPException, status
 from jwt import MissingRequiredClaimError, PyJWKClient
 from jwt.exceptions import (
-    InvalidSignatureError,
+    DecodeError,
     ExpiredSignatureError,
     InvalidAudienceError,
-    DecodeError,
+    InvalidSignatureError,
 )
 
-from datastore_api.config import environment
-from datastore_api.common.exceptions import AuthError, InternalServerError
 from datastore_api.adapter.db.models import UserInfo
-
+from datastore_api.common.exceptions import AuthError, InternalServerError
+from datastore_api.config import environment
 
 logger = logging.getLogger()
 

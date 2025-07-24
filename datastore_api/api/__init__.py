@@ -1,12 +1,14 @@
 from fastapi import FastAPI
 
+from datastore_api.api import (
+    importable_datasets,
+    jobs,
+    maintenance_status,
+    targets,
+)
 from datastore_api.api.data import data_router
 from datastore_api.api.metadata import metadata_router
 from datastore_api.api.observability import observability_router
-from datastore_api.api import maintenance_status
-from datastore_api.api import targets
-from datastore_api.api import importable_datasets
-from datastore_api.api import jobs
 
 
 def include_routers(app: FastAPI):

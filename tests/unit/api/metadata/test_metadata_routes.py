@@ -2,8 +2,9 @@ import json
 
 from fastapi import testclient
 from httpx import Response
-from datastore_api.domain import metadata
+
 from datastore_api.common.models import Version
+from datastore_api.domain import metadata
 
 MOCKED_DATASTORE_VERSIONS = {
     "name": "SSB-RAIRD",

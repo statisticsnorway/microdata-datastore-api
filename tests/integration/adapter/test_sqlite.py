@@ -1,29 +1,28 @@
-import os
 import json
+import os
 import sqlite3
 from datetime import datetime
 
 import pytest
 from pytest_mock import MockFixture
 
-from datastore_api.adapter.db.sqlite import (
-    JobAlreadyCompleteException,
-    NotFoundException,
-    SqliteDbClient,
-    JobExistsException,
-)
 from datastore_api.adapter.db.models import (
+    DatastoreVersion,
+    DataStructureUpdate,
     Job,
+    JobParameters,
     JobStatus,
     Operation,
-    UserInfo,
-    DataStructureUpdate,
-    DatastoreVersion,
-    JobParameters,
     Target,
+    UserInfo,
+)
+from datastore_api.adapter.db.sqlite import (
+    JobAlreadyCompleteException,
+    JobExistsException,
+    NotFoundException,
+    SqliteDbClient,
 )
 from datastore_api.api.jobs.models import NewJobRequest
-
 
 sqlite_file = "test.db"
 sqlite_client = SqliteDbClient(f"sqlite://{sqlite_file}")

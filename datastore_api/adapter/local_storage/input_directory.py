@@ -1,16 +1,16 @@
 import logging
 import os
-import tarfile
 import string
+import tarfile
 from pathlib import Path
 from tarfile import ReadError
 
-from datastore_api.config import environment
-from datastore_api.common.models import CamelModel
 from datastore_api.common.exceptions import (
-    NotFoundException,
     NameValidationError,
+    NotFoundException,
 )
+from datastore_api.common.models import CamelModel
+from datastore_api.config import environment
 
 logger = logging.getLogger()
 

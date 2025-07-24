@@ -1,10 +1,10 @@
 import pytest
 
 from datastore_api.api.data.models import (
-    InputTimeQuery,
-    InputTimePeriodQuery,
     InputFixedQuery,
     InputQuery,
+    InputTimePeriodQuery,
+    InputTimeQuery,
 )
 from datastore_api.common.models import Version
 

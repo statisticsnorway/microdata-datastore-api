@@ -1,6 +1,5 @@
 import os
 
-
 os.environ["DATASTORE_ROOT_DIR"] = "tests/resources/test_datastore"
 os.environ["DOCKER_HOST_NAME"] = "localhost"
 os.environ["STACK"] = "test"
@@ -13,6 +12,7 @@ os.environ["BUMP_ENABLED"] = "true"
 
 import pytest
 from fastapi import testclient
+
 from datastore_api.main import app
 
 

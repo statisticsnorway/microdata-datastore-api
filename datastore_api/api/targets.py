@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends
 
 from datastore_api.adapter import db
 
-
 logger = logging.getLogger()
 router = APIRouter()
 

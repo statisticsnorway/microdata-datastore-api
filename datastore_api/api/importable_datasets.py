@@ -1,8 +1,8 @@
 import logging
 
 from fastapi import APIRouter
-from datastore_api.adapter.local_storage import input_directory
 
+from datastore_api.adapter.local_storage import input_directory
 
 logger = logging.getLogger()
 

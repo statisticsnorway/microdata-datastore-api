@@ -1,14 +1,12 @@
 import logging
 
-from pyarrow import Table
-from pyarrow import dataset
+from pyarrow import Table, dataset
 
-from datastore_api.common.models import Version
-from datastore_api.domain.data import filters
 from datastore_api.adapter.local_storage import (
     datastore_directory,
 )
-
+from datastore_api.common.models import Version
+from datastore_api.domain.data import filters
 
 logger = logging.getLogger()
 

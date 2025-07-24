@@ -3,7 +3,6 @@ from datastore_api.adapter.local_storage.input_directory import (
     ImportableDataset,
 )
 
-
 expected_datasets = [
     ImportableDataset(
         dataset_name="MY_DATASET", has_data=True, has_metadata=True

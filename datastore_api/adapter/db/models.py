@@ -1,7 +1,7 @@
-from enum import StrEnum
 from datetime import datetime
+from enum import StrEnum
 
-from pydantic import model_validator, field_serializer
+from pydantic import field_serializer, model_validator
 
 from datastore_api.common.models import CamelModel
 

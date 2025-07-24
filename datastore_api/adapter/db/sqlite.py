@@ -1,24 +1,22 @@
+import json
+import logging
+import sqlite3
 from datetime import datetime
 from pathlib import Path
-import logging
-import json
 
-import sqlite3
-
+from datastore_api.adapter.db.models import (
+    Job,
+    JobStatus,
+    Log,
+    Operation,
+    Target,
+    UserInfo,
+)
 from datastore_api.common.exceptions import (
     JobAlreadyCompleteException,
     JobExistsException,
     NotFoundException,
 )
-from datastore_api.adapter.db.models import (
-    Job,
-    JobStatus,
-    Operation,
-    UserInfo,
-    Log,
-    Target,
-)
-
 
 logger = logging.getLogger()
 

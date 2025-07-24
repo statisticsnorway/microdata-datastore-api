@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends
+
 from datastore_api.adapter import db
 from datastore_api.common.models import CamelModel
 

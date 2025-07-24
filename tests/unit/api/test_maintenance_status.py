@@ -1,11 +1,10 @@
-import pytest
 from unittest.mock import Mock
 
-from datastore_api.adapter import db
+import pytest
 from fastapi.testclient import TestClient
 
+from datastore_api.adapter import db
 from datastore_api.main import app
-
 
 MAINTENANCE_STATUS_REQUEST_VALID = {"msg": "we upgrade chill", "paused": True}
 MAINTENANCE_STATUS_REQUEST_NO_MSG = {"paused": True}

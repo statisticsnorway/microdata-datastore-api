@@ -6,15 +6,14 @@ import pyarrow.parquet as pq
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import PlainTextResponse
 
-from datastore_api.domain import data
+from datastore_api.adapter.auth import AuthClient, get_auth_client
 from datastore_api.api.data.models import (
     ErrorMessage,
+    InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
-    InputFixedQuery,
 )
-from datastore_api.adapter.auth import AuthClient, get_auth_client
-
+from datastore_api.domain import data
 
 data_router = APIRouter()
 logger = logging.getLogger()

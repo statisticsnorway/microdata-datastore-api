@@ -1,21 +1,21 @@
 import logging
 
-from fastapi.responses import JSONResponse
 from fastapi import FastAPI, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException
+
 from datastore_api.api import include_routers
-from datastore_api.config.logging import setup_logging
 from datastore_api.common.exceptions import (
+    InvalidDraftVersionException,
+    InvalidStorageFormatException,
     JobExistsException,
     NameValidationError,
     NotFoundException,
-    InvalidStorageFormatException,
     RequestValidationException,
-    InvalidDraftVersionException,
 )
-
+from datastore_api.config.logging import setup_logging
 
 logger = logging.getLogger()
 

@@ -1,8 +1,8 @@
 from typing import Protocol
 
+from datastore_api.adapter.db.models import Job, JobStatus, Operation, Target
 from datastore_api.adapter.db.sqlite import SqliteDbClient
 from datastore_api.config import environment
-from datastore_api.adapter.db.models import Job, JobStatus, Target, Operation
 
 
 class DatabaseClient(Protocol):

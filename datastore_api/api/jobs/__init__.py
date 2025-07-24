@@ -1,17 +1,16 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Query, Cookie, Depends
+from fastapi import APIRouter, Cookie, Depends, Query
 
-from datastore_api.adapter import auth
-from datastore_api.config import environment
-from datastore_api.common.exceptions import BumpingDisabledException
+from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import JobStatus, Operation
 from datastore_api.api.jobs.models import (
     NewJobsRequest,
     UpdateJobRequest,
 )
-from datastore_api.adapter import db
+from datastore_api.common.exceptions import BumpingDisabledException
+from datastore_api.config import environment
 
 logger = logging.getLogger()
 

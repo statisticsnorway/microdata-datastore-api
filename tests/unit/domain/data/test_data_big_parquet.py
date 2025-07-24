@@ -1,8 +1,8 @@
-import pytest
 import os
 
-import pyarrow
 import numpy
+import pyarrow
+import pytest
 from pyarrow import dataset, parquet
 
 from datastore_api.common.models import Version
