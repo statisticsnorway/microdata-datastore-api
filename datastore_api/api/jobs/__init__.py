@@ -59,18 +59,22 @@ def new_job(
                 job = database_client.new_job(
                     job_request.generate_job_from_request("", parsed_user_info)
                 )
-                response_list.append({
-                    "status": "queued",
-                    "msg": "CREATED",
-                    "job_id": job.job_id,
-                })
+                response_list.append(
+                    {
+                        "status": "queued",
+                        "msg": "CREATED",
+                        "job_id": job.job_id,
+                    }
+                )
             database_client.update_target(job)
         except BumpingDisabledException as e:
             logger.exception(e)
-            response_list.append({
-                "status": "FAILED",
-                "msg": "FAILED: Bumping the datastore is disabled",
-            })
+            response_list.append(
+                {
+                    "status": "FAILED",
+                    "msg": "FAILED: Bumping the datastore is disabled",
+                }
+            )
         except Exception as e:
             logger.exception(e)
             response_list.append({"status": "FAILED", "msg": "FAILED"})

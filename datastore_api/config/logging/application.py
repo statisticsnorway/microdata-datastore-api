@@ -31,30 +31,32 @@ class MicrodataJSONFormatter(logging.Formatter):
         stack_trace = ""
         if record.exc_info is not None:
             stack_trace = self.formatException(record.exc_info)
-        return json.dumps({
-            "@timestamp": datetime.datetime.fromtimestamp(
-                record.created,
-                tz=datetime.timezone.utc,
-            ).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-            + "Z",
-            "command": self.command,
-            "error.stack": stack_trace,
-            "host": self.host,
-            "message": record.getMessage(),
-            "level": record.levelno,
-            "levelName": record.levelname,
-            "loggerName": record.name,
-            "method": method.get(""),
-            "responseTime": response_time_ms.get(""),
-            "schemaVersion": "v3",
-            "serviceName": "datastore-api",
-            "serviceVersion": self.commit_id,
-            "source_host": remote_host.get(""),
-            "statusCode": response_status.get(""),
-            "thread": record.threadName,
-            "url": url.get(""),
-            "xRequestId": re.sub(r"[^\w\-]", "", correlation_id.get("")),
-        })
+        return json.dumps(
+            {
+                "@timestamp": datetime.datetime.fromtimestamp(
+                    record.created,
+                    tz=datetime.timezone.utc,
+                ).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+                + "Z",
+                "command": self.command,
+                "error.stack": stack_trace,
+                "host": self.host,
+                "message": record.getMessage(),
+                "level": record.levelno,
+                "levelName": record.levelname,
+                "loggerName": record.name,
+                "method": method.get(""),
+                "responseTime": response_time_ms.get(""),
+                "schemaVersion": "v3",
+                "serviceName": "datastore-api",
+                "serviceVersion": self.commit_id,
+                "source_host": remote_host.get(""),
+                "statusCode": response_status.get(""),
+                "thread": record.threadName,
+                "url": url.get(""),
+                "xRequestId": re.sub(r"[^\w\-]", "", correlation_id.get("")),
+            }
+        )
 
 
 def setup_logging(app: FastAPI, log_level: int = logging.INFO) -> None:

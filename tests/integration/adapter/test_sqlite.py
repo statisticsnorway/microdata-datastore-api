@@ -69,20 +69,24 @@ TARGET_LIST = [
 TARGET_UPDATE_JOB = Job(
     job_id="123-123-123-123",
     status=JobStatus("queued"),
-    parameters=JobParameters.model_validate({
-        "target": "MY_DATASET",
-        "operation": "ADD",
-    }),
+    parameters=JobParameters.model_validate(
+        {
+            "target": "MY_DATASET",
+            "operation": "ADD",
+        }
+    ),
     created_at="2022-05-18T11:40:22.519222",
     created_by=USER_INFO,
 )
 NEW_TARGET_JOB = Job(
     job_id="123-123-123-123",
     status=JobStatus("queued"),
-    parameters=JobParameters.model_validate({
-        "target": "NEW_DATASET",
-        "operation": "ADD",
-    }),
+    parameters=JobParameters.model_validate(
+        {
+            "target": "NEW_DATASET",
+            "operation": "ADD",
+        }
+    ),
     created_at="2022-05-18T11:40:22.519222",
     created_by=USER_INFO,
 )
@@ -425,14 +429,18 @@ def test_update_targets_bump():
     assert "OTHER_DATASET" in target_names
     assert "FRESH_DATASET" in target_names
     assert "FRESH_DATASET2" in target_names
-    assert all([
-        target.action == ["RELEASED", "2.0.0"]
-        or target.action == ["REMOVED", "2.0.0"]
-        for target in targets
-        if target.name != "OTHER_DATASET"
-    ])
-    assert all([
-        target.action == ["SET_STATUS", "PENDING_RELEASE"]
-        for target in targets
-        if target.name == "OTHER_DATASET"
-    ])
+    assert all(
+        [
+            target.action == ["RELEASED", "2.0.0"]
+            or target.action == ["REMOVED", "2.0.0"]
+            for target in targets
+            if target.name != "OTHER_DATASET"
+        ]
+    )
+    assert all(
+        [
+            target.action == ["SET_STATUS", "PENDING_RELEASE"]
+            for target in targets
+            if target.name == "OTHER_DATASET"
+        ]
+    )

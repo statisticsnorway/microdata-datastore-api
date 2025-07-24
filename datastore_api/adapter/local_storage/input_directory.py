@@ -41,9 +41,9 @@ def _validate_dataset_name(dataset_name: str) -> bool:
 
     invalid_leading_characters = string.digits + "_"
     valid_characters = string.ascii_uppercase + string.digits + "_"
-    return dataset_name[0] not in invalid_leading_characters and all([
-        character in valid_characters for character in dataset_name
-    ])
+    return dataset_name[0] not in invalid_leading_characters and all(
+        [character in valid_characters for character in dataset_name]
+    )
 
 
 def get_datasets_in_directory(

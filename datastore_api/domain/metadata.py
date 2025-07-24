@@ -104,16 +104,20 @@ def _clear_code_list_and_missing_values(data_structures: list[dict]) -> None:
             "representedVariables"
         ]
         represented_identifiers = list(
-            chain(*[
-                identifier["representedVariables"]
-                for identifier in metadata["identifierVariables"]
-            ])
+            chain(
+                *[
+                    identifier["representedVariables"]
+                    for identifier in metadata["identifierVariables"]
+                ]
+            )
         )
         represented_attributes = list(
-            chain(*[
-                attribute["representedVariables"]
-                for attribute in metadata["attributeVariables"]
-            ])
+            chain(
+                *[
+                    attribute["representedVariables"]
+                    for attribute in metadata["attributeVariables"]
+                ]
+            )
         )
         represented_variables += (
             represented_measure

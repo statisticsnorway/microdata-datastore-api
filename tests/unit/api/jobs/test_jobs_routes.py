@@ -26,20 +26,24 @@ JOB_LIST = [
     Job(
         job_id="123-123-123-123",
         status=JobStatus("completed"),
-        parameters=JobParameters.model_validate({
-            "target": "MY_DATASET",
-            "operation": "ADD",
-        }),
+        parameters=JobParameters.model_validate(
+            {
+                "target": "MY_DATASET",
+                "operation": "ADD",
+            }
+        ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
     ),
     Job(
         job_id="123-123-123-123",
         status=JobStatus("completed"),
-        parameters=JobParameters.model_validate({
-            "target": "OTHER_DATASET",
-            "operation": "ADD",
-        }),
+        parameters=JobParameters.model_validate(
+            {
+                "target": "OTHER_DATASET",
+                "operation": "ADD",
+            }
+        ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
     ),
