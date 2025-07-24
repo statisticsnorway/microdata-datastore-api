@@ -100,7 +100,7 @@ def _read_parquet(
 
     if parquet_path is None:
         latest_version = datastore_directory.get_latest_version()
-        datastore_directory.get_data_path_from_data_versions(
+        parquet_path = datastore_directory.get_data_path_from_data_versions(
             dataset_name, latest_version
         )
     table = dataset.dataset(parquet_path).to_table(

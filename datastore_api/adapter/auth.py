@@ -38,7 +38,7 @@ class AuthClient:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
 
     def authorize_user(self, authorization_header: str | None) -> str:
-        if environment.get("JWT_AUTH") == "false":
+        if not environment.get("JWT_AUTH"):
             logger.info('Auth toggled off. Returning "default" as user_id.')
             return "default"
         if authorization_header is None:
@@ -77,7 +77,7 @@ class AuthClient:
     def authorize_data_administrator(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
-        if environment.get("JWT_AUTH") == "false":
+        if not environment.get("JWT_AUTH"):
             logger.warning("JWT_AUTH is turned off.")
             return UserInfo(
                 user_id="1234-1234-1234-1234",
