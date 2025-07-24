@@ -9,5 +9,5 @@ router = APIRouter()
 
 
 @router.get("/")
-def get_languages():
+def get_languages() -> list[dict[str, str]]:
     return metadata.find_languages()

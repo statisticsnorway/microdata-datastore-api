@@ -8,7 +8,7 @@ from contextvars import ContextVar
 from time import perf_counter_ns
 from typing import Callable
 
-from fastapi import Request
+from fastapi import FastAPI, Request, Response
 
 from datastore_api.config import environment
 
@@ -22,7 +22,7 @@ response_time_ms: ContextVar[int] = ContextVar("response_time_ms")
 
 
 class MicrodataJSONFormatter(logging.Formatter):
-    def __init__(self):
+    def __init__(self) -> None:
         self.host = environment.get("DOCKER_HOST_NAME")
         self.command = json.dumps(sys.argv)
         self.commit_id = environment.get("COMMIT_ID")
@@ -31,35 +31,33 @@ class MicrodataJSONFormatter(logging.Formatter):
         stack_trace = ""
         if record.exc_info is not None:
             stack_trace = self.formatException(record.exc_info)
-        return json.dumps(
-            {
-                "@timestamp": datetime.datetime.fromtimestamp(
-                    record.created,
-                    tz=datetime.timezone.utc,
-                ).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-                + "Z",
-                "command": self.command,
-                "error.stack": stack_trace,
-                "host": self.host,
-                "message": record.getMessage(),
-                "level": record.levelno,
-                "levelName": record.levelname,
-                "loggerName": record.name,
-                "method": method.get(""),
-                "responseTime": response_time_ms.get(""),
-                "schemaVersion": "v3",
-                "serviceName": "datastore-api",
-                "serviceVersion": self.commit_id,
-                "source_host": remote_host.get(""),
-                "statusCode": response_status.get(""),
-                "thread": record.threadName,
-                "url": url.get(""),
-                "xRequestId": re.sub(r"[^\w\-]", "", correlation_id.get("")),
-            }
-        )
+        return json.dumps({
+            "@timestamp": datetime.datetime.fromtimestamp(
+                record.created,
+                tz=datetime.timezone.utc,
+            ).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+            + "Z",
+            "command": self.command,
+            "error.stack": stack_trace,
+            "host": self.host,
+            "message": record.getMessage(),
+            "level": record.levelno,
+            "levelName": record.levelname,
+            "loggerName": record.name,
+            "method": method.get(""),
+            "responseTime": response_time_ms.get(""),
+            "schemaVersion": "v3",
+            "serviceName": "datastore-api",
+            "serviceVersion": self.commit_id,
+            "source_host": remote_host.get(""),
+            "statusCode": response_status.get(""),
+            "thread": record.threadName,
+            "url": url.get(""),
+            "xRequestId": re.sub(r"[^\w\-]", "", correlation_id.get("")),
+        })
 
 
-def setup_logging(app, log_level=logging.INFO):
+def setup_logging(app: FastAPI, log_level: int = logging.INFO) -> None:
     logger = logging.getLogger()
     logger.setLevel(log_level)
 
@@ -70,7 +68,9 @@ def setup_logging(app, log_level=logging.INFO):
     logger.addHandler(stream_handler)
 
     @app.middleware("http")
-    async def add_process_time_header(request: Request, call_next: Callable):
+    async def add_process_time_header(
+        request: Request, call_next: Callable
+    ) -> Response:
         request_start_time.set(perf_counter_ns())
         corr_id = request.headers.get("X-Request-ID", None)
         if corr_id is None:

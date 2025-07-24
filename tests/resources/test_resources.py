@@ -1,3 +1,6 @@
+# ruff: noqa
+# pyright: strict=false
+
 from datetime import datetime, timedelta
 
 from datastore_api.api.data.models import (

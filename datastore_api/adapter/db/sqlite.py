@@ -6,8 +6,10 @@ from pathlib import Path
 
 from datastore_api.adapter.db.models import (
     Job,
+    JobParameters,
     JobStatus,
     Log,
+    MaintenanceStatus,
     Operation,
     Target,
     UserInfo,
@@ -153,9 +155,13 @@ class SqliteDbClient:
             return Job(
                 job_id=str(job_row["job_id"]),
                 status=job_row["status"],
-                parameters=json.loads(job_row["parameters"]),
+                parameters=JobParameters.model_validate(
+                    json.loads(job_row["parameters"])
+                ),
                 created_at=job_row["created_at"].isoformat(),
-                created_by=json.loads(job_row["created_by"]),
+                created_by=UserInfo.model_validate(
+                    json.loads(job_row["created_by"])
+                ),
                 log=[
                     Log(at=row["at"], message=row["message"])
                     for row in json.loads(job_row["logs_json"])
@@ -424,7 +430,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def initialize_maintenance(self) -> dict:
+    def initialize_maintenance(self) -> MaintenanceStatus:
         """
         Inserts an initial maintenance status row if table is empty
         """
@@ -460,18 +466,18 @@ class SqliteDbClient:
                 (1,),
             )
             row = cursor.fetchone()
-            return {
-                "msg": row["msg"],
-                "paused": bool(row["paused"]),
-                "timestamp": row["timestamp"],
-            }
+            return MaintenanceStatus(
+                msg=row["msg"],
+                paused=bool(row["paused"]),
+                timestamp=str(row["timestamp"]),
+            )
         except Exception as e:
             conn.rollback()
             raise e
         finally:
             conn.close()
 
-    def get_latest_maintenance_status(self) -> dict:
+    def get_latest_maintenance_status(self) -> MaintenanceStatus:
         """
         Retrieves the latest maintenance status, initializing if necessary
         """
@@ -492,15 +498,15 @@ class SqliteDbClient:
             if row is None:
                 return self.initialize_maintenance()
 
-            return {
-                "msg": row["msg"],
-                "paused": bool(row["paused"]),
-                "timestamp": row["timestamp"],
-            }
+            return MaintenanceStatus(
+                msg=row["msg"],
+                paused=bool(row["paused"]),
+                timestamp=str(row["timestamp"]),
+            )
         finally:
             conn.close()
 
-    def get_maintenance_history(self) -> list:
+    def get_maintenance_history(self) -> list[MaintenanceStatus]:
         """
         Returns full history of maintenance entries, initializing if needed.
         """
@@ -518,11 +524,11 @@ class SqliteDbClient:
             rows = cursor.fetchall()
             if rows:
                 return [
-                    {
-                        "msg": row["msg"],
-                        "paused": bool(row["paused"]),
-                        "timestamp": row["timestamp"],
-                    }
+                    MaintenanceStatus(
+                        msg=row["msg"],
+                        paused=bool(row["paused"]),
+                        timestamp=str(row["timestamp"]),
+                    )
                     for row in rows
                 ]
             else:
@@ -530,7 +536,9 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def set_maintenance_status(self, msg: str, paused: bool) -> dict:
+    def set_maintenance_status(
+        self, msg: str, paused: bool
+    ) -> MaintenanceStatus:
         """
         Inserts a new maintenance status record.
         """
@@ -594,7 +602,7 @@ class SqliteDbClient:
         timestamp: datetime,
         created_by: str,
         action: str,
-    ):
+    ) -> None:
         cursor.execute(
             """
                 INSERT INTO target (name, datastore_id, status, last_updated_at, last_updated_by, action)

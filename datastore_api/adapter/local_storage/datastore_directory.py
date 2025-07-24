@@ -52,7 +52,8 @@ def get_metadata_all(version: Version) -> dict:
             result = _get_versioned_metadata_all(version)
             cache_info = _get_versioned_metadata_all.cache_info()
             logger.info(
-                f"Cache info for versioned metadata: hits={cache_info.hits}, misses={cache_info.misses}, currsize={cache_info.currsize}"
+                f"Cache info for versioned metadata: hits={cache_info.hits}, "
+                + "misses={cache_info.misses}, currsize={cache_info.currsize}"
             )
             return result
     except FileNotFoundError as e:
@@ -84,7 +85,8 @@ def get_data_path_from_data_versions(
         data_versions = json.load(f)
     if dataset_name not in data_versions:
         raise NotFoundException(
-            f"No {dataset_name} in data_versions file for version {file_version}"
+            f"No {dataset_name} in data_versions file "
+            + f"for version {file_version}"
         )
     file_name = data_versions[dataset_name]
     full_path = f"{DATASTORE_ROOT_DIR}/data/{dataset_name}/{file_name}"

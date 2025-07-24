@@ -24,7 +24,7 @@ def stream_result_event(
     input_query: InputTimePeriodQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-):
+) -> PlainTextResponse:
     """
     Create Result set of data with temporality type event,
     and stream result as response.
@@ -49,7 +49,7 @@ def stream_result_status(
     input_query: InputTimeQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-):
+) -> PlainTextResponse:
     """
     Create result set of data with temporality type status,
     and stream result as response.
@@ -73,7 +73,7 @@ def stream_result_fixed(
     input_query: InputFixedQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-):
+) -> PlainTextResponse:
     """
     Create result set of data with temporality type fixed,
     and stream result as response.

@@ -25,7 +25,7 @@ class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
     bump_to_version: Optional[str] = None
 
     @model_validator(mode="after")
-    def check_command_type(self: "NewJobRequest"):
+    def check_command_type(self: "NewJobRequest") -> "NewJobRequest":
         operation = self.operation
         if operation in ["REMOVE", "BUMP"]:
             if self.description is None:

@@ -2,7 +2,7 @@ import logging
 
 import jwt
 from fastapi import HTTPException, status
-from jwt import MissingRequiredClaimError, PyJWKClient
+from jwt import MissingRequiredClaimError, PyJWK, PyJWKClient
 from jwt.exceptions import (
     DecodeError,
     ExpiredSignatureError,
@@ -25,7 +25,7 @@ class AuthClient:
     valid_aud: str
     jwks_client: PyJWKClient
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.valid_aud = (
             "datastore-qa" if environment.get("STACK") == "qa" else "datastore"
         )
@@ -33,7 +33,7 @@ class AuthClient:
             environment.get("JWKS_URL"), lifespan=3000
         )
 
-    def _get_signing_key(self, jwt_token: str):
+    def _get_signing_key(self, jwt_token: str) -> PyJWK:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
 
     def authorize_user(self, authorization_header: str | None) -> str:
