@@ -47,11 +47,15 @@ def _validate_dataset_name(dataset_name: str) -> bool:
 
 
 def get_datasets_in_directory(
-    dir_path: Path, is_archived: bool = False
+    dir_path: Path,
+    filter_out: list[str],
+    is_archived: bool = False,
 ) -> list[ImportableDataset]:
     datasets = []
 
     for item in os.listdir(dir_path):
+        if item.strip(".tar") in filter_out:
+            continue
         item_path = dir_path / item
         dataset_name, ext = os.path.splitext(item)
         try:
@@ -77,13 +81,17 @@ def get_datasets_in_directory(
     ]
 
 
-def get_importable_datasets() -> list[ImportableDataset]:
+def get_importable_datasets(
+    filter_out: list[str] = [],
+) -> list[ImportableDataset]:
     """
     Returns names of all valid datasets in input directory.
     """
-    datasets = get_datasets_in_directory(INPUT_DIR)
+    datasets = get_datasets_in_directory(INPUT_DIR, filter_out)
     if ARCHIVE_DIR.exists():
-        datasets += get_datasets_in_directory(ARCHIVE_DIR, is_archived=True)
+        datasets += get_datasets_in_directory(
+            ARCHIVE_DIR, filter_out, is_archived=True
+        )
     return datasets
 
 
