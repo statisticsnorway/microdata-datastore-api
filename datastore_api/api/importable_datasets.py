@@ -8,7 +8,6 @@ from datastore_api.adapter.local_storage import input_directory
 from datastore_api.adapter.local_storage.input_directory import (
     ImportableDataset,
 )
-from datastore_api.domain import metadata
 
 logger = logging.getLogger()
 

@@ -73,7 +73,7 @@ def new_job(
             response_list.append(
                 NewJobResponse(
                     status="FAILED",
-                    msg="FAILED",
+                    msg="FAILED: Bumping the datastore is disabled",
                 )
             )
         except Exception as e:
