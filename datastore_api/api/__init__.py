@@ -12,6 +12,7 @@ from datastore_api.api import (
     importable_datasets,
     jobs,
     languages,
+    legacy,
     maintenance_statuses,
     metadata,
     observability,
@@ -48,6 +49,7 @@ def _include_routers(app: FastAPI) -> None:
     )
     app.include_router(jobs.router, prefix="/jobs")
     app.include_router(languages.router, prefix="/languages")
+    app.include_router(legacy.router)  # TODO: remove this
 
 
 def _include_middleware(app: FastAPI) -> None:

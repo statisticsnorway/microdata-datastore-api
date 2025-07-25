@@ -40,4 +40,4 @@ class DatabaseClient(Protocol):
 
 
 def get_database_client() -> DatabaseClient:
-    return SqliteDbClient(environment.get("SQLITE_URL"))
+    return SqliteDbClient(environment.sqlite_url)
