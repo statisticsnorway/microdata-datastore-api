@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import model_validator
+from pydantic import BaseModel, model_validator
 
 from datastore_api.adapter.db.models import (
     DatastoreVersion,
@@ -95,3 +95,11 @@ class UpdateJobRequest(CamelModel, extra="forbid"):
     status: Optional[JobStatus] = None
     description: Optional[str] = None
     log: Optional[str] = None
+
+
+# Note: Using BaseModel instead of CamelModel as clients
+#       expect snake_case
+class NewJobResponse(BaseModel):
+    status: str
+    msg: str
+    job_id: str | None = None
