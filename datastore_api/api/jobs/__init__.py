@@ -38,7 +38,7 @@ def get_jobs(
 def new_job(
     validated_body: NewJobsRequest,
     authorization: str | None = Cookie(None),
-    user_info: str | None = Cookie(None),
+    user_info: str | None = Cookie(None, alias="user_info"),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
 ) -> list[NewJobResponse]:
