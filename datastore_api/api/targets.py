@@ -9,11 +9,18 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("/", response_model_exclude_none=True)
+@router.get("/")
 def get_targets(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
-) -> list[Target]:
-    return database_client.get_targets()
+):
+    targets = database_client.get_targets()
+    logger.info("done reading from sqlite")
+    logger.info(targets)
+    return [
+        target.model_dump(exclude_none=True, by_alias=True)
+        for target in targets
+    ]
+
 
 
 @router.get("/{name}/jobs", response_model_exclude_none=True)
