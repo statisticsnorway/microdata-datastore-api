@@ -130,6 +130,78 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LanguageInfo'
+  /data/event/stream:
+    post:
+      summary: Return result event data as bytes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputTimePeriodQuery'
+      responses:
+        '200':
+          description: Event data as bytes
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /data/status/stream:
+    post:
+      summary: Return result status data as bytes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputTimeQuery'
+      responses:
+        '200':
+          description: Status data as bytes
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /data/fixed/stream:
+    post:
+      summary: Result fixed data as bytes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputFixedQuery'
+      responses:
+        '200':
+          description: Fixed data as bytes
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /health/alive:
     get:
       summary: Check if the service is alive
@@ -362,3 +434,45 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LanguageInfo'
+    InputQuery:
+      type: object
+      properties:
+        dataStructureName:
+          type: string
+        version:
+          type: string
+        population:
+          type: array
+          items:
+            type: string
+        includeAttributes:
+          type: boolean
+    InputTimePeriodQuery:
+      allOf:
+        - $ref: '#/components/schemas/InputQuery'
+        - type: object
+          properties:
+            startDate:
+              type: integer
+            stopDate:
+              type: integer
+    InputTimeQuery:
+      allOf:
+        - $ref: '#/components/schemas/InputQuery'
+        - type: object
+          properties:
+            date:
+              type: integer
+    InputFixedQuery:
+      allOf:
+        - $ref: '#/components/schemas/InputQuery'
+    ErrorMessage:
+      type: object
+      properties:
+        detail:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

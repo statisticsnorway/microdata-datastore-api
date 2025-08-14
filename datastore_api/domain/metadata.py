@@ -1,16 +1,16 @@
 from itertools import chain
-from typing import List, Union
-from datastore_api.adapter import datastore
-from datastore_api.domain.version import Version
-from datastore_api.exceptions.exceptions import (
-    InvalidStorageFormatException,
+
+from datastore_api.adapter.local_storage import datastore_directory
+from datastore_api.common.exceptions import (
     InvalidDraftVersionException,
+    InvalidStorageFormatException,
 )
+from datastore_api.common.models import Version
 
 
-def find_all_datastore_versions():
-    draft_version = datastore.get_draft_version()
-    datastore_versions = datastore.get_datastore_versions()
+def find_all_datastore_versions() -> dict:
+    draft_version = datastore_directory.get_draft_version()
+    datastore_versions = datastore_directory.get_datastore_versions()
 
     if draft_version:
         datastore_versions["versions"].insert(0, draft_version)
@@ -19,8 +19,8 @@ def find_all_datastore_versions():
 
 
 def find_current_data_structure_status(
-    status_query_names: List[str],
-) -> dict[str, Union[dict, None]]:
+    status_query_names: list[str],
+) -> dict[str, dict | None]:
     datastore_versions = find_all_datastore_versions()
     datastructure_statuses = {}
     for version in datastore_versions["versions"]:
@@ -45,10 +45,10 @@ def find_data_structures(
     version: Version,
     include_attributes: bool,
     skip_code_lists: bool = False,
-):
+) -> list[dict]:
     _validate_version(version)
     metadata = (
-        datastore.get_metadata_all(version)
+        datastore_directory.get_metadata_all(version)
         if not skip_code_lists
         else find_all_metadata_skip_code_list_and_missing_values(version)
     )
@@ -66,16 +66,16 @@ def find_data_structures(
     return matched
 
 
-def find_all_metadata(version: Version, skip_code_lists: bool = False):
+def find_all_metadata(version: Version, skip_code_lists: bool = False) -> dict:
     _validate_version(version)
     return (
-        datastore.get_metadata_all(version)
+        datastore_directory.get_metadata_all(version)
         if not skip_code_lists
         else find_all_metadata_skip_code_list_and_missing_values(version)
     )
 
 
-def find_all_data_structures_ever():
+def find_all_data_structures_ever() -> list[str]:
     all_datastore_versions = find_all_datastore_versions()
     datastore_versions = [ver for ver in all_datastore_versions["versions"]]
     data_structures = set()
@@ -85,15 +85,11 @@ def find_all_data_structures_ever():
     return list(data_structures)
 
 
-def find_languages():
-    return [
-        {"code": "no", "label": "Norsk"},
-    ]
-
-
-def find_all_metadata_skip_code_list_and_missing_values(version: Version):
+def find_all_metadata_skip_code_list_and_missing_values(
+    version: Version,
+) -> dict:
     _validate_version(version)
-    metadata_all = datastore.get_metadata_all(version)
+    metadata_all = datastore_directory.get_metadata_all(version)
     if "dataStructures" in metadata_all:
         _clear_code_list_and_missing_values(metadata_all["dataStructures"])
     else:
@@ -101,7 +97,7 @@ def find_all_metadata_skip_code_list_and_missing_values(version: Version):
     return metadata_all
 
 
-def _clear_code_list_and_missing_values(data_structures: list[dict]):
+def _clear_code_list_and_missing_values(data_structures: list[dict]) -> None:
     represented_variables = []
     for metadata in data_structures:
         represented_measure = metadata["measureVariable"][
@@ -135,9 +131,9 @@ def _clear_code_list_and_missing_values(data_structures: list[dict]):
             represented_variable["valueDomain"]["missingValues"].clear()
 
 
-def _validate_version(version: Version):
+def _validate_version(version: Version) -> None:
     if version.is_draft() and version.draft != "0":
-        draft_version = datastore.get_draft_version()
+        draft_version = datastore_directory.get_draft_version()
         if draft_version["version"] != version.to_4_dotted():
             raise InvalidDraftVersionException(
                 f"Requested draft version {version}, "

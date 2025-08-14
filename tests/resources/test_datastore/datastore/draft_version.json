@@ -1,0 +1,21 @@
+{
+  "version": "0.0.0.1608000000",
+  "description": "Draft",
+  "releaseTime": 1608000000,
+  "languageCode": "no",
+  "dataStructureUpdates": [
+    {
+      "description": "Første publisering",
+      "name": "TEST_PERSON_HOBBIES",
+      "operation": "ADD",
+      "releaseStatus": "DRAFT"
+    },
+    {
+      "description": "Første publisering",
+      "name": "TEST_PERSON_SAVINGS",
+      "operation": "ADD",
+      "releaseStatus": "PENDING_RELEASE"
+    }
+  ],
+  "updateType": "MINOR"
+}
