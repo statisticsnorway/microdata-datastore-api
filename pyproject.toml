@@ -5,6 +5,7 @@ description = ""
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "cryptography>=45.0.6",
     "fastapi>=0.115.13",
     "gunicorn>=23.0.0",
     "pyarrow>=21.0.0",
