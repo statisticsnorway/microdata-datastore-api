@@ -18,7 +18,7 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("/", response_model_exclude_none=True)
+@router.get("", response_model_exclude_none=True)
 def get_jobs(
     status: Optional[str] = Query(None),
     operation: Optional[str] = Query(None),
@@ -34,11 +34,11 @@ def get_jobs(
     )
 
 
-@router.post("/", response_model_exclude_none=True)
+@router.post("", response_model_exclude_none=True)
 def new_job(
     validated_body: NewJobsRequest,
     authorization: str | None = Cookie(None),
-    user_info: str | None = Cookie(None, alias="user_info"),
+    user_info: str | None = Cookie(None, alias="user-info"),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
 ) -> list[NewJobResponse]:

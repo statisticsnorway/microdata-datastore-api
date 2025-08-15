@@ -9,6 +9,6 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("")
 def get_languages() -> list[Language]:
     return languages.find_languages()
