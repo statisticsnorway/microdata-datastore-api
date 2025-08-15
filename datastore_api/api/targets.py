@@ -9,7 +9,7 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("/", response_model_exclude_none=True)
+@router.get("", response_model_exclude_none=True)
 def get_targets(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> list[Target]:

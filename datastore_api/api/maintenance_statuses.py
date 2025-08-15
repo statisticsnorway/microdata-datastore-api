@@ -15,7 +15,7 @@ class NewMaintenanceStatusRequest(CamelModel, extra="forbid"):
     paused: bool
 
 
-@router.post("/")
+@router.post("")
 def set_status(
     maintenance_status_request: NewMaintenanceStatusRequest,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
@@ -25,7 +25,7 @@ def set_status(
     )
 
 
-@router.get("/")
+@router.get("")
 def get_history(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> list[MaintenanceStatus]:
