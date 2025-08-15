@@ -29,7 +29,7 @@ as it is non-breaking.
 """
 
 
-@router.get("/")
+@router.get("")
 def get_importable_datasets(
     db_client: DatabaseClient = Depends(db.get_database_client),
 ) -> list[ImportableDataset]:
