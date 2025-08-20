@@ -26,6 +26,9 @@ dev = [
 
 [tool.uv]
 package = true
+dev-dependencies = [
+    "pre-commit>=4.3.0",
+]
 
 [tool.ruff]
 line-length = 80

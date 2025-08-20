@@ -21,6 +21,15 @@ You can run the application locally with hot reloading:
 uv run python datastore_api/main.py 
 ```
 
+## Pre-commit
+There are now 3 active rules: Ruff-format, Ruff-lint and sync lock file.
+To manually run the hooks:
+
+```sh
+uv run pre-commit
+```
+Read more about [pre-commit](https://pre-commit.com/#intro) 
+
 ## Built with
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [Uvicorn](https://www.uvicorn.org/)
