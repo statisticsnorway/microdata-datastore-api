@@ -116,7 +116,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Find previous workflow runs for the same workflow
-          runs=$(gh run list --workflow=87753572 --json databaseId,status --jq '.[] | select(.status == "waiting") | .databaseId')
+          runs=$(gh run list --workflow=172524703 --json databaseId,status --jq '.[] | select(.status == "waiting") | .databaseId')
           
           for run_id in $runs; do
             echo "Marking workflow run $run_id as outdated"
