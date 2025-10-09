@@ -40,11 +40,14 @@ def get_importable_datasets(
         )
     ]
     return input_directory.get_importable_datasets(
-        filter_out=in_progress_targets
+        db_client, filter_out=in_progress_targets
     )
 
 
 @router.delete("/{dataset_name}")
-def delete_importable_datasets(dataset_name: str) -> dict:
-    input_directory.delete_importable_datasets(dataset_name)
+def delete_importable_datasets(
+    dataset_name: str,
+    db_client: DatabaseClient = Depends(db.get_database_client),
+) -> dict:
+    input_directory.delete_importable_datasets(db_client, dataset_name)
     return {"message": f"OK, {dataset_name} deleted"}
