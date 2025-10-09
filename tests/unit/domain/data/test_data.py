@@ -1,7 +1,11 @@
 # pylint: disable=protected-access
+from unittest.mock import Mock
+
 import pytest
 from pyarrow import Table, dataset
 
+from datastore_api.adapter.db.models import Datastore
+from datastore_api.adapter.local_storage import datastore_directory
 from datastore_api.common.exceptions import NotFoundException
 from datastore_api.common.models import Version
 from datastore_api.domain import data
@@ -30,8 +34,30 @@ FIND_BY_TIME_FILTER = (start_epoch_le_date & stop_missing) | (
     start_epoch_le_date & stop_epoch_ge_date
 )
 
+DATABASE_RESPONSE_OBJECT = Datastore(
+    rdn="no.dev.test",
+    description="Datastore for testing",
+    directory="tests/resources/test_datastore",
+    name="Test datastore",
+    bump_enabled=True,
+)
 
-def test_valid_event_request():
+
+@pytest.fixture
+def mock_db_client():
+    mock = Mock()
+    mock.get_datastore.return_value = DATABASE_RESPONSE_OBJECT
+    return mock
+
+
+@pytest.fixture
+def patch_db(mock_db_client, monkeypatch):
+    monkeypatch.setattr(
+        datastore_directory.db, "get_database_client", lambda: mock_db_client
+    )
+
+
+def test_valid_event_request(patch_db):
     payload = test_resources.VALID_EVENT_QUERY_PERSON_INCOME_ALL
     file_name = data.process_event_request(
         payload.dataStructureName,
@@ -46,7 +72,7 @@ def test_valid_event_request():
     )
 
 
-def test_valid_event_request_partitioned():
+def test_valid_event_request_partitioned(patch_db):
     payload = test_resources.VALID_EVENT_QUERY_TEST_STUDIEPOENG_ALL
     file_name = data.process_event_request(
         payload.dataStructureName,
@@ -61,7 +87,7 @@ def test_valid_event_request_partitioned():
     )
 
 
-def test_event_request_causing_empty_result():
+def test_event_request_causing_empty_result(patch_db):
     payload = test_resources.INVALID_EVENT_QUERY_INVALID_STOP_DATE
     result = data.process_event_request(
         payload.dataStructureName,
@@ -76,7 +102,7 @@ def test_event_request_causing_empty_result():
     assert result.num_rows == 0
 
 
-def test_valid_status_request():
+def test_valid_status_request(patch_db):
     payload = test_resources.VALID_STATUS_QUERY_PERSON_INCOME_LAST_ROW
     file_name = data.process_status_request(
         payload.dataStructureName,
@@ -90,7 +116,7 @@ def test_valid_status_request():
     )
 
 
-def test_invalid_status_request():
+def test_invalid_status_request(patch_db):
     payload = test_resources.INVALID_STATUS_QUERY_NOT_FOUND
     with pytest.raises(NotFoundException) as e:
         data.process_status_request(
@@ -105,7 +131,7 @@ def test_invalid_status_request():
     )
 
 
-def test_valid_fixed_request():
+def test_valid_fixed_request(patch_db):
     payload = test_resources.VALID_FIXED_QUERY_PERSON_INCOME_ALL
     file_name = data.process_fixed_request(
         payload.dataStructureName,
@@ -118,7 +144,7 @@ def test_valid_fixed_request():
     )
 
 
-def test_invalid_fixed_request():
+def test_invalid_fixed_request(patch_db):
     payload = test_resources.INVALID_FIXED_QUERY_NOT_FOUND
     with pytest.raises(NotFoundException) as e:
         data.process_fixed_request(
@@ -140,7 +166,7 @@ def parquet_table_to_csv_string(table):
     return csv_string
 
 
-def test_read_parquet_no_filter():
+def test_read_parquet_no_filter(patch_db):
     expected_unit_ids = [
         11111111864482,
         11111112296273,
@@ -184,7 +210,7 @@ def test_read_parquet_no_filter():
     assert len(result_dict.keys()) == 2
 
 
-def test_read_parquet_fixed():
+def test_read_parquet_fixed(patch_db):
     expected_unit_ids = [11111111864482, 11111112296273, 11111113785911]
     expected_values = ["21529182", "12687840", "16354872"]
     table_filter = dataset.field("unit_id").isin(expected_unit_ids)
@@ -211,7 +237,7 @@ def test_read_parquet_fixed():
     assert len(result_dict.keys()) == 2
 
 
-def test_read_parquet_time_period():
+def test_read_parquet_time_period(patch_db):
     expected_unit_ids = [11111113735577, 11111111190644]
     expected_values = ["12982099", "11331198"]
     result = data._read_parquet(
@@ -230,7 +256,7 @@ def test_read_parquet_time_period():
         assert epoch_day <= 10000 and epoch_day >= 3000
 
 
-def test_read_parquet_time_period_with_pop_filter():
+def test_read_parquet_time_period_with_pop_filter(patch_db):
     expected_unit_ids = [11111113735577]
     expected_values = ["12982099"]
     table_filter = FIND_BY_TIME_PERIOD_FILTER & dataset.field("unit_id").isin(
@@ -252,7 +278,7 @@ def test_read_parquet_time_period_with_pop_filter():
         assert epoch_day <= 10000 and epoch_day >= 3000
 
 
-def test_read_parquet_time():
+def test_read_parquet_time(patch_db):
     expected_unit_ids = [11111111864482, 11111112296273]
     expected_values = ["21529182", "12687840"]
     result = data._read_parquet(
@@ -270,7 +296,7 @@ def test_read_parquet_time():
         assert epoch_day >= 17167
 
 
-def test_read_parquet_time_with_pop_filter():
+def test_read_parquet_time_with_pop_filter(patch_db):
     expected_unit_ids = [11111111864482]
     expected_values = ["21529182"]
     table_filter = FIND_BY_TIME_FILTER & dataset.field("unit_id").isin(

@@ -1,23 +1,25 @@
 import json
 from itertools import chain
 from typing import List
+from unittest.mock import Mock
 
 import pytest
 
+from datastore_api.adapter.db.models import Datastore
 from datastore_api.adapter.local_storage import datastore_directory
 from datastore_api.common.exceptions import (
     InvalidDraftVersionException,
     InvalidStorageFormatException,
 )
 from datastore_api.common.models import Version
-from datastore_api.config import environment
 from datastore_api.domain import metadata
 
-DATASTORE_ROOT_DIR = environment.datastore_root_dir
 FIXTURES_DIR = "tests/resources/fixtures"
 METADATA_ALL_FILE_PATH = f"{FIXTURES_DIR}/domain/metadata_all.json"
 DATASTORE_VERSIONS_FILE_PATH = f"{FIXTURES_DIR}/domain/datastore_versions.json"
-DRAFT_VERSION_FILE_PATH = f"{DATASTORE_ROOT_DIR}/datastore/draft_version.json"
+DRAFT_VERSION_FILE_PATH = (
+    "tests/resources/test_datastore/datastore/draft_version.json"
+)
 DATA_STRUCTURES_FILE_PATH = f"{FIXTURES_DIR}/api/data_structures.json"
 
 METADATA_ALL_NO_CODE_LIST_FILE_PATH = (
@@ -27,6 +29,28 @@ METADATA_ALL_NO_CODE_LIST_FILE_PATH = (
 DATA_STRUCTURES_NO_CODE_LIST_FILE_PATH = (
     f"{FIXTURES_DIR}/api/data_structures_no_code_list.json"
 )
+
+DATABASE_RESPONSE_OBJECT = Datastore(
+    rdn="no.dev.test",
+    description="Datastore for testing",
+    directory="tests/resources/test_datastore",
+    name="Test datastore",
+    bump_enabled=True,
+)
+
+
+@pytest.fixture
+def mock_db_client():
+    mock = Mock()
+    mock.get_datastore.return_value = DATABASE_RESPONSE_OBJECT
+    return mock
+
+
+@pytest.fixture
+def patch_db(mock_db_client, monkeypatch):
+    monkeypatch.setattr(
+        datastore_directory.db, "get_database_client", lambda: mock_db_client
+    )
 
 
 def test_find_two_data_structures_with_attrs(mocker):
@@ -280,7 +304,7 @@ def test_find_all_metadata_skip_code_list_and_missing_values_invalid_model(
     assert "Invalid metadata format" in str(e)
 
 
-def test_get_draft_metadata_all(mocker):
+def test_get_draft_metadata_all(mocker, patch_db):
     with open(METADATA_ALL_FILE_PATH, encoding="utf-8") as f:
         mocked_metadata_all = json.load(f)
 
@@ -310,7 +334,7 @@ def test_get_draft_metadata_all_0_0_0_0(mocker):
     assert "dataStructures" in filtered_metadata
 
 
-def test_get_draft_metadata_all_invalid_draft_version(mocker):
+def test_get_draft_metadata_all_invalid_draft_version(mocker, patch_db):
     with open(METADATA_ALL_FILE_PATH, encoding="utf-8") as f:
         mocked_metadata_all = json.load(f)
 
