@@ -25,7 +25,7 @@ expected_datasets = [
         is_archived=True,
     ),
 ]
-DATABASE_RESPONSE_OBJECT = Datastore(
+DATASTORE = Datastore(
     rdn="no.dev.test",
     description="Datastore for testing",
     directory="tests/resources/test_datastore",
@@ -37,7 +37,7 @@ DATABASE_RESPONSE_OBJECT = Datastore(
 @pytest.fixture
 def mock_db_client():
     mock = Mock()
-    mock.get_datastore.return_value = DATABASE_RESPONSE_OBJECT
+    mock.get_datastore.return_value = DATASTORE
     return mock
 
 

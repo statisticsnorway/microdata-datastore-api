@@ -9,7 +9,7 @@ from datastore_api.adapter import db
 from datastore_api.adapter.db.models import Datastore
 from datastore_api.main import app
 
-DATABASE_RESPONSE_OBJECT = Datastore(
+DATASTORE = Datastore(
     rdn="no.dev.test",
     description="Datastore for testing",
     directory="tests/resources/test_datastore",
@@ -21,7 +21,7 @@ DATABASE_RESPONSE_OBJECT = Datastore(
 @pytest.fixture
 def mock_db_client():
     mock = Mock()
-    mock.get_datastore.return_value = DATABASE_RESPONSE_OBJECT
+    mock.get_datastore.return_value = DATASTORE
     mock.get_jobs.return_value = []
     return mock
 

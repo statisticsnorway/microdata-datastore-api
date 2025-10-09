@@ -34,7 +34,7 @@ FIND_BY_TIME_FILTER = (start_epoch_le_date & stop_missing) | (
     start_epoch_le_date & stop_epoch_ge_date
 )
 
-DATABASE_RESPONSE_OBJECT = Datastore(
+DATASTORE = Datastore(
     rdn="no.dev.test",
     description="Datastore for testing",
     directory="tests/resources/test_datastore",
@@ -46,7 +46,7 @@ DATABASE_RESPONSE_OBJECT = Datastore(
 @pytest.fixture
 def mock_db_client():
     mock = Mock()
-    mock.get_datastore.return_value = DATABASE_RESPONSE_OBJECT
+    mock.get_datastore.return_value = DATASTORE
     return mock
 
 
