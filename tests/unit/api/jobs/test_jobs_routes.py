@@ -5,13 +5,13 @@ from fastapi.testclient import TestClient
 
 from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import (
+    Datastore,
     Job,
     JobParameters,
     JobStatus,
     UserInfo,
 )
 from datastore_api.common.exceptions import NotFoundException
-from datastore_api.config import environment
 from datastore_api.main import app
 
 NOT_FOUND_MESSAGE = "Not found"
@@ -82,6 +82,14 @@ BUMP_JOB_REQUEST = {
 }
 UPDATE_JOB_REQUEST = {"status": "initiated", "log": "extra logging"}
 
+DATASTORE = Datastore(
+    rdn="no.dev.test",
+    description="Datastore for testing",
+    directory="tests/resources/test_datastore",
+    name="Test datastore",
+    bump_enabled=False,
+)
+
 
 @pytest.fixture
 def mock_db_client():
@@ -91,6 +99,7 @@ def mock_db_client():
     mock.get_jobs.return_value = JOB_LIST
     mock.new_job.return_value = JOB_LIST[0]
     mock.update_job.return_value = JOB_LIST[0]
+    mock.get_datastore.return_value = DATASTORE
     return mock
 
 
@@ -176,7 +185,6 @@ def test_update_job_bad_request(client, mock_db_client):
 
 
 def test_update_job_disabled_bump(client):
-    environment.bump_enabled = False
     response = client.post("/jobs", json=BUMP_JOB_REQUEST)
     assert response.status_code == 200
     assert response.json() == [
