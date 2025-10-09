@@ -139,4 +139,4 @@ def test_delete_nonexisting_dataset(client, mock_db_client):
 def test_delete_invalid_name_dataset(client, mock_db_client):
     response = client.delete("/importable-datasets/INVALID_NAME_DATASET++")
     assert response.status_code == 400
-    mock_db_client.get_datastore.assert_not_called()
+    mock_db_client.get_datastore.assert_called_once()

@@ -5,7 +5,6 @@ import tarfile
 from pathlib import Path
 from tarfile import ReadError
 
-from datastore_api.adapter.db import DatabaseClient
 from datastore_api.common.exceptions import (
     NameValidationError,
     NotFoundException,
@@ -78,19 +77,14 @@ def get_datasets_in_directory(
     ]
 
 
-def get_input_directory(db_client: DatabaseClient) -> Path:
-    return Path(db_client.get_datastore().directory + "_input")
-
-
 def get_importable_datasets(
-    db_client: DatabaseClient,
+    input_dir: Path,
     filter_out: list[str] = [],
 ) -> list[ImportableDataset]:
     """
     Returns names of all valid datasets in input directory.
     """
-    input_dir = get_input_directory(db_client)
-    archive_dir = Path(input_dir / "archive")
+    archive_dir = input_dir / "archive"
     datasets = get_datasets_in_directory(input_dir, filter_out)
     if archive_dir.exists():
         datasets += get_datasets_in_directory(
@@ -99,16 +93,13 @@ def get_importable_datasets(
     return datasets
 
 
-def delete_importable_datasets(
-    db_client: DatabaseClient, dataset_name: str
-) -> None:
+def delete_importable_datasets(dataset_name: str, input_dir: Path) -> None:
     if not _validate_dataset_name(dataset_name):
         raise NameValidationError(
             f'"{dataset_name}" contains invalid characters. '
             'Please use only uppercase A-Z, numbers 0-9 or "_"'
         )
     try:
-        input_dir = get_input_directory(db_client)
         os.remove(f"{input_dir}/{dataset_name}.tar")
     except (FileNotFoundError, OSError) as e:
         raise NotFoundException(f"File {dataset_name} not found") from e

@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, Depends
 
@@ -39,8 +40,9 @@ def get_importable_datasets(
             status=None, operations=None, ignore_completed=True
         )
     ]
+    datastore_input_dir = Path(db_client.get_datastore().directory + "_input")
     return input_directory.get_importable_datasets(
-        db_client, filter_out=in_progress_targets
+        datastore_input_dir, filter_out=in_progress_targets
     )
 
 
@@ -49,5 +51,8 @@ def delete_importable_datasets(
     dataset_name: str,
     db_client: DatabaseClient = Depends(db.get_database_client),
 ) -> dict:
-    input_directory.delete_importable_datasets(db_client, dataset_name)
+    datastore_input_dir = Path(db_client.get_datastore().directory + "_input")
+    input_directory.delete_importable_datasets(
+        dataset_name, datastore_input_dir
+    )
     return {"message": f"OK, {dataset_name} deleted"}

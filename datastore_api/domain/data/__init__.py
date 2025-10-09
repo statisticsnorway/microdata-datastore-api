@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from pyarrow import Table, dataset
 
@@ -21,16 +22,14 @@ def process_event_request(
     include_attributes: bool,
     start_date: int,
     stop_date: int,
+    datastore_root_dir: Path,
 ) -> Table:
     table_filter = filters.generate_time_period_filter(
         start_date, stop_date, population
     )
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
     return _read_parquet(
-        dataset_name,
-        version,
-        table_filter,
-        columns,
+        dataset_name, version, table_filter, columns, datastore_root_dir
     )
 
 
@@ -40,14 +39,12 @@ def process_status_request(
     population: list | None,
     include_attributes: bool,
     date: int,
+    datastore_root_dir: Path,
 ) -> Table:
     table_filter = filters.generate_time_filter(date, population)
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
     return _read_parquet(
-        dataset_name,
-        version,
-        table_filter,
-        columns,
+        dataset_name, version, table_filter, columns, datastore_root_dir
     )
 
 
@@ -56,14 +53,12 @@ def process_fixed_request(
     version: Version,
     population: list | None,
     include_attributes: bool,
+    datastore_root_dir: Path,
 ) -> Table:
     table_filter = filters.generate_population_filter(population)
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
     return _read_parquet(
-        dataset_name,
-        version,
-        table_filter,
-        columns,
+        dataset_name, version, table_filter, columns, datastore_root_dir
     )
 
 
@@ -72,6 +67,7 @@ def _read_parquet(
     version: Version,
     table_filter: dataset.Expression,
     columns: list[str],
+    datastore_root_dir: Path,
 ) -> Table:
     """
     Reads and filters a parquet file or partition and returns a
@@ -89,17 +85,19 @@ def _read_parquet(
     parquet_path: str | None = None
     if version.is_draft():
         parquet_path = datastore_directory.get_draft_data_file_path(
-            dataset_name
+            dataset_name, datastore_root_dir
         )
     else:
         parquet_path = datastore_directory.get_data_path_from_data_versions(
-            dataset_name, version
+            dataset_name, version, datastore_root_dir
         )
 
     if parquet_path is None:
-        latest_version = datastore_directory.get_latest_version()
+        latest_version = datastore_directory.get_latest_version(
+            datastore_root_dir
+        )
         parquet_path = datastore_directory.get_data_path_from_data_versions(
-            dataset_name, latest_version
+            dataset_name, latest_version, datastore_root_dir
         )
     table = dataset.dataset(parquet_path).to_table(
         filter=table_filter, columns=columns

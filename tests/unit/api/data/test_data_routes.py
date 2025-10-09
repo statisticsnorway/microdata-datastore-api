@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pyarrow as pa
@@ -6,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
-from datastore_api.adapter import auth
+from datastore_api.adapter import auth, db
 from datastore_api.domain import data
 from datastore_api.main import app
 
@@ -22,8 +23,18 @@ def mock_auth_client():
 
 
 @pytest.fixture
-def client(mock_auth_client: Mock):
+def mock_db_client():
+    mock = Mock()
+    mock.get_datastore.return_value = SimpleNamespace(
+        directory=str("tests/resources/test_datastore")
+    )
+    return mock
+
+
+@pytest.fixture
+def client(mock_auth_client: Mock, mock_db_client: Mock):
     app.dependency_overrides[auth.get_auth_client] = lambda: mock_auth_client
+    app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -31,13 +42,13 @@ def client(mock_auth_client: Mock):
 @pytest.fixture(autouse=True)
 def setup(monkeypatch: MonkeyPatch):
     monkeypatch.setattr(
-        data, "process_status_request", lambda a, b, c, d, e: MOCK_RESULT
+        data, "process_status_request", lambda a, b, c, d, e, f: MOCK_RESULT
     )
     monkeypatch.setattr(
-        data, "process_event_request", lambda a, b, c, d, e, f: MOCK_RESULT
+        data, "process_event_request", lambda a, b, c, d, e, f, g: MOCK_RESULT
     )
     monkeypatch.setattr(
-        data, "process_fixed_request", lambda a, b, c, d: MOCK_RESULT
+        data, "process_fixed_request", lambda a, b, c, d, e: MOCK_RESULT
     )
 
 

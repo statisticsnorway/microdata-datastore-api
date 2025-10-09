@@ -1,11 +1,10 @@
 import json
 from itertools import chain
+from pathlib import Path
 from typing import List
-from unittest.mock import Mock
 
 import pytest
 
-from datastore_api.adapter.db.models import Datastore
 from datastore_api.adapter.local_storage import datastore_directory
 from datastore_api.common.exceptions import (
     InvalidDraftVersionException,
@@ -30,27 +29,7 @@ DATA_STRUCTURES_NO_CODE_LIST_FILE_PATH = (
     f"{FIXTURES_DIR}/api/data_structures_no_code_list.json"
 )
 
-DATASTORE = Datastore(
-    rdn="no.dev.test",
-    description="Datastore for testing",
-    directory="tests/resources/test_datastore",
-    name="Test datastore",
-    bump_enabled=True,
-)
-
-
-@pytest.fixture
-def mock_db_client():
-    mock = Mock()
-    mock.get_datastore.return_value = DATASTORE
-    return mock
-
-
-@pytest.fixture
-def patch_db(mock_db_client, monkeypatch):
-    monkeypatch.setattr(
-        datastore_directory.db, "get_database_client", lambda: mock_db_client
-    )
+DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore")
 
 
 def test_find_two_data_structures_with_attrs(mocker):
@@ -62,6 +41,7 @@ def test_find_two_data_structures_with_attrs(mocker):
         return_value=mocked_metadata_all,
     )
     actual = metadata.find_data_structures(
+        DATASTORE_ROOT_DIR,
         ["TEST_PERSON_INCOME", "TEST_PERSON_PETS"],
         Version.from_str("1.0.0.0"),
         True,
@@ -91,6 +71,7 @@ def test_find_two_data_structures_without_attrs(mocker):
         return_value=mocked_metadata_all,
     )
     actual = metadata.find_data_structures(
+        DATASTORE_ROOT_DIR,
         ["TEST_PERSON_INCOME", "TEST_PERSON_PETS"],
         Version.from_str("1.0.0.0"),
         False,
@@ -120,7 +101,11 @@ def test_find_data_structures_no_name_filter(mocker):
         return_value=mocked_metadata_all,
     )
     actual = metadata.find_data_structures(
-        [], Version.from_str("1.0.0.0"), True, skip_code_lists=False
+        DATASTORE_ROOT_DIR,
+        [],
+        Version.from_str("1.0.0.0"),
+        True,
+        skip_code_lists=False,
     )
     assert len(actual) == 2
 
@@ -141,19 +126,19 @@ def test_find_current_data_structure_status(mocker):
         return_value=mocked_draft_version,
     )
     actual_draft = metadata.find_current_data_structure_status(
-        ["TEST_PERSON_HOBBIES"]
+        ["TEST_PERSON_HOBBIES"], DATASTORE_ROOT_DIR
     )
     actual_pending_release = metadata.find_current_data_structure_status(
-        ["TEST_PERSON_SAVINGS"]
+        ["TEST_PERSON_SAVINGS"], DATASTORE_ROOT_DIR
     )
     actual_released = metadata.find_current_data_structure_status(
-        ["TEST_PERSON_PETS"]
+        ["TEST_PERSON_PETS"], DATASTORE_ROOT_DIR
     )
     actual_removed = metadata.find_current_data_structure_status(
-        ["TEST_PERSON_INCOME"]
+        ["TEST_PERSON_INCOME"], DATASTORE_ROOT_DIR
     )
     actual_no_such_dataset = metadata.find_current_data_structure_status(
-        ["NO_SUCH_DATASET"]
+        ["NO_SUCH_DATASET"], DATASTORE_ROOT_DIR
     )
     actual_all = metadata.find_current_data_structure_status(
         [
@@ -162,7 +147,8 @@ def test_find_current_data_structure_status(mocker):
             "TEST_PERSON_SAVINGS",
             "TEST_PERSON_HOBBIES",
             "NO_SUCH_DATASET",
-        ]
+        ],
+        DATASTORE_ROOT_DIR,
     )
     expected_draft = {
         "TEST_PERSON_HOBBIES": {
@@ -223,7 +209,7 @@ def test_find_all_datastore_versions(mocker):
         "get_draft_version",
         return_value=mocked_draft_version,
     )
-    actual = metadata.find_all_datastore_versions()
+    actual = metadata.find_all_datastore_versions(DATASTORE_ROOT_DIR)
     assert len(actual["versions"]) == 3
     assert actual["versions"][0]["version"] == "0.0.0.1608000000"
     assert actual["versions"][1]["version"] == "2.0.0.0"
@@ -240,7 +226,7 @@ def test_find_all_datastore_versions_when_draft_version_empty(mocker):
     mocker.patch.object(
         datastore_directory, "get_draft_version", return_value={}
     )
-    actual = metadata.find_all_datastore_versions()
+    actual = metadata.find_all_datastore_versions(DATASTORE_ROOT_DIR)
     assert len(actual["versions"]) == 2
     assert actual["versions"][0]["version"] == "2.0.0.0"
 
@@ -261,7 +247,7 @@ def test_find_all_data_structures_ever(mocker):
         return_value=mocked_draft_version,
     )
 
-    actual = metadata.find_all_data_structures_ever()
+    actual = metadata.find_all_data_structures_ever(DATASTORE_ROOT_DIR)
     assert len(actual) == 4
     assert isinstance(actual, List)
 
@@ -277,7 +263,7 @@ def test_get_metadata_all_skip_code_list_and_missing_values(mocker):
     )
     filtered_metadata = (
         metadata.find_all_metadata_skip_code_list_and_missing_values(
-            Version.from_str("1.0.0.0")
+            Version.from_str("1.0.0.0"), DATASTORE_ROOT_DIR
         )
     )
     _assert_code_list_and_missing_values(filtered_metadata["dataStructures"])
@@ -299,12 +285,12 @@ def test_find_all_metadata_skip_code_list_and_missing_values_invalid_model(
     )
     with pytest.raises(InvalidStorageFormatException) as e:
         metadata.find_all_metadata_skip_code_list_and_missing_values(
-            Version.from_str("1.0.0.0")
+            Version.from_str("1.0.0.0"), DATASTORE_ROOT_DIR
         )
     assert "Invalid metadata format" in str(e)
 
 
-def test_get_draft_metadata_all(mocker, patch_db):
+def test_get_draft_metadata_all(mocker):
     with open(METADATA_ALL_FILE_PATH, encoding="utf-8") as f:
         mocked_metadata_all = json.load(f)
 
@@ -314,7 +300,7 @@ def test_get_draft_metadata_all(mocker, patch_db):
         return_value=mocked_metadata_all,
     )
     filtered_metadata = metadata.find_all_metadata(
-        Version.from_str("0.0.0.1608000000")
+        Version.from_str("0.0.0.1608000000"), DATASTORE_ROOT_DIR
     )
 
     assert "dataStructures" in filtered_metadata
@@ -329,12 +315,14 @@ def test_get_draft_metadata_all_0_0_0_0(mocker):
         "get_metadata_all",
         return_value=mocked_metadata_all,
     )
-    filtered_metadata = metadata.find_all_metadata(Version.from_str("0.0.0.0"))
+    filtered_metadata = metadata.find_all_metadata(
+        Version.from_str("0.0.0.0"), DATASTORE_ROOT_DIR
+    )
 
     assert "dataStructures" in filtered_metadata
 
 
-def test_get_draft_metadata_all_invalid_draft_version(mocker, patch_db):
+def test_get_draft_metadata_all_invalid_draft_version(mocker):
     with open(METADATA_ALL_FILE_PATH, encoding="utf-8") as f:
         mocked_metadata_all = json.load(f)
 
@@ -345,7 +333,9 @@ def test_get_draft_metadata_all_invalid_draft_version(mocker, patch_db):
     )
 
     with pytest.raises(InvalidDraftVersionException) as e:
-        metadata.find_all_metadata(Version.from_str("0.0.0.2"))
+        metadata.find_all_metadata(
+            Version.from_str("0.0.0.2"), DATASTORE_ROOT_DIR
+        )
 
     assert "Requested draft version" in str(e)
 

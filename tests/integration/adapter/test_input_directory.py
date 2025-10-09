@@ -1,12 +1,11 @@
-from unittest.mock import Mock
+from pathlib import Path
 
-import pytest
-
-from datastore_api.adapter.db.models import Datastore
 from datastore_api.adapter.local_storage import input_directory
 from datastore_api.adapter.local_storage.input_directory import (
     ImportableDataset,
 )
+
+INPUT_DIR = Path("tests/resources/test_datastore_input")
 
 expected_datasets = [
     ImportableDataset(
@@ -25,24 +24,10 @@ expected_datasets = [
         is_archived=True,
     ),
 ]
-DATASTORE = Datastore(
-    rdn="no.dev.test",
-    description="Datastore for testing",
-    directory="tests/resources/test_datastore",
-    name="Test datastore",
-    bump_enabled=True,
-)
 
 
-@pytest.fixture
-def mock_db_client():
-    mock = Mock()
-    mock.get_datastore.return_value = DATASTORE
-    return mock
-
-
-def test_get_importable_datasets(mock_db_client):
-    actual_datasets = input_directory.get_importable_datasets(mock_db_client)
+def test_get_importable_datasets():
+    actual_datasets = input_directory.get_importable_datasets(INPUT_DIR)
     assert len(actual_datasets) == 4
     for dataset in expected_datasets:
         assert dataset in actual_datasets

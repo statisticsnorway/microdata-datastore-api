@@ -1,4 +1,5 @@
 from itertools import chain
+from pathlib import Path
 
 from datastore_api.adapter.local_storage import datastore_directory
 from datastore_api.common.exceptions import (
@@ -8,9 +9,11 @@ from datastore_api.common.exceptions import (
 from datastore_api.common.models import Version
 
 
-def find_all_datastore_versions() -> dict:
-    draft_version = datastore_directory.get_draft_version()
-    datastore_versions = datastore_directory.get_datastore_versions()
+def find_all_datastore_versions(datastore_root_dir: Path) -> dict:
+    draft_version = datastore_directory.get_draft_version(datastore_root_dir)
+    datastore_versions = datastore_directory.get_datastore_versions(
+        datastore_root_dir
+    )
 
     if draft_version:
         datastore_versions["versions"].insert(0, draft_version)
@@ -19,9 +22,9 @@ def find_all_datastore_versions() -> dict:
 
 
 def find_current_data_structure_status(
-    status_query_names: list[str],
+    status_query_names: list[str], datastore_root_dir: Path
 ) -> dict[str, dict | None]:
-    datastore_versions = find_all_datastore_versions()
+    datastore_versions = find_all_datastore_versions(datastore_root_dir)
     datastructure_statuses = {}
     for version in datastore_versions["versions"]:
         for data_structure in version["dataStructureUpdates"]:
@@ -41,16 +44,19 @@ def find_current_data_structure_status(
 
 
 def find_data_structures(
+    datastore_root_dir: Path,
     names: list[str],
     version: Version,
     include_attributes: bool,
     skip_code_lists: bool = False,
 ) -> list[dict]:
-    _validate_version(version)
+    _validate_version(version, datastore_root_dir)
     metadata = (
-        datastore_directory.get_metadata_all(version)
+        datastore_directory.get_metadata_all(version, datastore_root_dir)
         if not skip_code_lists
-        else find_all_metadata_skip_code_list_and_missing_values(version)
+        else find_all_metadata_skip_code_list_and_missing_values(
+            version, datastore_root_dir
+        )
     )
 
     if names:
@@ -66,17 +72,21 @@ def find_data_structures(
     return matched
 
 
-def find_all_metadata(version: Version, skip_code_lists: bool = False) -> dict:
-    _validate_version(version)
+def find_all_metadata(
+    version: Version, datastore_root_dir: Path, skip_code_lists: bool = False
+) -> dict:
+    _validate_version(version, datastore_root_dir)
     return (
-        datastore_directory.get_metadata_all(version)
+        datastore_directory.get_metadata_all(version, datastore_root_dir)
         if not skip_code_lists
-        else find_all_metadata_skip_code_list_and_missing_values(version)
+        else find_all_metadata_skip_code_list_and_missing_values(
+            version, datastore_root_dir
+        )
     )
 
 
-def find_all_data_structures_ever() -> list[str]:
-    all_datastore_versions = find_all_datastore_versions()
+def find_all_data_structures_ever(datastore_root_dir: Path) -> list[str]:
+    all_datastore_versions = find_all_datastore_versions(datastore_root_dir)
     datastore_versions = [ver for ver in all_datastore_versions["versions"]]
     data_structures = set()
     for datastore_version in datastore_versions:
@@ -86,10 +96,12 @@ def find_all_data_structures_ever() -> list[str]:
 
 
 def find_all_metadata_skip_code_list_and_missing_values(
-    version: Version,
+    version: Version, datastore_root_dir: Path
 ) -> dict:
-    _validate_version(version)
-    metadata_all = datastore_directory.get_metadata_all(version)
+    _validate_version(version, datastore_root_dir)
+    metadata_all = datastore_directory.get_metadata_all(
+        version, datastore_root_dir
+    )
     if "dataStructures" in metadata_all:
         _clear_code_list_and_missing_values(metadata_all["dataStructures"])
     else:
@@ -131,9 +143,11 @@ def _clear_code_list_and_missing_values(data_structures: list[dict]) -> None:
             represented_variable["valueDomain"]["missingValues"].clear()
 
 
-def _validate_version(version: Version) -> None:
+def _validate_version(version: Version, datastore_root_dir: Path) -> None:
     if version.is_draft() and version.draft != "0":
-        draft_version = datastore_directory.get_draft_version()
+        draft_version = datastore_directory.get_draft_version(
+            datastore_root_dir
+        )
         if draft_version["version"] != version.to_4_dotted():
             raise InvalidDraftVersionException(
                 f"Requested draft version {version}, "
