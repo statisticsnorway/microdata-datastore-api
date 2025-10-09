@@ -1,6 +1,7 @@
 from typing import Protocol
 
 from datastore_api.adapter.db.models import (
+    Datastore,
     Job,
     JobStatus,
     MaintenanceStatus,
@@ -37,6 +38,7 @@ class DatabaseClient(Protocol):
     def get_targets(self) -> list[Target]: ...
     def update_target(self, job: Job) -> None: ...
     def update_bump_targets(self, job: Job) -> None: ...
+    def get_datastore(self) -> Datastore: ...
 
 
 def get_database_client() -> DatabaseClient:
