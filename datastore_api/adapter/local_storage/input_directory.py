@@ -100,6 +100,11 @@ def delete_importable_datasets(dataset_name: str, input_dir: Path) -> None:
             'Please use only uppercase A-Z, numbers 0-9 or "_"'
         )
     try:
-        os.remove(f"{input_dir}/{dataset_name}.tar")
+        file_path = (input_dir / f"{dataset_name}.tar").resolve()
+        if input_dir.resolve() not in file_path.parents:
+            raise NameValidationError(
+                f'Invalid path for dataset name "{dataset_name}"'
+            )
+        os.remove(file_path)
     except (FileNotFoundError, OSError) as e:
         raise NotFoundException(f"File {dataset_name} not found") from e
