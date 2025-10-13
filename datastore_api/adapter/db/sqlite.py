@@ -101,10 +101,14 @@ class SqliteDbClient:
                     description TEXT,
                     directory TEXT,
                     name TEXT,
-                    bump_enabled BOOLEAN DEFAULT FALSE,
-                    UNIQUE(rdn)
+                    bump_enabled BOOLEAN DEFAULT FALSE
                 )
             """)
+            conn.commit()
+            cursor.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_rdn
+                ON datastore(rdn)
+                """)
             conn.commit()
         finally:
             conn.close()
