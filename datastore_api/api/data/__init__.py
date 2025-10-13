@@ -21,12 +21,19 @@ router = APIRouter()
 logger = logging.getLogger()
 
 
+def get_datastore_root_dir(
+    database_client: db.DatabaseClient = Depends(db.get_database_client),
+) -> Path:
+    """Return the path to the datastore directory"""
+    return Path(database_client.get_datastore().directory)
+
+
 @router.post("/event/stream", responses={404: {"model": ErrorMessage}})
 def stream_result_event(
     input_query: InputTimePeriodQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-    database_client: db.DatabaseClient = Depends(db.get_database_client),
+    datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> PlainTextResponse:
     """
     Create Result set of data with temporality type event,
@@ -34,7 +41,6 @@ def stream_result_event(
     """
     logger.info(f"Entering /data/event/stream with input query: {input_query}")
     auth_client.authorize_user(authorization)
-    datastore_root_dir = Path(database_client.get_datastore().directory)
     result_data = data.process_event_request(
         input_query.dataStructureName,
         input_query.version,
@@ -54,7 +60,7 @@ def stream_result_status(
     input_query: InputTimeQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-    database_client: db.DatabaseClient = Depends(db.get_database_client),
+    datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> PlainTextResponse:
     """
     Create result set of data with temporality type status,
@@ -62,7 +68,6 @@ def stream_result_status(
     """
     logger.info(f"Entering /data/status/stream with input query: {input_query}")
     auth_client.authorize_user(authorization)
-    datastore_root_dir = Path(database_client.get_datastore().directory)
     result_data = data.process_status_request(
         input_query.dataStructureName,
         input_query.version,
@@ -81,7 +86,7 @@ def stream_result_fixed(
     input_query: InputFixedQuery,
     authorization: str = Header(None),
     auth_client: AuthClient = Depends(get_auth_client),
-    database_client: db.DatabaseClient = Depends(db.get_database_client),
+    datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> PlainTextResponse:
     """
     Create result set of data with temporality type fixed,
@@ -89,7 +94,6 @@ def stream_result_fixed(
     """
     logger.info(f"Entering /data/fixed/stream with input query: {input_query}")
     auth_client.authorize_user(authorization)
-    datastore_root_dir = Path(database_client.get_datastore().directory)
     result_data = data.process_fixed_request(
         input_query.dataStructureName,
         input_query.version,
