@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from datastore_api.adapter.db.models import (
+    Datastore,
     Job,
     JobParameters,
     JobStatus,
@@ -99,9 +100,15 @@ class SqliteDbClient:
                     rdn TEXT,
                     description TEXT,
                     directory TEXT,
-                    name TEXT
+                    name TEXT,
+                    bump_enabled BOOLEAN DEFAULT FALSE
                 )
             """)
+            conn.commit()
+            cursor.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_rdn
+                ON datastore(rdn)
+                """)
             conn.commit()
         finally:
             conn.close()
@@ -711,5 +718,34 @@ class SqliteDbClient:
         except Exception as e:
             conn.rollback()
             raise e
+        finally:
+            conn.close()
+
+    def get_datastore(self) -> Datastore:
+        conn = self._conn()
+        try:
+            cursor = conn.cursor()
+            datastore = cursor.execute(
+                """
+                SELECT
+                    datastore_id,
+                    rdn,
+                    description,
+                    directory,
+                    name,
+                    bump_enabled
+                FROM datastore
+                WHERE datastore_id = ?
+                """,
+                (1,),  # TODO - remove hardcode
+            ).fetchone()
+            return Datastore(
+                datastore_id=datastore["datastore_id"],
+                rdn=datastore["rdn"],
+                description=datastore["description"],
+                directory=datastore["directory"],
+                name=datastore["name"],
+                bump_enabled=datastore["bump_enabled"],
+            )
         finally:
             conn.close()

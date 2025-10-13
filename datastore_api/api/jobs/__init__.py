@@ -11,7 +11,6 @@ from datastore_api.api.jobs.models import (
     UpdateJobRequest,
 )
 from datastore_api.common.exceptions import BumpingDisabledException
-from datastore_api.config import environment
 
 logger = logging.getLogger()
 
@@ -51,7 +50,7 @@ def new_job(
             if (
                 job_request.target == "DATASTORE"
                 and job_request.operation == "BUMP"
-                and environment.bump_enabled is False
+                and database_client.get_datastore().bump_enabled is False
             ):
                 raise BumpingDisabledException(
                     "Bumping the datastore is disabled"

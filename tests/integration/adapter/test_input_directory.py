@@ -1,7 +1,11 @@
+from pathlib import Path
+
 from datastore_api.adapter.local_storage import input_directory
 from datastore_api.adapter.local_storage.input_directory import (
     ImportableDataset,
 )
+
+INPUT_DIR = Path("tests/resources/test_datastore_input")
 
 expected_datasets = [
     ImportableDataset(
@@ -23,7 +27,7 @@ expected_datasets = [
 
 
 def test_get_importable_datasets():
-    actual_datasets = input_directory.get_importable_datasets()
+    actual_datasets = input_directory.get_importable_datasets(INPUT_DIR)
     assert len(actual_datasets) == 4
     for dataset in expected_datasets:
         assert dataset in actual_datasets

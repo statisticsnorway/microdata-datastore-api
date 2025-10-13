@@ -1,7 +1,11 @@
 # pylint: disable=protected-access
+
+from pathlib import Path
+
 import pytest
 from pyarrow import Table, dataset
 
+from datastore_api.adapter.db.models import Datastore
 from datastore_api.common.exceptions import NotFoundException
 from datastore_api.common.models import Version
 from datastore_api.domain import data
@@ -30,6 +34,17 @@ FIND_BY_TIME_FILTER = (start_epoch_le_date & stop_missing) | (
     start_epoch_le_date & stop_epoch_ge_date
 )
 
+DATASTORE = Datastore(
+    datastore_id=1,
+    rdn="no.dev.test",
+    description="Datastore for testing",
+    directory="tests/resources/test_datastore",
+    name="Test datastore",
+    bump_enabled=True,
+)
+
+DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore")
+
 
 def test_valid_event_request():
     payload = test_resources.VALID_EVENT_QUERY_PERSON_INCOME_ALL
@@ -40,6 +55,7 @@ def test_valid_event_request():
         payload.includeAttributes,
         payload.startDate,
         payload.stopDate,
+        DATASTORE_ROOT_DIR,
     )
     assert parquet_table_to_csv_string(file_name) == (
         test_resources.PERSON_INCOME_ALL
@@ -55,6 +71,7 @@ def test_valid_event_request_partitioned():
         payload.includeAttributes,
         payload.startDate,
         payload.stopDate,
+        DATASTORE_ROOT_DIR,
     )
     assert parquet_table_to_csv_string(file_name) == (
         test_resources.TEST_STUDIEPOENG_ALL
@@ -70,6 +87,7 @@ def test_event_request_causing_empty_result():
         payload.includeAttributes,
         payload.startDate,
         payload.stopDate,
+        DATASTORE_ROOT_DIR,
     )
     assert isinstance(result, Table)
     assert result.num_columns == 2
@@ -84,6 +102,7 @@ def test_valid_status_request():
         payload.population,
         payload.includeAttributes,
         payload.date,
+        DATASTORE_ROOT_DIR,
     )
     assert parquet_table_to_csv_string(file_name) == (
         test_resources.PERSON_INCOME_LAST_ROW
@@ -99,6 +118,7 @@ def test_invalid_status_request():
             payload.population,
             payload.includeAttributes,
             payload.date,
+            DATASTORE_ROOT_DIR,
         )
     assert str(e.value) == (
         "No NOT_A_DATASET in data_versions file for version 1_0"
@@ -112,6 +132,7 @@ def test_valid_fixed_request():
         payload.version,
         payload.population,
         payload.includeAttributes,
+        DATASTORE_ROOT_DIR,
     )
     assert parquet_table_to_csv_string(file_name) == (
         test_resources.PERSON_INCOME_ALL
@@ -126,6 +147,7 @@ def test_invalid_fixed_request():
             payload.version,
             payload.population,
             payload.includeAttributes,
+            DATASTORE_ROOT_DIR,
         )
     assert str(e.value) == (
         "No NOT_A_DATASET in data_versions file for version 1_0"
@@ -164,7 +186,11 @@ def test_read_parquet_no_filter():
         "6926636",
     ]
     result = data._read_parquet(
-        "TEST_PERSON_INCOME", Version.from_str("1.0.0.0"), None, ALL_COLUMNS
+        "TEST_PERSON_INCOME",
+        Version.from_str("1.0.0.0"),
+        None,
+        ALL_COLUMNS,
+        DATASTORE_ROOT_DIR,
     )
     result_dict = result.to_pydict()
     assert result_dict["unit_id"] == expected_unit_ids
@@ -176,7 +202,11 @@ def test_read_parquet_no_filter():
         == len(result_dict["stop_epoch_days"])
     )
     result = data._read_parquet(
-        "TEST_PERSON_INCOME", Version.from_str("1.0.0.0"), None, ALL_COLUMNS[:2]
+        "TEST_PERSON_INCOME",
+        Version.from_str("1.0.0.0"),
+        None,
+        ALL_COLUMNS[:2],
+        DATASTORE_ROOT_DIR,
     )
     result_dict = result.to_pydict()
     assert result_dict["unit_id"] == expected_unit_ids
@@ -193,6 +223,7 @@ def test_read_parquet_fixed():
         Version.from_str("1.0.0.0"),
         table_filter,
         ALL_COLUMNS,
+        DATASTORE_ROOT_DIR,
     )
     result_dict = result.to_pydict()
     assert result_dict["unit_id"] == expected_unit_ids
@@ -204,6 +235,7 @@ def test_read_parquet_fixed():
         Version.from_str("1.0.0.0"),
         table_filter,
         ALL_COLUMNS[:2],
+        DATASTORE_ROOT_DIR,
     )
     result_dict = result.to_pydict()
     assert result_dict["unit_id"] == expected_unit_ids
@@ -219,6 +251,7 @@ def test_read_parquet_time_period():
         Version.from_str("1.0.0.0"),
         FIND_BY_TIME_PERIOD_FILTER,
         ALL_COLUMNS,
+        DATASTORE_ROOT_DIR,
     )
     result_dict = result.to_pydict()
     assert result_dict["unit_id"] == expected_unit_ids
@@ -241,6 +274,7 @@ def test_read_parquet_time_period_with_pop_filter():
         Version.from_str("1.0.0.0"),
         table_filter,
         ALL_COLUMNS,
+        DATASTORE_ROOT_DIR,
     )
     result_dict = result.to_pydict()
     assert result_dict["unit_id"] == expected_unit_ids
@@ -260,6 +294,7 @@ def test_read_parquet_time():
         Version.from_str("1.0.0.0"),
         FIND_BY_TIME_FILTER,
         ALL_COLUMNS,
+        DATASTORE_ROOT_DIR,
     )
     result_dict = result.to_pydict()
     assert result_dict["unit_id"] == expected_unit_ids
@@ -281,6 +316,7 @@ def test_read_parquet_time_with_pop_filter():
         Version.from_str("1.0.0.0"),
         table_filter,
         ALL_COLUMNS,
+        DATASTORE_ROOT_DIR,
     )
     result_dict = result.to_pydict()
     assert result_dict["unit_id"] == expected_unit_ids

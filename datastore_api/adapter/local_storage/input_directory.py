@@ -10,12 +10,8 @@ from datastore_api.common.exceptions import (
     NotFoundException,
 )
 from datastore_api.common.models import CamelModel
-from datastore_api.config import environment
 
 logger = logging.getLogger()
-
-INPUT_DIR = Path(environment.input_dir)
-ARCHIVE_DIR = INPUT_DIR / "archive"
 
 
 class ImportableDataset(CamelModel, extra="forbid"):
@@ -82,26 +78,33 @@ def get_datasets_in_directory(
 
 
 def get_importable_datasets(
+    input_dir: Path,
     filter_out: list[str] = [],
 ) -> list[ImportableDataset]:
     """
     Returns names of all valid datasets in input directory.
     """
-    datasets = get_datasets_in_directory(INPUT_DIR, filter_out)
-    if ARCHIVE_DIR.exists():
+    archive_dir = input_dir / "archive"
+    datasets = get_datasets_in_directory(input_dir, filter_out)
+    if archive_dir.exists():
         datasets += get_datasets_in_directory(
-            ARCHIVE_DIR, filter_out, is_archived=True
+            archive_dir, filter_out, is_archived=True
         )
     return datasets
 
 
-def delete_importable_datasets(dataset_name: str) -> None:
+def delete_importable_datasets(dataset_name: str, input_dir: Path) -> None:
     if not _validate_dataset_name(dataset_name):
         raise NameValidationError(
             f'"{dataset_name}" contains invalid characters. '
             'Please use only uppercase A-Z, numbers 0-9 or "_"'
         )
     try:
-        os.remove(f"{INPUT_DIR}/{dataset_name}.tar")
+        file_path = (input_dir / f"{dataset_name}.tar").resolve()
+        if input_dir.resolve() not in file_path.parents:
+            raise NameValidationError(
+                f'Invalid path for dataset name "{dataset_name}"'
+            )
+        os.remove(file_path)
     except (FileNotFoundError, OSError) as e:
         raise NotFoundException(f"File {dataset_name} not found") from e

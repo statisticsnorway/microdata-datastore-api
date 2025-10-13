@@ -137,3 +137,12 @@ class MaintenanceStatus(CamelModel):
     paused: bool
     msg: str
     timestamp: str
+
+
+class Datastore(CamelModel):
+    datastore_id: int
+    rdn: str
+    description: str
+    directory: str
+    name: str
+    bump_enabled: bool

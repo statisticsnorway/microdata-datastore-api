@@ -444,3 +444,9 @@ def test_update_targets_bump():
             if target.name == "OTHER_DATASET"
         ]
     )
+
+
+def test_get_datastore():
+    datastore = sqlite_client.get_datastore()
+    assert "no.ssb.test" in datastore.rdn
+    assert not datastore.bump_enabled

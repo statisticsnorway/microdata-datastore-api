@@ -1,10 +1,16 @@
 import json
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock
 
-from fastapi import testclient
+import pytest
+from fastapi.testclient import TestClient
 from httpx import Response
 
+from datastore_api.adapter import db
 from datastore_api.common.models import Version
 from datastore_api.domain import metadata
+from datastore_api.main import app
 
 MOCKED_DATASTORE_VERSIONS = {
     "name": "SSB-RAIRD",
@@ -62,15 +68,32 @@ MOCKED_LANGUAGES = [
 
 DATA_STRUCTURES_FILE_PATH = "tests/resources/fixtures/api/data_structures.json"
 METADATA_ALL_FILE_PATH = "tests/resources/fixtures/domain/metadata_all.json"
+DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore")
 
 
-def test_get_data_store(test_app: testclient.TestClient, mocker):
+@pytest.fixture
+def mock_db_client():
+    mock = Mock()
+    mock.get_datastore.return_value = SimpleNamespace(
+        directory=str("tests/resources/test_datastore")
+    )
+    return mock
+
+
+@pytest.fixture
+def client(mock_db_client: Mock):
+    app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+def test_get_data_store(client, mocker):
     spy = mocker.patch.object(
         metadata,
         "find_all_datastore_versions",
         return_value=MOCKED_DATASTORE_VERSIONS,
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "/metadata/data-store",
         headers={
             "X-Request-ID": "test-123",
@@ -78,20 +101,18 @@ def test_get_data_store(test_app: testclient.TestClient, mocker):
             "Accept": "application/json",
         },
     )
-    spy.assert_called()
+    spy.assert_called_with(DATASTORE_ROOT_DIR)
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == MOCKED_DATASTORE_VERSIONS
 
 
-def test_get_current_data_structure_status(
-    test_app: testclient.TestClient, mocker
-):
+def test_get_current_data_structure_status(client, mocker):
     spy = mocker.patch.object(
         metadata,
         "find_current_data_structure_status",
         return_value=MOCKED_DATASTRUCTURE,
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "metadata/data-structures/status?names=INNTEKT_TJENPEN",
         headers={
             "X-Request-ID": "test-123",
@@ -99,20 +120,18 @@ def test_get_current_data_structure_status(
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with([MOCKED_DATASTRUCTURE["name"]])
+    spy.assert_called_with([MOCKED_DATASTRUCTURE["name"]], DATASTORE_ROOT_DIR)
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == MOCKED_DATASTRUCTURE
 
 
-def test_get_current_data_structure_status_as_post(
-    test_app: testclient.TestClient, mocker
-):
+def test_get_current_data_structure_status_as_post(client, mocker):
     spy = mocker.patch.object(
         metadata,
         "find_current_data_structure_status",
         return_value=MOCKED_DATASTRUCTURES,
     )
-    response: Response = test_app.post(
+    response: Response = client.post(
         "metadata/data-structures/status",
         json={"names": ",".join(list(MOCKED_DATASTRUCTURES.keys()))},
         headers={
@@ -121,20 +140,20 @@ def test_get_current_data_structure_status_as_post(
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with(list(MOCKED_DATASTRUCTURES.keys()))
+    spy.assert_called_with(
+        list(MOCKED_DATASTRUCTURES.keys()), DATASTORE_ROOT_DIR
+    )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == MOCKED_DATASTRUCTURES
 
 
-def test_get_multiple_data_structure_status(
-    test_app: testclient.TestClient, mocker
-):
+def test_get_multiple_data_structure_status(client, mocker):
     spy = mocker.patch.object(
         metadata,
         "find_current_data_structure_status",
         return_value=MOCKED_DATASTRUCTURE,
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "/metadata/data-structures/status?names=INNTEKT_TJENPEN,INNTEKT_TO",
         headers={
             "X-Request-ID": "test-123",
@@ -142,18 +161,20 @@ def test_get_multiple_data_structure_status(
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with(["INNTEKT_TJENPEN", "INNTEKT_TO"])
+    spy.assert_called_with(
+        ["INNTEKT_TJENPEN", "INNTEKT_TO"], DATASTORE_ROOT_DIR
+    )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == MOCKED_DATASTRUCTURE
 
 
-def test_get_data_structures(test_app: testclient.TestClient, mocker):
+def test_get_data_structures(client, mocker):
     with open(DATA_STRUCTURES_FILE_PATH, encoding="utf-8") as f:
         mocked_data_structures = json.load(f)
     spy = mocker.patch.object(
         metadata, "find_data_structures", return_value=mocked_data_structures
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "/metadata/data-structures?names=FNR,AKT_ARBAP&version=3.2.1.0",
         headers={
             "X-Request-ID": "test-123",
@@ -162,20 +183,24 @@ def test_get_data_structures(test_app: testclient.TestClient, mocker):
         },
     )
     spy.assert_called_with(
-        ["FNR", "AKT_ARBAP"], Version.from_str("3.2.1.0"), True, False
+        DATASTORE_ROOT_DIR,
+        ["FNR", "AKT_ARBAP"],
+        Version.from_str("3.2.1.0"),
+        True,
+        False,
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_data_structures
 
 
-def test_get_all_data_structures_ever(test_app: testclient.TestClient, mocker):
+def test_get_all_data_structures_ever(client, mocker):
     mocked_data_structures = ["TEST_PERSON_INCOME", "TEST_PERSON_PETS"]
     spy = mocker.patch.object(
         metadata,
         "find_all_data_structures_ever",
         return_value=mocked_data_structures,
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "/metadata/all-data-structures",
         headers={
             "X-Request-ID": "test-123",
@@ -183,12 +208,12 @@ def test_get_all_data_structures_ever(test_app: testclient.TestClient, mocker):
             "Accept": "application/json",
         },
     )
-    spy.assert_called()
+    spy.assert_called_with(DATASTORE_ROOT_DIR)
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_data_structures
 
 
-def test_get_all_metadata(test_app: testclient.TestClient, mocker):
+def test_get_all_metadata(client, mocker):
     with open(DATA_STRUCTURES_FILE_PATH, encoding="utf-8") as f:
         mocked_data_structures = json.load(f)
     mocked_metadata_all = {
@@ -204,7 +229,7 @@ def test_get_all_metadata(test_app: testclient.TestClient, mocker):
     spy = mocker.patch.object(
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "/metadata/all?version=3.2.1.0",
         headers={
             "X-Request-ID": "test-123",
@@ -212,14 +237,14 @@ def test_get_all_metadata(test_app: testclient.TestClient, mocker):
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with(Version.from_str("3.2.1.0"), False)
+    spy.assert_called_with(
+        Version.from_str("3.2.1.0"), DATASTORE_ROOT_DIR, False
+    )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_metadata_all
 
 
-def test_get_all_metadata_long_version_numbers(
-    test_app: testclient.TestClient, mocker
-):
+def test_get_all_metadata_long_version_numbers(client, mocker):
     with open(DATA_STRUCTURES_FILE_PATH, encoding="utf-8") as f:
         mocked_data_structures = json.load(f)
     mocked_metadata_all = {
@@ -235,7 +260,7 @@ def test_get_all_metadata_long_version_numbers(
     spy = mocker.patch.object(
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "/metadata/all?version=1234.5678.9012.0",
         headers={
             "X-Request-ID": "test-123",
@@ -243,20 +268,20 @@ def test_get_all_metadata_long_version_numbers(
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with(Version.from_str("1234.5678.9012.0"), False)
+    spy.assert_called_with(
+        Version.from_str("1234.5678.9012.0"), DATASTORE_ROOT_DIR, False
+    )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_metadata_all
 
 
-def test_get_all_metadata_skip_code_lists(
-    test_app: testclient.TestClient, mocker
-):
+def test_get_all_metadata_skip_code_lists(client, mocker):
     with open(METADATA_ALL_FILE_PATH, encoding="utf-8") as f:
         mocked_metadata_all = json.load(f)
     spy = mocker.patch.object(
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "/metadata/all?version=3.2.1.0&skip_code_lists=true",
         headers={
             "X-Request-ID": "test-123",
@@ -264,20 +289,20 @@ def test_get_all_metadata_skip_code_lists(
             "Accept": "application/json",
         },
     )
-    spy.assert_called_with(Version.from_str("3.2.1.0"), True)
+    spy.assert_called_with(
+        Version.from_str("3.2.1.0"), DATASTORE_ROOT_DIR, True
+    )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_metadata_all
 
 
-def test_get_data_structures_skip_code_lists(
-    test_app: testclient.TestClient, mocker
-):
+def test_get_data_structures_skip_code_lists(client, mocker):
     with open(DATA_STRUCTURES_FILE_PATH, encoding="utf-8") as f:
         mocked_data_structures = json.load(f)
     spy = mocker.patch.object(
         metadata, "find_data_structures", return_value=mocked_data_structures
     )
-    response: Response = test_app.get(
+    response: Response = client.get(
         "/metadata/data-structures?names=FNR,AKT_ARBAP&version=3.2.1.0&skip_code_lists=true",
         headers={
             "X-Request-ID": "test-123",
@@ -286,7 +311,11 @@ def test_get_data_structures_skip_code_lists(
         },
     )
     spy.assert_called_with(
-        ["FNR", "AKT_ARBAP"], Version.from_str("3.2.1.0"), True, True
+        DATASTORE_ROOT_DIR,
+        ["FNR", "AKT_ARBAP"],
+        Version.from_str("3.2.1.0"),
+        True,
+        True,
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == mocked_data_structures
