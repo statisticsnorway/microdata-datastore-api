@@ -10,6 +10,7 @@ from datastore_api.adapter.db.models import Datastore
 from datastore_api.main import app
 
 DATASTORE = Datastore(
+    datastore_id=1,
     rdn="no.dev.test",
     description="Datastore for testing",
     directory="tests/resources/test_datastore",

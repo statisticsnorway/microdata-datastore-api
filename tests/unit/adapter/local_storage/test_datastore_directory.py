@@ -16,6 +16,7 @@ TEST_STUDIEPOENG_PATH_1_0 = (
 )
 
 DATASTORE = Datastore(
+    datastore_id=1,
     rdn="no.dev.test",
     description="datastore for testing",
     directory="tests/resources/test_datastore",

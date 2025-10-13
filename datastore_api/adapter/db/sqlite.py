@@ -724,6 +724,7 @@ class SqliteDbClient:
             datastore = cursor.execute(
                 """
                 SELECT
+                    datastore_id,
                     rdn,
                     description,
                     directory,
@@ -735,6 +736,7 @@ class SqliteDbClient:
                 (1,),  # TODO - remove hardcode
             ).fetchone()
             return Datastore(
+                datastore_id=datastore["datastore_id"],
                 rdn=datastore["rdn"],
                 description=datastore["description"],
                 directory=datastore["directory"],

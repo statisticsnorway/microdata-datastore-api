@@ -35,6 +35,7 @@ FIND_BY_TIME_FILTER = (start_epoch_le_date & stop_missing) | (
 )
 
 DATASTORE = Datastore(
+    datastore_id=1,
     rdn="no.dev.test",
     description="Datastore for testing",
     directory="tests/resources/test_datastore",

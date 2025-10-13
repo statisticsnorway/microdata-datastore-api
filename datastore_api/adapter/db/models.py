@@ -140,6 +140,7 @@ class MaintenanceStatus(CamelModel):
 
 
 class Datastore(CamelModel):
+    datastore_id: int
     rdn: str
     description: str
     directory: str

@@ -83,6 +83,7 @@ BUMP_JOB_REQUEST = {
 UPDATE_JOB_REQUEST = {"status": "initiated", "log": "extra logging"}
 
 DATASTORE = Datastore(
+    datastore_id=1,
     rdn="no.dev.test",
     description="Datastore for testing",
     directory="tests/resources/test_datastore",
