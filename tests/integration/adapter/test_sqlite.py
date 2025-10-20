@@ -27,6 +27,7 @@ from datastore_api.api.jobs.models import NewJobRequest
 sqlite_file = "test.db"
 sqlite_client = SqliteDbClient(f"sqlite://{sqlite_file}")
 
+DATASTORE_ID = 1
 USER_INFO_DICT = {
     "userId": "123-123-123",
     "firstName": "Data",
@@ -162,6 +163,19 @@ def setup_function():
     )
     cursor.execute(
         """
+        INSERT INTO datastore (rdn, description, directory, name, bump_enabled)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "no.dev.test",
+            "unit test another datastore",
+            "test/resources/another_test_datastore",
+            "Another SSB test datastore",
+            True,
+        ),
+    )
+    cursor.execute(
+        """
         INSERT INTO job (
             target,
             datastore_id,
@@ -174,7 +188,7 @@ def setup_function():
         """,
         (
             JOB["parameters"]["target"],
-            1,
+            DATASTORE_ID,
             JOB["status"],
             JOB["created_at"],
             json.dumps(JOB["created_by"]),
@@ -208,7 +222,7 @@ def setup_function():
     """,
         (
             JOB2["parameters"]["target"],
-            1,
+            DATASTORE_ID,
             JOB2["status"],
             JOB2["created_at"],
             json.dumps(JOB2["created_by"]),
@@ -229,7 +243,7 @@ def setup_function():
             """,
             (
                 target.name,
-                1,
+                DATASTORE_ID,
                 target.last_updated_at,
                 str(target.status),
                 ",".join(target.action),
@@ -447,6 +461,11 @@ def test_update_targets_bump():
 
 
 def test_get_datastore():
-    datastore = sqlite_client.get_datastore()
+    datastore = sqlite_client.get_datastore(DATASTORE_ID)
     assert "no.ssb.test" in datastore.rdn
     assert not datastore.bump_enabled
+
+
+def test_get_datastore_id_from_rdn():
+    rdn = "no.dev.test"
+    assert sqlite_client.get_datastore_id_from_rdn(rdn) == 2

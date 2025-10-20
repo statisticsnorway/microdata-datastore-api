@@ -77,6 +77,7 @@ def mock_db_client():
     mock.get_datastore.return_value = SimpleNamespace(
         directory=str("tests/resources/test_datastore")
     )
+    mock.get_datastore_id_from_rdn.return_value = 1
     return mock
 
 
@@ -87,14 +88,14 @@ def client(mock_db_client: Mock):
     app.dependency_overrides.clear()
 
 
-def test_get_data_store(client, mocker):
+def test_get_data_store(client, mocker, mock_db_client):
     spy = mocker.patch.object(
         metadata,
         "find_all_datastore_versions",
         return_value=MOCKED_DATASTORE_VERSIONS,
     )
     response: Response = client.get(
-        "/metadata/data-store",
+        "/datastores/no.ssb.test/metadata/data-store",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",
@@ -113,7 +114,7 @@ def test_get_current_data_structure_status(client, mocker):
         return_value=MOCKED_DATASTRUCTURE,
     )
     response: Response = client.get(
-        "metadata/data-structures/status?names=INNTEKT_TJENPEN",
+        "/datastores/no.ssb.test/metadata/data-structures/status?names=INNTEKT_TJENPEN",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",
@@ -132,7 +133,7 @@ def test_get_current_data_structure_status_as_post(client, mocker):
         return_value=MOCKED_DATASTRUCTURES,
     )
     response: Response = client.post(
-        "metadata/data-structures/status",
+        "/datastores/no.ssb.test/metadata/data-structures/status",
         json={"names": ",".join(list(MOCKED_DATASTRUCTURES.keys()))},
         headers={
             "X-Request-ID": "test-123",
@@ -154,7 +155,7 @@ def test_get_multiple_data_structure_status(client, mocker):
         return_value=MOCKED_DATASTRUCTURE,
     )
     response: Response = client.get(
-        "/metadata/data-structures/status?names=INNTEKT_TJENPEN,INNTEKT_TO",
+        "/datastores/no.ssb.test/metadata/data-structures/status?names=INNTEKT_TJENPEN,INNTEKT_TO",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",
@@ -175,7 +176,7 @@ def test_get_data_structures(client, mocker):
         metadata, "find_data_structures", return_value=mocked_data_structures
     )
     response: Response = client.get(
-        "/metadata/data-structures?names=FNR,AKT_ARBAP&version=3.2.1.0",
+        "/datastores/no.ssb.test/metadata/data-structures?names=FNR,AKT_ARBAP&version=3.2.1.0",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",
@@ -201,7 +202,7 @@ def test_get_all_data_structures_ever(client, mocker):
         return_value=mocked_data_structures,
     )
     response: Response = client.get(
-        "/metadata/all-data-structures",
+        "/datastores/no.ssb.test/metadata/all-data-structures",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",
@@ -230,7 +231,7 @@ def test_get_all_metadata(client, mocker):
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
     response: Response = client.get(
-        "/metadata/all?version=3.2.1.0",
+        "/datastores/no.ssb.test/metadata/all?version=3.2.1.0",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",
@@ -261,7 +262,7 @@ def test_get_all_metadata_long_version_numbers(client, mocker):
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
     response: Response = client.get(
-        "/metadata/all?version=1234.5678.9012.0",
+        "/datastores/no.ssb.test/metadata/all?version=1234.5678.9012.0",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",
@@ -282,7 +283,7 @@ def test_get_all_metadata_skip_code_lists(client, mocker):
         metadata, "find_all_metadata", return_value=mocked_metadata_all
     )
     response: Response = client.get(
-        "/metadata/all?version=3.2.1.0&skip_code_lists=true",
+        "/datastores/no.ssb.test/metadata/all?version=3.2.1.0&skip_code_lists=true",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",
@@ -303,7 +304,7 @@ def test_get_data_structures_skip_code_lists(client, mocker):
         metadata, "find_data_structures", return_value=mocked_data_structures
     )
     response: Response = client.get(
-        "/metadata/data-structures?names=FNR,AKT_ARBAP&version=3.2.1.0&skip_code_lists=true",
+        "/datastores/no.ssb.test/metadata/data-structures?names=FNR,AKT_ARBAP&version=3.2.1.0&skip_code_lists=true",
         headers={
             "X-Request-ID": "test-123",
             "Accept-Language": "no",

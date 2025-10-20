@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from datastore_api.adapter.db.models import Datastore
 from datastore_api.adapter.local_storage import datastore_directory
 from datastore_api.common.models import Version
 
@@ -15,14 +14,6 @@ TEST_STUDIEPOENG_PATH_1_0 = (
     f"{TEST_DATA_DIR}/TEST_STUDIEPOENG/TEST_STUDIEPOENG__1_0"
 )
 
-DATASTORE = Datastore(
-    datastore_id=1,
-    rdn="no.dev.test",
-    description="datastore for testing",
-    directory="tests/resources/test_datastore",
-    name="Test datastore",
-    bump_enabled=False,
-)
 
 DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore")
 

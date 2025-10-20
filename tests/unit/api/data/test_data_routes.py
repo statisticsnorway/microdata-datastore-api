@@ -54,7 +54,7 @@ def setup(monkeypatch: MonkeyPatch):
 
 def test_data_event_stream_result(client: TestClient):
     response = client.post(
-        "/data/event/stream",
+        "/datastores/no.ssb.test/data/event/stream",
         json={
             "version": "1.0.0.0",
             "dataStructureName": "FAKE_NAME",
@@ -71,7 +71,7 @@ def test_data_event_stream_result(client: TestClient):
 
 def test_data_status_stream_result(client: TestClient):
     response = client.post(
-        "/data/status/stream",
+        "/datastores/no.ssb.test/data/status/stream",
         json={
             "version": "1.0.0.0",
             "dataStructureName": "FAKE_NAME",
@@ -87,7 +87,7 @@ def test_data_status_stream_result(client: TestClient):
 
 def test_data_fixed_stream_result(client: TestClient):
     response = client.post(
-        "/data/fixed/stream",
+        "/datastores/no.ssb.test/data/fixed/stream",
         json={"version": "1.0.0.0", "dataStructureName": "FAKE_NAME"},
         headers={"Authorization": "Bearer valid-token"},
     )
