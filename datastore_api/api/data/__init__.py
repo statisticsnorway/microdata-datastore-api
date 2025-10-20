@@ -7,7 +7,6 @@ import pyarrow.parquet as pq
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import PlainTextResponse
 
-from datastore_api.adapter import db
 from datastore_api.adapter.auth import AuthClient, get_auth_client
 from datastore_api.api.data.models import (
     ErrorMessage,
@@ -15,17 +14,11 @@ from datastore_api.api.data.models import (
     InputTimePeriodQuery,
     InputTimeQuery,
 )
+from datastore_api.api.dependencies.datastore import get_datastore_root_dir
 from datastore_api.domain import data
 
 router = APIRouter()
 logger = logging.getLogger()
-
-
-def get_datastore_root_dir(
-    database_client: db.DatabaseClient = Depends(db.get_database_client),
-) -> Path:
-    """Return the path to the datastore directory"""
-    return Path(database_client.get_datastore().directory)
 
 
 @router.post("/event/stream", responses={404: {"model": ErrorMessage}})

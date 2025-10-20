@@ -721,7 +721,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def get_datastore(self) -> Datastore:
+    def get_datastore(self, datastore_id: int) -> Datastore:
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -737,7 +737,7 @@ class SqliteDbClient:
                 FROM datastore
                 WHERE datastore_id = ?
                 """,
-                (1,),  # TODO - remove hardcode
+                (datastore_id,),
             ).fetchone()
             return Datastore(
                 datastore_id=datastore["datastore_id"],
@@ -747,5 +747,22 @@ class SqliteDbClient:
                 name=datastore["name"],
                 bump_enabled=datastore["bump_enabled"],
             )
+        finally:
+            conn.close()
+
+    def get_datastore_id_from_rdn(self, rdn: str) -> int:
+        conn = self._conn()
+        try:
+            cursor = conn.cursor()
+            datastore_id = cursor.execute(
+                """
+                SELECT
+                    datastore_id
+                FROM datastore
+                WHERE rdn = ?
+                """,
+                (rdn,),
+            ).fetchone()
+            return int(datastore_id["datastore_id"])
         finally:
             conn.close()

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Cookie, Depends, Query
 
 from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import Job, JobStatus, Operation
+from datastore_api.api.dependencies.datastore import get_datastore_id
 from datastore_api.api.jobs.models import (
     NewJobResponse,
     NewJobsRequest,
@@ -40,6 +41,7 @@ def new_job(
     user_info: str | None = Cookie(None, alias="user-info"),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
+    datastore_id: int = Depends(get_datastore_id),
 ) -> list[NewJobResponse]:
     parsed_user_info = auth_client.authorize_data_administrator(
         authorization, user_info
@@ -50,7 +52,8 @@ def new_job(
             if (
                 job_request.target == "DATASTORE"
                 and job_request.operation == "BUMP"
-                and database_client.get_datastore().bump_enabled is False
+                and database_client.get_datastore(datastore_id).bump_enabled
+                is False
             ):
                 raise BumpingDisabledException(
                     "Bumping the datastore is disabled"

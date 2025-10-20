@@ -18,6 +18,7 @@ from datastore_api.api import (
     targets,
 )
 from datastore_api.common.exceptions import (
+    DatastoreNotFoundException,
     InvalidDraftVersionException,
     InvalidStorageFormatException,
     JobExistsException,
@@ -36,8 +37,16 @@ def setup_api(app: FastAPI) -> None:
 
 
 def _include_routers(app: FastAPI) -> None:
-    app.include_router(data.router, prefix="/data")
-    app.include_router(metadata.router, prefix="/metadata")
+    app.include_router(
+        data.router, prefix="/data"
+    )  # TODO: Remove legacy router once all clients use datastore-specific URLs
+    app.include_router(
+        metadata.router, prefix="/metadata"
+    )  # TODO: Remove legacy router once all clients use datastore-specific URLs
+    app.include_router(data.router, prefix="/datastores/{datastore_rdn}/data")
+    app.include_router(
+        metadata.router, prefix="/datastores/{datastore_rdn}/metadata"
+    )
     app.include_router(observability.router, prefix="/health")
     app.include_router(
         maintenance_statuses.router, prefix="/maintenance-statuses"
@@ -132,6 +141,13 @@ def _include_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         logger.warning(e, exc_info=True)
         return JSONResponse(status_code=400, content={"message": str(e)})
+
+    @app.exception_handler(DatastoreNotFoundException)
+    def handle_datastore_not_found(
+        _req: Request, e: NameValidationError
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=404, content={"message": str(e)})
 
     @app.exception_handler(Exception)
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:
