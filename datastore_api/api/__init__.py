@@ -56,7 +56,12 @@ def _include_routers(app: FastAPI) -> None:
         importable_datasets.router, prefix="/importable-datasets"
     )
     app.include_router(jobs.router, prefix="/jobs")
-    app.include_router(languages.router, prefix="/languages")
+    app.include_router(
+        languages.router, prefix="/languages"
+    )  # TODO: Remove legacy router once all clients use datastore-specific URLs
+    app.include_router(
+        languages.router, prefix="/datastores/{datastore_rdn}/languages"
+    )
 
 
 def _include_middleware(app: FastAPI) -> None:

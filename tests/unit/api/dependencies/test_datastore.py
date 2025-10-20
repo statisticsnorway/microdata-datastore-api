@@ -48,6 +48,7 @@ def test_get_datastore_id_reads_rdn_from_path(client, mock_db_client):
     )
     mock_db_client.get_datastore.assert_called_once_with(3)
 
+
 # TODO: Remove test once legacy routers without rdn is removed
 def test_legacy_path_defaults_to_id_1(client, mock_db_client):
     response: Response = client.get(
