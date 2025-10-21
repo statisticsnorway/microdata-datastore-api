@@ -5,7 +5,7 @@ from fastapi import APIRouter, Cookie, Depends, Query
 
 from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import Job, JobStatus, Operation
-from datastore_api.api.dependencies.datastore import get_datastore_id
+from datastore_api.api.common.dependencies import get_datastore_id
 from datastore_api.api.jobs.models import (
     NewJobResponse,
     NewJobsRequest,

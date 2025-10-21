@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends
 
-from datastore_api.api.dependencies.datastore import get_datastore_root_dir
+from datastore_api.api.common.dependencies import get_datastore_root_dir
 from datastore_api.api.metadata.models import (
     MetadataQuery,
     NameParam,
