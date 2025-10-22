@@ -14,7 +14,7 @@ def test_get_languages(test_app: testclient.TestClient, mocker):
         languages, "find_languages", return_value=MOCKED_LANGUAGES
     )
     response: Response = test_app.get(
-        "/languages",
+        "/datastores/no.ssb.test/languages",
         headers={"X-Request-ID": "test-123"},
     )
     spy.assert_called()

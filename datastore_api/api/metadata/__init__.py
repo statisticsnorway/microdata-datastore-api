@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends
 
-from datastore_api.adapter import db
+from datastore_api.api.common.dependencies import get_datastore_root_dir
 from datastore_api.api.metadata.models import (
     MetadataQuery,
     NameParam,
@@ -11,13 +11,6 @@ from datastore_api.api.metadata.models import (
 from datastore_api.domain import metadata
 
 router = APIRouter()
-
-
-def get_datastore_root_dir(
-    database_client: db.DatabaseClient = Depends(db.get_database_client),
-) -> Path:
-    """Return the path to the datastore directory"""
-    return Path(database_client.get_datastore().directory)
 
 
 @router.get("/data-store")
