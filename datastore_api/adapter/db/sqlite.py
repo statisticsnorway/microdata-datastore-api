@@ -750,7 +750,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def get_datastore_id_from_rdn(self, rdn: str) -> int:
+    def get_datastore_id_from_rdn(self, rdn: str) -> int | None:
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -763,6 +763,9 @@ class SqliteDbClient:
                 """,
                 (rdn,),
             ).fetchone()
-            return int(datastore_id["datastore_id"])
+            if datastore_id is None:
+                return None
+            else:
+                return int(datastore_id["datastore_id"])
         finally:
             conn.close()
