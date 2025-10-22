@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -6,9 +7,8 @@ from fastapi import Depends, Request
 from datastore_api.adapter import db
 from datastore_api.common.exceptions import DatastoreNotFoundException
 
-import logging
-
 logger = logging.getLogger()
+
 
 # TODO: Remove Optional RDN + default once legacy routers are removed.
 def get_datastore_id(
