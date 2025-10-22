@@ -763,9 +763,6 @@ class SqliteDbClient:
                 """,
                 (rdn,),
             ).fetchone()
-            if datastore_id is None:
-                return None
-            else:
-                return int(datastore_id["datastore_id"])
+            return int(datastore_id) if datastore_id is not None else None
         finally:
             conn.close()
