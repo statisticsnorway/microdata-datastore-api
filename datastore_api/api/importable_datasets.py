@@ -9,6 +9,7 @@ from datastore_api.adapter.local_storage import input_directory
 from datastore_api.adapter.local_storage.input_directory import (
     ImportableDataset,
 )
+from datastore_api.api.common.dependencies import get_datastore_id
 
 logger = logging.getLogger()
 
@@ -33,6 +34,7 @@ as it is non-breaking.
 @router.get("")
 def get_importable_datasets(
     db_client: DatabaseClient = Depends(db.get_database_client),
+    datastore_id: int = Depends(get_datastore_id),
 ) -> list[ImportableDataset]:
     in_progress_targets = [
         job.parameters.target
@@ -40,7 +42,9 @@ def get_importable_datasets(
             status=None, operations=None, ignore_completed=True
         )
     ]
-    datastore_input_dir = Path(db_client.get_datastore().directory + "_input")
+    datastore_input_dir = Path(
+        db_client.get_datastore(datastore_id).directory + "_input"
+    )
     return input_directory.get_importable_datasets(
         datastore_input_dir, filter_out=in_progress_targets
     )
@@ -50,8 +54,11 @@ def get_importable_datasets(
 def delete_importable_datasets(
     dataset_name: str,
     db_client: DatabaseClient = Depends(db.get_database_client),
+    datastore_id: int = Depends(get_datastore_id),
 ) -> dict:
-    datastore_input_dir = Path(db_client.get_datastore().directory + "_input")
+    datastore_input_dir = Path(
+        db_client.get_datastore(datastore_id).directory + "_input"
+    )
     input_directory.delete_importable_datasets(
         dataset_name, datastore_input_dir
     )

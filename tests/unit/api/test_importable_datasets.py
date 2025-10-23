@@ -22,7 +22,7 @@ DATASTORE = Datastore(
 @pytest.fixture
 def mock_db_client():
     mock = Mock()
-    mock.get_datastore.return_value = DATASTORE
+    mock.get_datastore = Mock(side_effect=lambda datastore_id: DATASTORE)
     mock.get_jobs.return_value = []
     return mock
 
