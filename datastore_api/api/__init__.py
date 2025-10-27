@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException
 
 from datastore_api.api import (
     data,
+    datastores,
     importable_datasets,
     jobs,
     languages,
@@ -43,6 +44,7 @@ def _include_routers(app: FastAPI) -> None:
     app.include_router(
         metadata.router, prefix="/metadata"
     )  # TODO: Remove legacy router once all clients use datastore-specific URLs
+    app.include_router(datastores.router, prefix="/datastores/{datastore_rdn}")
     app.include_router(data.router, prefix="/datastores/{datastore_rdn}/data")
     app.include_router(
         metadata.router, prefix="/datastores/{datastore_rdn}/metadata"
