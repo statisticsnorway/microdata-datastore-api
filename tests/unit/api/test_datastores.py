@@ -1,7 +1,6 @@
 from unittest.mock import Mock
 
 import pytest
-from fastapi import testclient
 from fastapi.testclient import TestClient
 
 from datastore_api.adapter import db
