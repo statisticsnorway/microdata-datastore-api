@@ -60,7 +60,9 @@ def _include_routers(app: FastAPI) -> None:
         prefix="/datastores/{datastore_rdn}/importable-datasets",
     )
 
-    # TODO: Remove legacy routers once all clients use datastore-specific URLs:
+    # TODO: Remove legacy routers once all clients use datastore-specific URLs
+    #       and move router definitions into the datastore/-api directory
+    #       when applicable.
     app.include_router(targets.router, prefix="/targets")
     app.include_router(languages.router, prefix="/languages")
     app.include_router(
