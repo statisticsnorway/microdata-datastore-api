@@ -11,7 +11,8 @@
             "userId": "123-123-123",
             "firstName": "Data",
             "lastName": "Admin"
-        }
+        },
+        "datastoreRdn": "no.ssb.test"
     },
     {
         "jobId": "123-123-123-123",
@@ -43,7 +44,8 @@
             "userId": "123-123-123",
             "firstName": "Data",
             "lastName": "Admin"
-        }
+        },
+        "datastoreRdn": "no.ssb.test"
     },
     {
         "jobId": "123-123-123-123",
@@ -58,6 +60,7 @@
             "userId": "123-123-123",
             "firstName": "Data",
             "lastName": "Admin"
-        }
+        },
+        "datastoreRdn": "no.ssb.test"
     }
 ]

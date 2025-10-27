@@ -43,6 +43,7 @@ JOB = {
         {"at": datetime.now(), "message": "other example"},
     ],
     "created_at": datetime.now(),
+    "datastore_rdn": "no.ssb.test",
 }
 JOB2 = {
     "status": "queued",
@@ -50,6 +51,7 @@ JOB2 = {
     "created_by": USER_INFO_DICT,
     "logs": [],
     "created_at": datetime.now(),
+    "datastore_rdn": "no.ssb.test",
 }
 TARGET_LIST = [
     Target(
@@ -58,6 +60,7 @@ TARGET_LIST = [
         status=JobStatus("completed"),
         action=["SET_STATUS", "PENDING_RELEASE"],
         last_updated_by=USER_INFO,
+        datastore_rdn="no.ssb.test",
     ),
     Target(
         name="OTHER_DATASET",
@@ -65,6 +68,7 @@ TARGET_LIST = [
         status=JobStatus("completed"),
         action=["SET_STATUS", "PENDING_RELEASE"],
         last_updated_by=USER_INFO,
+        datastore_rdn="no.ssb.test",
     ),
 ]
 TARGET_UPDATE_JOB = Job(
@@ -78,6 +82,7 @@ TARGET_UPDATE_JOB = Job(
     ),
     created_at="2022-05-18T11:40:22.519222",
     created_by=USER_INFO,
+    datastore_rdn="no.ssb.test",
 )
 NEW_TARGET_JOB = Job(
     job_id="123-123-123-123",
@@ -90,12 +95,14 @@ NEW_TARGET_JOB = Job(
     ),
     created_at="2022-05-18T11:40:22.519222",
     created_by=USER_INFO,
+    datastore_rdn="no.ssb.test",
 )
 BUMP_JOB = Job(
     job_id="bump-bump-bump-bump",
     status=JobStatus("completed"),
     created_at="2022-05-18T11:40:22.519222",
     created_by=USER_INFO,
+    datastore_rdn="no.ssb.test",
     parameters=JobParameters(
         bump_from_version="1.0.0",
         bump_to_version="2.0.0",
@@ -264,36 +271,52 @@ def test_get_job():
 
 def test_get_jobs():
     jobs = sqlite_client.get_jobs(
-        status=None, operations=None, ignore_completed=False
+        status=None,
+        operations=None,
+        ignore_completed=False,
+        datastore_id=DATASTORE_ID,
     )
     assert len(jobs) == 2
     jobs = sqlite_client.get_jobs(
         status=JobStatus("queued"),
         operations=[Operation.ADD],
         ignore_completed=True,
+        datastore_id=DATASTORE_ID,
     )
     assert len(jobs) == 1
 
 
 def test_get_jobs_for_target():
-    jobs = sqlite_client.get_jobs_for_target("MY_DATASET")
+    jobs = sqlite_client.get_jobs_for_target(
+        "MY_DATASET", datastore_id=DATASTORE_ID
+    )
     assert len(jobs) == 1
 
 
 def test_new_job():
     job = sqlite_client.new_job(
         NewJobRequest(
-            operation=Operation.ADD, target="NEW_DATASET"
-        ).generate_job_from_request("", UserInfo(**USER_INFO_DICT)),
+            operation=Operation.ADD,
+            target="NEW_DATASET",
+        ).generate_job_from_request(
+            "",
+            UserInfo(**USER_INFO_DICT),
+            datastore_rdn="no.ssb.test",
+        ),
     )
     assert job
-    jobs = sqlite_client.get_jobs_for_target("NEW_DATASET")
+    jobs = sqlite_client.get_jobs_for_target(
+        "NEW_DATASET", datastore_id=DATASTORE_ID
+    )
     assert len(jobs) == 1
     with pytest.raises(JobExistsException):
         sqlite_client.new_job(
             NewJobRequest(
-                operation=Operation.ADD, target="NEW_DATASET"
-            ).generate_job_from_request("", UserInfo(**USER_INFO_DICT))
+                operation=Operation.ADD,
+                target="NEW_DATASET",
+            ).generate_job_from_request(
+                "", UserInfo(**USER_INFO_DICT), datastore_rdn="no.ssb.test"
+            )
         )
 
 
@@ -328,11 +351,15 @@ def test_update_job():
 def test_new_job_different_created_at():
     job1 = NewJobRequest(
         operation=Operation.ADD, target="NEW_DATASET"
-    ).generate_job_from_request("abc", UserInfo(**USER_INFO_DICT))
+    ).generate_job_from_request(
+        "abc", UserInfo(**USER_INFO_DICT), datastore_rdn="no.ssb.test"
+    )
 
     job2 = NewJobRequest(
         operation=Operation.ADD, target="NEW_DATASET"
-    ).generate_job_from_request("def", UserInfo(**USER_INFO_DICT))
+    ).generate_job_from_request(
+        "def", UserInfo(**USER_INFO_DICT), datastore_rdn="no.ssb.test"
+    )
     assert job1.created_at != job2.created_at
 
 
@@ -411,7 +438,7 @@ def test_set_and_get_maintenance_status():
 
 
 def test_get_targets():
-    targets = sqlite_client.get_targets()
+    targets = sqlite_client.get_targets(datastore_id=DATASTORE_ID)
     target_names = [target.name for target in targets]
     assert "MY_DATASET" in target_names
     assert "OTHER_DATASET" in target_names
@@ -419,14 +446,14 @@ def test_get_targets():
 
 def test_update_target():
     sqlite_client.update_target(TARGET_UPDATE_JOB)
-    targets = sqlite_client.get_targets()
+    targets = sqlite_client.get_targets(datastore_id=DATASTORE_ID)
     assert len(targets) == 2
     target = targets[0]
     assert target.action == ["ADD"]
     assert target.status == "queued"
 
     sqlite_client.update_target(NEW_TARGET_JOB)
-    targets = sqlite_client.get_targets()
+    targets = sqlite_client.get_targets(datastore_id=DATASTORE_ID)
     assert len(targets) == 3
     target_names = [target.name for target in targets]
     assert "NEW_DATASET" in target_names
@@ -436,7 +463,7 @@ def test_update_target():
 
 def test_update_targets_bump():
     sqlite_client.update_bump_targets(BUMP_JOB)
-    targets = sqlite_client.get_targets()
+    targets = sqlite_client.get_targets(datastore_id=DATASTORE_ID)
     assert len(targets) == 4
     target_names = [target.name for target in targets]
     assert "MY_DATASET" in target_names

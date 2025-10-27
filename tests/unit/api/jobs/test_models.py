@@ -20,6 +20,7 @@ USER_INFO_DICT = {
     "lastName": "Admin",
 }
 USER_INFO = UserInfo(**USER_INFO_DICT)
+DATASTORE_ID = 1
 
 
 def test_new_jobs_requests():
@@ -28,7 +29,10 @@ def test_new_jobs_requests():
         assert job_request.target is not None
         assert job_request.operation is not None
         assert isinstance(
-            job_request.generate_job_from_request(JOB_ID, USER_INFO), Job
+            job_request.generate_job_from_request(
+                JOB_ID, USER_INFO, datastore_rdn="no.ssb.test"
+            ),
+            Job,
         )
 
 

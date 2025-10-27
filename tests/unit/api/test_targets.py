@@ -27,6 +27,7 @@ TARGET_LIST = [
         status=JobStatus("completed"),
         action=["ADD"],
         last_updated_by=USER_INFO,
+        datastore_rdn="no.ssb.test",
     ),
     Target(
         name="OTHER_DATASET",
@@ -34,6 +35,7 @@ TARGET_LIST = [
         status=JobStatus("completed"),
         action=["SET_STATUS", "PENDING_RELEASE"],
         last_updated_by=USER_INFO,
+        datastore_rdn="no.ssb.test",
     ),
 ]
 JOB_LIST = [
@@ -45,6 +47,7 @@ JOB_LIST = [
         ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
+        datastore_rdn="no.ssb.test",
     ),
     Job(
         job_id="123-123-123-123",
@@ -54,6 +57,7 @@ JOB_LIST = [
         ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
+        datastore_rdn="no.ssb.test",
     ),
 ]
 
@@ -86,7 +90,7 @@ def test_get_targets(client, mock_db_client):
 def test_get_target(client, mock_db_client):
     response = client.get("/targets/MY_DATASET/jobs")
     mock_db_client.get_jobs_for_target.assert_called_once()
-    mock_db_client.get_jobs_for_target.assert_called_with("MY_DATASET")
+    mock_db_client.get_jobs_for_target.assert_called_with("MY_DATASET", 1)
     assert response.status_code == 200
     assert response.json() == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST

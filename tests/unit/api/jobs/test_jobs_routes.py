@@ -34,6 +34,7 @@ JOB_LIST = [
         ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
+        datastore_rdn="no.ssb.test",
     ),
     Job(
         job_id="123-123-123-123",
@@ -46,6 +47,7 @@ JOB_LIST = [
         ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
+        datastore_rdn="no.ssb.test",
     ),
 ]
 NEW_JOB_REQUEST = {
