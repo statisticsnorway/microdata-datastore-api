@@ -93,8 +93,6 @@ DATASTORE = Datastore(
 )
 
 
-
-
 @pytest.fixture
 def mock_db_client():
     mock = Mock()
@@ -131,7 +129,6 @@ def test_get_jobs_for_datastore(client, mock_db_client):
     ]
     assert response.status_code == 200
     mock_db_client.get_jobs.assert_called_once()
-
 
 
 def test_new_job(client, mock_db_client, mock_auth_client):
