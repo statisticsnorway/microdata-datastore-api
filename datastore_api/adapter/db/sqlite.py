@@ -125,6 +125,7 @@ class SqliteDbClient:
                 j.parameters,
                 j.created_at,
                 j.created_by,
+                j.datastore_id,
                 COALESCE((
                     SELECT json_group_array(
                         json_object(
@@ -156,7 +157,6 @@ class SqliteDbClient:
             cursor = conn.cursor()
             job_id = int(job_id)
             job_row = self._get_job_row_with_logs(cursor, job_id)
-
             if not job_row:
                 raise NotFoundException(f"No job found for jobId: {job_id}")
 
@@ -174,6 +174,7 @@ class SqliteDbClient:
                     Log(at=row["at"], message=row["message"])
                     for row in json.loads(job_row["logs_json"])
                 ],
+                datastore_rdn=self.get_datastore(job_row["datastore_id"]).rdn,
             )
         finally:
             conn.close()
@@ -183,11 +184,14 @@ class SqliteDbClient:
         status: JobStatus | None,
         operations: list[Operation] | None,
         ignore_completed: bool = False,
+        datastore_id: int | None = None,
     ) -> list[Job]:
         """
         Returns list of jobs with matching status from database.
         """
         where_conditions = []
+        if datastore_id is not None:
+            where_conditions.append(f"datastore_id = '{datastore_id}'")
         if status is not None:
             where_conditions.append(f"status = '{status}'")
         if ignore_completed:
@@ -213,6 +217,7 @@ class SqliteDbClient:
                     j.parameters,
                     j.created_at,
                     j.created_by,
+                    j.datastore_id,
                     COALESCE((
                         SELECT json_group_array(
                             json_object(
@@ -233,6 +238,7 @@ class SqliteDbClient:
             ).fetchall()
             if not job_rows:
                 return []
+            id_to_rdn_map = self._get_datastore_id_to_rdn_map()
             return [
                 Job(
                     job_id=str(job_row["job_id"]),
@@ -244,13 +250,14 @@ class SqliteDbClient:
                         Log(at=row["at"], message=row["message"])
                         for row in json.loads(job_row["logs_json"])
                     ],
+                    datastore_rdn=id_to_rdn_map[job_row["datastore_id"]],
                 )
                 for job_row in job_rows
             ]
         finally:
             conn.close()
 
-    def get_jobs_for_target(self, name: str) -> list[Job]:
+    def get_jobs_for_target(self, name: str, datastore_id: int) -> list[Job]:
         """
         Returns list of jobs with matching target name for database.
         Including datastore bump jobs that include the name in
@@ -267,6 +274,7 @@ class SqliteDbClient:
                     j.parameters,
                     j.created_at,
                     j.created_by,
+                    j.datastore_id,
                     COALESCE((
                         SELECT json_group_array(
                             json_object(
@@ -282,12 +290,13 @@ class SqliteDbClient:
                         ) AS job_log_row
                     ), '[]') AS logs_json
                 FROM job j
-                WHERE j.target = ?;
+                WHERE j.target = ? AND j.datastore_id = ?;
                 """,
-                (name,),
+                (name, datastore_id),
             ).fetchall()
             if not job_rows:
                 return []
+            id_to_rdn_map = self._get_datastore_id_to_rdn_map()
             return [
                 Job(
                     job_id=str(job_row["job_id"]),
@@ -299,6 +308,7 @@ class SqliteDbClient:
                         Log(at=row["at"], message=row["message"])
                         for row in json.loads(job_row["logs_json"])
                     ],
+                    datastore_rdn=id_to_rdn_map[job_row["datastore_id"]],
                 )
                 for job_row in job_rows
             ]
@@ -315,6 +325,7 @@ class SqliteDbClient:
         try:
             conn.execute("BEGIN IMMEDIATE")
             cursor = conn.cursor()
+            datastore_id = self.get_datastore_id_from_rdn(new_job.datastore_rdn)
             cursor.execute(
                 """
                 SELECT 1 FROM job
@@ -322,7 +333,7 @@ class SqliteDbClient:
                 AND status NOT IN ('completed', 'failed')
                 LIMIT 1
                 """,
-                (new_job.parameters.target, 1),
+                (new_job.parameters.target, datastore_id),
             )
             in_progress_job = cursor.fetchone()
             if not in_progress_job:
@@ -342,7 +353,7 @@ class SqliteDbClient:
                     """,
                     (
                         new_job.parameters.target,
-                        1,
+                        datastore_id,
                         new_job.status,
                         json.dumps(
                             new_job.parameters.model_dump(by_alias=True)
@@ -444,6 +455,7 @@ class SqliteDbClient:
                     Log(at=row["at"], message=row["message"])
                     for row in json.loads(job_row["logs_json"])
                 ],
+                datastore_rdn=self.get_datastore(job_row["datastore_id"]).rdn,
             )
         except sqlite3.Error as e:
             conn.rollback()
@@ -596,7 +608,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def get_targets(self) -> list[Target]:
+    def get_targets(self, datastore_id: int) -> list[Target]:
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -612,8 +624,9 @@ class SqliteDbClient:
                 FROM target
                 WHERE datastore_id = ?
                 """,
-                (1,),
+                (datastore_id,),
             ).fetchall()
+            id_to_rdn_map = self._get_datastore_id_to_rdn_map()
             return [
                 Target(
                     name=target_row["name"],
@@ -623,6 +636,7 @@ class SqliteDbClient:
                     last_updated_by=UserInfo(
                         **json.loads(target_row["last_updated_by"])
                     ),
+                    datastore_rdn=id_to_rdn_map[target_row["datastore_id"]],
                 )
                 for target_row in target_rows
             ]
@@ -637,6 +651,7 @@ class SqliteDbClient:
         timestamp: datetime,
         created_by: str,
         action: str,
+        datastore_id: int,
     ) -> None:
         cursor.execute(
             """
@@ -655,7 +670,7 @@ class SqliteDbClient:
                     last_updated_by = excluded.last_updated_by,
                     action = excluded.action
                 """,
-            (name, 1, status, timestamp, created_by, action),
+            (name, datastore_id, status, timestamp, created_by, action),
         )
 
     def update_target(self, job: Job) -> None:
@@ -663,6 +678,7 @@ class SqliteDbClient:
         try:
             conn.execute("BEGIN IMMEDIATE")
             cursor = conn.cursor()
+            datastore_id = self.get_datastore_id_from_rdn(job.datastore_rdn)
             self._upsert_one_target(
                 cursor,
                 job.parameters.target,
@@ -672,6 +688,7 @@ class SqliteDbClient:
                     job.created_by.model_dump(exclude_none=True, by_alias=True)
                 ),
                 ",".join(job.get_action()),
+                datastore_id,
             )
             conn.commit()
         except Exception as e:
@@ -685,6 +702,7 @@ class SqliteDbClient:
         try:
             conn.execute("BEGIN IMMEDIATE")
             cursor = conn.cursor()
+            datastore_id = self.get_datastore_id_from_rdn(job.datastore_rdn)
             bump_manifesto = job.parameters.bump_manifesto
             if bump_manifesto is None:
                 raise ValueError(
@@ -713,6 +731,7 @@ class SqliteDbClient:
                     datetime.now(),
                     created_by,
                     ",".join([operation, str(version)]),
+                    datastore_id,
                 )
             conn.commit()
         except Exception as e:
@@ -768,5 +787,20 @@ class SqliteDbClient:
                 if datastore_id is not None
                 else None
             )
+        finally:
+            conn.close()
+
+    def _get_datastore_id_to_rdn_map(self) -> dict[int, str]:
+        conn = self._conn()
+        try:
+            cursor = conn.cursor()
+            rows = cursor.execute(
+                """
+                SELECT
+                    datastore_id, rdn
+                FROM datastore
+                """,
+            ).fetchall()
+            return {row[0]: row[1] for row in rows}
         finally:
             conn.close()

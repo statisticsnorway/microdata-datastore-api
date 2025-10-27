@@ -107,6 +107,7 @@ class Job(CamelModel, use_enum_values=True):
     log: list[Log] = []
     created_at: str
     created_by: UserInfo
+    datastore_rdn: str
 
     def get_action(self) -> list[str]:
         match self.parameters.operation:
@@ -131,6 +132,7 @@ class Target(CamelModel, use_enum_values=True, extra="forbid"):
     status: JobStatus
     last_updated_by: UserInfo
     action: list[str]
+    datastore_rdn: str
 
 
 class MaintenanceStatus(CamelModel):
