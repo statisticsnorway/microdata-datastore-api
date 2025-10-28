@@ -11,7 +11,6 @@ from datastore_api.adapter.db.models import (
     JobStatus,
     UserInfo,
 )
-from datastore_api.common.exceptions import NotFoundException
 from datastore_api.main import app
 
 NOT_FOUND_MESSAGE = "Not found"
@@ -86,7 +85,7 @@ UPDATE_JOB_REQUEST = {"status": "initiated", "log": "extra logging"}
 
 DATASTORE = Datastore(
     datastore_id=1,
-    rdn="no.dev.test",
+    rdn="no.ssb.test",
     description="Datastore for testing",
     directory="tests/resources/test_datastore",
     name="Test datastore",
@@ -121,9 +120,9 @@ def client(mock_db_client, mock_auth_client):
     app.dependency_overrides.clear()
 
 
-def test_get_jobs(client, mock_db_client):
+def test_get_jobs_for_datastore(client, mock_db_client):
     response = client.get(
-        "jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
+        "datastores/no.ssb.test/jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
     )
     assert response.json() == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST
@@ -132,27 +131,8 @@ def test_get_jobs(client, mock_db_client):
     mock_db_client.get_jobs.assert_called_once()
 
 
-def test_get_job(client, mock_db_client):
-    response = client.get(f"/jobs/{JOB_ID}")
-    mock_db_client.get_job.assert_called_once()
-    mock_db_client.get_job.assert_called_with(JOB_ID)
-    assert response.status_code == 200
-    assert response.json() == JOB_LIST[0].model_dump(
-        exclude_none=True, by_alias=True
-    )
-
-
-def test_get_job_not_found(client, mock_db_client):
-    mock_db_client.get_job.side_effect = NotFoundException(NOT_FOUND_MESSAGE)
-    response = client.get(f"/jobs/{JOB_ID}")
-    mock_db_client.get_job.assert_called_once()
-    mock_db_client.get_job.assert_called_with(JOB_ID)
-    assert response.status_code == 404
-    assert response.json() == {"message": NOT_FOUND_MESSAGE}
-
-
 def test_new_job(client, mock_db_client, mock_auth_client):
-    response = client.post("/jobs", json=NEW_JOB_REQUEST)
+    response = client.post("datastores/no.ssb.test/jobs", json=NEW_JOB_REQUEST)
     assert mock_db_client.new_job.call_count == 2
     assert mock_db_client.update_target.call_count == 2
     mock_auth_client.authorize_data_administrator.assert_called_once()
@@ -160,39 +140,4 @@ def test_new_job(client, mock_db_client, mock_auth_client):
     assert response.json() == [
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
-    ]
-
-
-def test_update_job(client, mock_db_client):
-    response = client.put(f"/jobs/{JOB_ID}", json=UPDATE_JOB_REQUEST)
-    mock_db_client.update_target.assert_called_once()
-    mock_db_client.update_job.assert_called_once()
-    mock_db_client.update_job.assert_called_with(
-        JOB_ID,
-        JobStatus(UPDATE_JOB_REQUEST["status"]),
-        None,
-        UPDATE_JOB_REQUEST["log"],
-    )
-    assert response.status_code == 200
-    assert response.json() == {"message": f"Updated job with jobId {JOB_ID}"}
-
-
-def test_update_job_bad_request(client, mock_db_client):
-    response = client.put(
-        f"/jobs/{JOB_ID}",
-        json={"status": "no-such-status"},
-    )
-    mock_db_client.update_target.assert_not_called()
-    assert response.status_code == 400
-    assert response.json().get("details") is not None
-
-
-def test_update_job_disabled_bump(client):
-    response = client.post("/jobs", json=BUMP_JOB_REQUEST)
-    assert response.status_code == 200
-    assert response.json() == [
-        {
-            "msg": "FAILED: Bumping the datastore is disabled",
-            "status": "FAILED",
-        },
     ]

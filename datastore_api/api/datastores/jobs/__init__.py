@@ -5,13 +5,17 @@ from fastapi import APIRouter, Cookie, Depends, Query
 
 from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import Job, JobStatus, Operation
-from datastore_api.api.common.dependencies import get_datastore_id
+from datastore_api.api.common.dependencies import (
+    get_datastore_id,
+    get_datastore_rdn_from_request,
+)
 from datastore_api.api.jobs.models import (
     NewJobResponse,
     NewJobsRequest,
-    UpdateJobRequest,
 )
-from datastore_api.common.exceptions import BumpingDisabledException
+from datastore_api.common.exceptions import (
+    BumpingDisabledException,
+)
 
 logger = logging.getLogger()
 
@@ -19,14 +23,15 @@ router = APIRouter()
 
 
 @router.get("", response_model_exclude_none=True)
-def get_jobs(
+def get_jobs_for_datastore(
     status: Optional[str] = Query(None),
     operation: Optional[str] = Query(None),
     ignoreCompleted: bool = Query(False),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
+    datastore_id: int = Depends(get_datastore_id),
 ) -> list[Job]:
     return database_client.get_jobs(
-        datastore_id=None,
+        datastore_id=datastore_id,
         status=JobStatus(status) if status else None,
         operations=[Operation(op) for op in operation.split(",")]
         if operation is not None
@@ -35,7 +40,6 @@ def get_jobs(
     )
 
 
-# TODO: Legacy - remove once all clients use rdn-paths for posting new jobs
 @router.post("", response_model_exclude_none=True)
 def new_job(
     validated_body: NewJobsRequest,
@@ -43,6 +47,7 @@ def new_job(
     user_info: str | None = Cookie(None, alias="user-info"),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
+    datastore_rdn: str = Depends(get_datastore_rdn_from_request),
     datastore_id: int = Depends(get_datastore_id),
 ) -> list[NewJobResponse]:
     parsed_user_info = auth_client.authorize_data_administrator(
@@ -63,9 +68,7 @@ def new_job(
             else:
                 job = database_client.new_job(
                     job_request.generate_job_from_request(
-                        "",
-                        parsed_user_info,
-                        database_client.get_datastore(datastore_id).rdn,
+                        "", parsed_user_info, datastore_rdn
                     )
                 )
                 response_list.append(
@@ -88,29 +91,3 @@ def new_job(
             logger.exception(e)
             response_list.append({"status": "FAILED", "msg": "FAILED"})
     return response_list
-
-
-@router.get("/{job_id}", response_model_exclude_none=True)
-def get_job(
-    job_id: str,
-    database_client: db.DatabaseClient = Depends(db.get_database_client),
-) -> Job:
-    return database_client.get_job(job_id)
-
-
-@router.put("/{job_id}")
-def update_job(
-    job_id: str,
-    validated_body: UpdateJobRequest,
-    database_client: db.DatabaseClient = Depends(db.get_database_client),
-) -> dict:
-    job = database_client.update_job(
-        job_id,
-        validated_body.status,
-        validated_body.description,
-        validated_body.log,
-    )
-    database_client.update_target(job)
-    if job.parameters.target == "DATASTORE" and job.status == "completed":
-        database_client.update_bump_targets(job)
-    return {"message": f"Updated job with jobId {job_id}"}

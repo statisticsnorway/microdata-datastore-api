@@ -39,7 +39,7 @@ def get_importable_datasets(
     in_progress_targets = [
         job.parameters.target
         for job in db_client.get_jobs(
-            status=None, operations=None, ignore_completed=True
+            datastore_id, status=None, operations=None, ignore_completed=True
         )
     ]
     datastore_input_dir = Path(

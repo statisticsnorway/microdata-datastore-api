@@ -51,7 +51,7 @@ class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
         return self
 
     def generate_job_from_request(
-        self, job_id: str, user_info: UserInfo
+        self, job_id: str, user_info: UserInfo, datastore_rdn: str
     ) -> Job:
         if self.operation == "SET_STATUS":
             job_parameters = JobParameters(
@@ -84,6 +84,7 @@ class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
             parameters=job_parameters,
             created_at=datetime.now().isoformat(),
             created_by=user_info,
+            datastore_rdn=datastore_rdn,
         )
 
 

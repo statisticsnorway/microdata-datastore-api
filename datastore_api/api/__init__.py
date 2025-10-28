@@ -38,13 +38,8 @@ def setup_api(app: FastAPI) -> None:
 
 
 def _include_routers(app: FastAPI) -> None:
-    app.include_router(
-        data.router, prefix="/data"
-    )  # TODO: Remove legacy router once all clients use datastore-specific URLs
-    app.include_router(
-        metadata.router, prefix="/metadata"
-    )  # TODO: Remove legacy router once all clients use datastore-specific URLs
     app.include_router(datastores.router, prefix="/datastores/{datastore_rdn}")
+
     app.include_router(data.router, prefix="/datastores/{datastore_rdn}/data")
     app.include_router(
         metadata.router, prefix="/datastores/{datastore_rdn}/metadata"
@@ -53,17 +48,28 @@ def _include_routers(app: FastAPI) -> None:
     app.include_router(
         maintenance_statuses.router, prefix="/maintenance-statuses"
     )
-    app.include_router(targets.router, prefix="/targets")
-    app.include_router(
-        importable_datasets.router, prefix="/importable-datasets"
-    )
     app.include_router(jobs.router, prefix="/jobs")
-    app.include_router(
-        languages.router, prefix="/languages"
-    )  # TODO: Remove legacy router once all clients use datastore-specific URLs
     app.include_router(
         languages.router, prefix="/datastores/{datastore_rdn}/languages"
     )
+    app.include_router(
+        targets.router, prefix="/datastores/{datastore_rdn}/targets"
+    )
+    app.include_router(
+        importable_datasets.router,
+        prefix="/datastores/{datastore_rdn}/importable-datasets",
+    )
+
+    # TODO: Remove legacy routers once all clients use datastore-specific URLs
+    #       and move router definitions into the datastore/-api directory
+    #       when applicable.
+    app.include_router(targets.router, prefix="/targets")
+    app.include_router(languages.router, prefix="/languages")
+    app.include_router(
+        importable_datasets.router, prefix="/importable-datasets"
+    )
+    app.include_router(data.router, prefix="/data")
+    app.include_router(metadata.router, prefix="/metadata")
 
 
 def _include_middleware(app: FastAPI) -> None:
