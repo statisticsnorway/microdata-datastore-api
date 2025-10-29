@@ -16,17 +16,19 @@ class DatabaseClient(Protocol):
     def get_job(self, job_id: int | str) -> Job: ...
     def get_jobs(
         self,
+        *,
         datastore_id: int | None,
         status: JobStatus | None,
         operations: list[Operation] | None,
         ignore_completed: bool = False,
     ) -> list[Job]: ...
     def get_jobs_for_target(
-        self, name: str, datastore_id: int
+        self, *, name: str, datastore_id: int
     ) -> list[Job]: ...
     def new_job(self, new_job: Job) -> Job: ...
     def update_job(
         self,
+        *,
         job_id: str,
         status: JobStatus | None,
         description: str | None,

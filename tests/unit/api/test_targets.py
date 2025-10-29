@@ -90,7 +90,9 @@ def test_get_targets(client, mock_db_client):
 def test_get_target(client, mock_db_client):
     response = client.get("/targets/MY_DATASET/jobs")
     mock_db_client.get_jobs_for_target.assert_called_once()
-    mock_db_client.get_jobs_for_target.assert_called_with("MY_DATASET", 1)
+    mock_db_client.get_jobs_for_target.assert_called_with(
+        name="MY_DATASET", datastore_id=1
+    )
     assert response.status_code == 200
     assert response.json() == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST
