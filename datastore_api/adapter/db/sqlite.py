@@ -740,6 +740,19 @@ class SqliteDbClient:
         finally:
             conn.close()
 
+    def get_datastores(self) -> list[str]:
+        conn = self._conn()
+        try:
+            cursor = conn.cursor()
+            rows = cursor.execute(
+                """
+                SELECT rdn FROM datastore
+                """,
+            ).fetchall()
+            return [row[0] for row in rows]
+        finally:
+            conn.close()
+
     def get_datastore(self, datastore_id: int) -> Datastore:
         conn = self._conn()
         try:

@@ -487,6 +487,11 @@ def test_update_targets_bump():
     )
 
 
+def test_get_datastores():
+    datastores = sqlite_client.get_datastores()
+    assert "no.dev.test" in datastores
+
+
 def test_get_datastore():
     datastore = sqlite_client.get_datastore(DATASTORE_ID)
     assert "no.ssb.test" in datastore.rdn

@@ -9,6 +9,13 @@ router = APIRouter()
 
 
 @router.get("")
+async def get_datastores(
+    db_client: db.DatabaseClient = Depends(db.get_database_client),
+) -> list[str]:
+    return db_client.get_datastores()
+
+
+@router.get("/{datastore_rdn}")
 async def get_datastore(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
@@ -16,4 +23,4 @@ async def get_datastore(
     return db_client.get_datastore(datastore_id)
 
 
-router.include_router(jobs.router, prefix="/jobs")
+router.include_router(jobs.router, prefix="/{datastore_rdn}/jobs")

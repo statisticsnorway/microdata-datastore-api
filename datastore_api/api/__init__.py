@@ -38,7 +38,7 @@ def setup_api(app: FastAPI) -> None:
 
 
 def _include_routers(app: FastAPI) -> None:
-    app.include_router(datastores.router, prefix="/datastores/{datastore_rdn}")
+    app.include_router(datastores.router, prefix="/datastores")
 
     app.include_router(data.router, prefix="/datastores/{datastore_rdn}/data")
     app.include_router(
