@@ -22,6 +22,7 @@ DATASTORE = Datastore(
 def mock_db_client():
     mock = Mock()
     mock.get_datastore = Mock(side_effect=lambda datastore_id: DATASTORE)
+    mock.get_datastores = Mock(side_effect=lambda: ["no.dev.test"])
     return mock
 
 
@@ -39,3 +40,9 @@ def test_get_datastore(client):
     )
     assert response.status_code == 200
     assert response.json() == DATASTORE.model_dump()
+
+
+def test_get_datastores(client):
+    response = client.get("/datastores", headers={"X-Request-ID": "abc123"})
+    assert response.status_code == 200
+    assert response.json() == ["no.dev.test"]
