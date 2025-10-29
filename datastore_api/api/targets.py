@@ -24,4 +24,6 @@ def get_target_jobs(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
 ) -> list[Job]:
-    return database_client.get_jobs_for_target(name, datastore_id)
+    return database_client.get_jobs_for_target(
+        name=name, datastore_id=datastore_id
+    )

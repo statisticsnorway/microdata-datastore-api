@@ -288,7 +288,7 @@ def test_get_jobs():
 
 def test_get_jobs_for_target():
     jobs = sqlite_client.get_jobs_for_target(
-        "MY_DATASET", datastore_id=DATASTORE_ID
+        name="MY_DATASET", datastore_id=DATASTORE_ID
     )
     assert len(jobs) == 1
 
@@ -306,7 +306,7 @@ def test_new_job():
     )
     assert job
     jobs = sqlite_client.get_jobs_for_target(
-        "NEW_DATASET", datastore_id=DATASTORE_ID
+        name="NEW_DATASET", datastore_id=DATASTORE_ID
     )
     assert len(jobs) == 1
     with pytest.raises(JobExistsException):
