@@ -43,8 +43,6 @@ def test_get_datastore(client):
 
 
 def test_get_datastores(client):
-    response = client.get(
-        "/datastores", headers={"X-Request-ID": "abc123"}
-    )
+    response = client.get("/datastores", headers={"X-Request-ID": "abc123"})
     assert response.status_code == 200
     assert response.json() == ["no.dev.test"]
