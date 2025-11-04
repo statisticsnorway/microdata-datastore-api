@@ -10,6 +10,7 @@ class Environment:
     jwks_url: str
     stack: str
     jwt_auth: bool
+    no_jwt_validation_auth: bool
 
 
 def _initialize_environment() -> Environment:
@@ -21,6 +22,11 @@ def _initialize_environment() -> Environment:
         stack=os.environ["STACK"],
         jwt_auth=(
             False if os.environ.get("JWT_AUTH", "true") == "false" else True
+        ),
+        no_jwt_validation_auth=(
+            True
+            if os.environ.get("NO_JWT_VALIDATION_AUTH", "false") == "true"
+            else False
         ),
     )
 
