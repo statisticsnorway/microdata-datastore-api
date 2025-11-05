@@ -150,7 +150,7 @@ class DisabledAuthClient:
         self,
         authorization_header: str | None,  # NOSONAR(S1172)
     ) -> str:
-        logger.info('Auth toggled off. Returning "default" as user_id.')
+        logger.error('Auth toggled off. Returning "default" as user_id.')
         return "default"
 
     def authorize_data_administrator(
@@ -158,7 +158,7 @@ class DisabledAuthClient:
         authorization_cookie: str | None,  # NOSONAR(S1172)
         user_info_cookie: str | None,  # NOSONAR(S1172)
     ) -> UserInfo:
-        logger.warning("JWT_AUTH is turned off. Returning default UserInfo")
+        logger.error("JWT_AUTH is turned off. Returning default UserInfo")
         return UserInfo(
             user_id="1234-1234-1234-1234",
             first_name="Test",
@@ -166,7 +166,7 @@ class DisabledAuthClient:
         )
 
 
-class NoValidationAuthClient:
+class SkipSignatureAuthClient:
     """
     This auth client reads JWT claims WITHOUT signature validation.
     Only use this in development/testing environments.
@@ -180,6 +180,9 @@ class NoValidationAuthClient:
         )
 
     def authorize_user(self, authorization_header: str | None) -> str:
+        logger.error(
+            "This auth client reads JWT claims WITHOUT signature validation!"
+        )
         if authorization_header is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -216,6 +219,9 @@ class NoValidationAuthClient:
     def authorize_data_administrator(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
+        logger.error(
+            "This auth client reads JWT claims WITHOUT signature validation!"
+        )
         if authorization_cookie is None:
             raise AuthError("Unauthorized. No authorization token was provided")
         if user_info_cookie is None:
@@ -288,7 +294,7 @@ def get_auth_client() -> AuthClient:
             "JWT tokens will be read WITHOUT signature validation. "
             "This should only be used in development/testing environments."
         )
-        return NoValidationAuthClient()
+        return SkipSignatureAuthClient()
     if not environment.jwt_auth:
         logger.error('Auth toggled off. Returning "default" as user_id.')
         return DisabledAuthClient()
