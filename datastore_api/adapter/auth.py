@@ -288,14 +288,20 @@ class SkipSignatureAuthClient:
 
 
 def get_auth_client() -> AuthClient:
-    if environment.no_jwt_validation_auth:
-        logger.error(
-            "NO_JWT_VALIDATION_AUTH is enabled. "
-            "JWT tokens will be read WITHOUT signature validation. "
-            "This should only be used in development/testing environments."
-        )
-        return SkipSignatureAuthClient()
-    if not environment.jwt_auth:
-        logger.error('Auth toggled off. Returning "default" as user_id.')
-        return DisabledAuthClient()
-    return MicrodataAuthClient()
+    match environment.jwt_auth:
+        case "FULL":
+            return MicrodataAuthClient()
+        case "SKIP_SIGNATURE":
+            logger.error(
+                "SKIP_SIGNATURE is enabled. "
+                "JWT tokens will be read WITHOUT signature validation. "
+                "This should only be used in development/testing environments."
+            )
+            return SkipSignatureAuthClient()
+        case "OFF":
+            logger.error('Auth toggled off. Returning "default" as user_id.')
+            return DisabledAuthClient()
+        case _:
+            raise InternalServerError(
+                f"Unrecognized auth client: {environment.jwt_auth}"
+            )
