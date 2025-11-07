@@ -4,7 +4,7 @@ os.environ["DOCKER_HOST_NAME"] = "localhost"
 os.environ["STACK"] = "test"
 os.environ["COMMIT_ID"] = "abc123"
 os.environ["SQLITE_URL"] = "test.db"
-os.environ["JWT_AUTH"] = "false"
+os.environ["JWT_AUTH"] = "OFF"
 os.environ["JWKS_URL"] = "http://localhost"
 
 import pytest
