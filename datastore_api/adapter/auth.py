@@ -31,14 +31,14 @@ class AuthClient(Protocol):
 
 
 class MicrodataAuthClient:
-    valid_aud: str
     jwks_client: PyJWKClient
+    valid_aud_jobs: str
+    valid_aud_data: str
 
-    def __init__(self) -> None:
-        self.valid_aud = (
-            "datastore-qa" if environment.stack == "qa" else "datastore"
-        )
+    def __init__(self, valid_aud_jobs: str, valid_aud_data: str) -> None:
         self.jwks_client = PyJWKClient(environment.jwks_url, lifespan=3000)
+        self.valid_aud_jobs = valid_aud_jobs
+        self.valid_aud_data = valid_aud_data
 
     def _get_signing_key(self, jwt_token: str) -> PyJWK:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
@@ -58,7 +58,7 @@ class MicrodataAuthClient:
                 jwt_token,
                 signing_key,
                 algorithms=["RS256", "RS512"],
-                audience=self.valid_aud,
+                audience=self.valid_aud_data,
             )
             user_id = decoded_jwt.get("sub")
             if user_id in [None, ""]:
@@ -90,7 +90,7 @@ class MicrodataAuthClient:
                 authorization_cookie,
                 signing_key,
                 algorithms=["RS256", "RS512"],
-                audience=self.valid_aud,
+                audience=self.valid_aud_jobs,
                 options={
                     "require": [
                         "aud",
