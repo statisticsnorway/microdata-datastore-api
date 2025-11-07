@@ -172,12 +172,12 @@ class SkipSignatureAuthClient:
     Only use this in development/testing environments.
     """
 
-    valid_aud: str
+    valid_aud_jobs: str
+    valid_aud_data: str
 
-    def __init__(self) -> None:
-        self.valid_aud = (
-            "datastore-qa" if environment.stack == "qa" else "datastore"
-        )
+    def __init__(self, valid_aud_jobs: str, valid_aud_data: str) -> None:
+        self.valid_aud_jobs = valid_aud_jobs
+        self.valid_aud_data = valid_aud_data
 
     def authorize_user(self, authorization_header: str | None) -> str:
         logger.error(
@@ -193,7 +193,7 @@ class SkipSignatureAuthClient:
             jwt_token = authorization_header.removeprefix("Bearer ")
             decoded_jwt = jwt.decode(
                 jwt_token,
-                audience=self.valid_aud,
+                audience=self.valid_aud_data,
                 options={  # NOSONAR(S5659)
                     "verify_signature": False,
                     "verify_exp": True,
@@ -230,7 +230,7 @@ class SkipSignatureAuthClient:
         try:
             decoded_authorization = jwt.decode(
                 authorization_cookie,
-                audience=self.valid_aud,
+                audience=self.valid_aud_jobs,
                 options={  # NOSONAR(S5659)
                     "verify_signature": False,
                     "verify_exp": True,
@@ -288,16 +288,30 @@ class SkipSignatureAuthClient:
 
 
 def get_auth_client() -> AuthClient:
+    stack = environment.stack
+    valid_aud_jobs = (
+        "datastore-api-jobs-qa" if stack == "qa" else "datastore-api-jobs"
+    )
+    valid_aud_data = (
+        "datastore-api-data-qa" if stack == "qa" else "datastore-api-data"
+    )
+
     match environment.jwt_auth:
         case "FULL":
-            return MicrodataAuthClient()
+            return MicrodataAuthClient(
+                valid_aud_jobs=valid_aud_jobs,
+                valid_aud_data=valid_aud_data,
+            )
         case "SKIP_SIGNATURE":
             logger.error(
                 "SKIP_SIGNATURE is enabled. "
                 "JWT tokens will be read WITHOUT signature validation. "
                 "This should only be used in development/testing environments."
             )
-            return SkipSignatureAuthClient()
+            return SkipSignatureAuthClient(
+                valid_aud_jobs=valid_aud_jobs,
+                valid_aud_data=valid_aud_data,
+            )
         case "OFF":
             logger.error('Auth toggled off. Returning "default" as user_id.')
             return DisabledAuthClient()
