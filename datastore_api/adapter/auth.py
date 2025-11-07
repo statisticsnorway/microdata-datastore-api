@@ -17,6 +17,7 @@ from datastore_api.config import environment
 
 logger = logging.getLogger()
 
+
 USER_FIRST_NAME_KEY = "user/firstName"
 USER_LAST_NAME_KEY = "user/lastName"
 USER_ID_KEY = "user/uuid"
@@ -25,19 +26,21 @@ USER_ID_KEY = "user/uuid"
 class AuthClient(Protocol):
     def authorize_user(self, authorization_header: str | None) -> str: ...
     def authorize_data_administrator(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+        self,
+        authorization_cookie: str | None,
+        user_info_cookie: str | None,
     ) -> UserInfo: ...
 
 
 class MicrodataAuthClient:
-    valid_aud: str
     jwks_client: PyJWKClient
+    valid_aud_jobs: str
+    valid_aud_data: str
 
-    def __init__(self) -> None:
-        self.valid_aud = (
-            "datastore-qa" if environment.stack == "qa" else "datastore"
-        )
+    def __init__(self, valid_aud_jobs: str, valid_aud_data: str) -> None:
         self.jwks_client = PyJWKClient(environment.jwks_url, lifespan=3000)
+        self.valid_aud_jobs = valid_aud_jobs
+        self.valid_aud_data = valid_aud_data
 
     def _get_signing_key(self, jwt_token: str) -> PyJWK:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
@@ -57,7 +60,7 @@ class MicrodataAuthClient:
                 jwt_token,
                 signing_key,
                 algorithms=["RS256", "RS512"],
-                audience=self.valid_aud,
+                audience=self.valid_aud_data,
             )
             user_id = decoded_jwt.get("sub")
             if user_id in [None, ""]:
@@ -77,7 +80,9 @@ class MicrodataAuthClient:
             raise InternalServerError(f"Internal Server Error: {e}") from e
 
     def authorize_data_administrator(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+        self,
+        authorization_cookie: str | None,
+        user_info_cookie: str | None,
     ) -> UserInfo:
         if authorization_cookie is None:
             raise AuthError("Unauthorized. No authorization token was provided")
@@ -89,7 +94,7 @@ class MicrodataAuthClient:
                 authorization_cookie,
                 signing_key,
                 algorithms=["RS256", "RS512"],
-                audience=self.valid_aud,
+                audience=self.valid_aud_jobs,
                 options={
                     "require": [
                         "aud",
@@ -146,13 +151,15 @@ class MicrodataAuthClient:
 
 class DisabledAuthClient:
     def authorize_user(self, authorization_header: str | None) -> str:
-        logger.info('Auth toggled off. Returning "default" as user_id.')
+        logger.error('Auth toggled off. Returning "default" as user_id.')
         return "default"
 
     def authorize_data_administrator(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+        self,
+        authorization_cookie: str | None,
+        user_info_cookie: str | None,
     ) -> UserInfo:
-        logger.warning("JWT_AUTH is turned off. Returning default UserInfo")
+        logger.error("JWT_AUTH is turned off. Returning default UserInfo")
         return UserInfo(
             user_id="1234-1234-1234-1234",
             first_name="Test",
@@ -164,4 +171,12 @@ def get_auth_client() -> AuthClient:
     if not environment.jwt_auth:
         logger.info('Auth toggled off. Returning "default" as user_id.')
         return DisabledAuthClient()
-    return MicrodataAuthClient()
+    stack = environment.stack
+    return MicrodataAuthClient(
+        valid_aud_jobs=(
+            "datastore-api-jobs-qa" if stack == "qa" else "datastore-api-jobs"
+        ),
+        valid_aud_data=(
+            "datastore-api-data-qa" if stack == "qa" else "datastore-api-data"
+        ),
+    )
