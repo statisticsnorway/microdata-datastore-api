@@ -58,14 +58,8 @@ class MicrodataAuthClient:
                 jwt_token,
                 signing_key,
                 algorithms=["RS256", "RS512"],
-                options={"verify_aud": False},  # TODO verify only new aud here,
+                audience=self.valid_aud_data
             )
-            token_auds = decoded_jwt.get("aud")
-            if not any(
-                token_aud in ["datastore", self.valid_aud_data]
-                for token_aud in token_auds
-            ):
-                raise AuthError(f"Invalid audience: {token_auds}")
             user_id = decoded_jwt.get("sub")
             if user_id in [None, ""]:
                 raise AuthError("No valid user_id")
