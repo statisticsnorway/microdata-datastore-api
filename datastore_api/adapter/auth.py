@@ -58,7 +58,7 @@ class MicrodataAuthClient:
                 jwt_token,
                 signing_key,
                 algorithms=["RS256", "RS512"],
-                audience=self.valid_aud_data
+                audience=self.valid_aud_data,
             )
             user_id = decoded_jwt.get("sub")
             if user_id in [None, ""]:
