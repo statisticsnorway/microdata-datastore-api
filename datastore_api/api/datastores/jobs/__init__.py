@@ -15,6 +15,7 @@ from datastore_api.api.jobs.models import (
 )
 from datastore_api.common.exceptions import (
     BumpingDisabledException,
+    NotFoundException,
 )
 
 logger = logging.getLogger()
@@ -38,6 +39,22 @@ def get_jobs_for_datastore(
         else None,
         ignore_completed=ignoreCompleted,
     )
+
+
+@router.get("/{job_id}", response_model_exclude_none=True)
+def get_job(
+    job_id: str,
+    datastore_rdn: str = Depends(get_datastore_rdn_from_request),
+    authorization: str | None = Cookie(None),
+    user_info: str | None = Cookie(None, alias="user-info"),
+    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
+    database_client: db.DatabaseClient = Depends(db.get_database_client),
+) -> Job:
+    auth_client.authorize_data_administrator(authorization, user_info)
+    job = database_client.get_job(job_id)
+    if job.datastore_rdn != datastore_rdn:
+        raise NotFoundException
+    return job
 
 
 @router.post("", response_model_exclude_none=True)
