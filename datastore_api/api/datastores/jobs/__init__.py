@@ -50,7 +50,7 @@ def get_job(
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> Job:
-    parsed_user_info = auth_client.authorize_data_administrator(
+    auth_client.authorize_data_administrator(
         authorization, user_info
     )
     job = database_client.get_job(job_id)
