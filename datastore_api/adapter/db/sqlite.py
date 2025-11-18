@@ -65,11 +65,9 @@ class SqliteDbClient:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS maintenance (
                     maintenance_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    datastore_id INTEGER,
                     msg TEXT,
                     paused BOOLEAN,
-                    timestamp TIMESTAMP,
-                    FOREIGN KEY(datastore_id) REFERENCES datastore(datastore_id)
+                    timestamp TIMESTAMP
                 )
             """)
             cursor.execute("""
@@ -481,15 +479,13 @@ class SqliteDbClient:
                 cursor.execute(
                     """
                     INSERT INTO maintenance (
-                        datastore_id,
                         msg,
                         paused,
                         timestamp
                     )
-                    VALUES (?, ?, ?, ?)
+                    VALUES (?, ?, ?)
                     """,
                     (
-                        1,
                         "Initial status inserted by at startup.",
                         False,
                         timestamp,
@@ -500,11 +496,9 @@ class SqliteDbClient:
             cursor.execute(
                 """
                 SELECT msg, paused, timestamp FROM maintenance
-                WHERE datastore_id = ?
                 ORDER BY timestamp DESC
                 LIMIT 1
-                """,
-                (1,),
+                """
             )
             row = cursor.fetchone()
             return MaintenanceStatus(
@@ -529,11 +523,9 @@ class SqliteDbClient:
             cursor.execute(
                 """
                 SELECT msg, paused, timestamp FROM maintenance
-                WHERE datastore_id = ?
                 ORDER BY timestamp DESC
                 LIMIT 1
-                """,
-                (1,),
+                """
             )
             row = cursor.fetchone()
             if row is None:
@@ -557,10 +549,8 @@ class SqliteDbClient:
             cursor.execute(
                 """
                 SELECT msg, paused, timestamp FROM maintenance
-                WHERE datastore_id = ?
                 ORDER BY timestamp DESC
-                """,
-                (1,),
+                """
             )
             rows = cursor.fetchall()
             if rows:
@@ -590,11 +580,10 @@ class SqliteDbClient:
             timestamp = datetime.now().isoformat()
             cursor.execute(
                 """
-                INSERT INTO maintenance (datastore_id, msg, paused, timestamp)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO maintenance (msg, paused, timestamp)
+                VALUES (?, ?, ?)
                 """,
                 (
-                    1,
                     msg,
                     paused,
                     timestamp,
