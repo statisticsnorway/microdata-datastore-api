@@ -47,6 +47,9 @@ def _include_routers(app: FastAPI) -> None:
     )
     app.include_router(observability.router, prefix="/health")
     app.include_router(
+        observability.router, prefix="/datastores/{datastore_rdn}/health"
+    )
+    app.include_router(
         maintenance_statuses.router, prefix="/maintenance-statuses"
     )
     app.include_router(jobs.router, prefix="/jobs")
