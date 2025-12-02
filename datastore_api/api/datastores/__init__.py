@@ -36,7 +36,7 @@ router.include_router(metadata.router, prefix="/{datastore_rdn}/metadata")
 router.include_router(data.router, prefix="/{datastore_rdn}/data")
 
 router.include_router(
-    importable_datasets.router, prefix="/{datastore_rdn}/importable_datasets"
+    importable_datasets.router, prefix="/{datastore_rdn}/importable-datasets"
 )
 router.include_router(targets.router, prefix="/{datastore_rdn}/targets")
 router.include_router(languages.router, prefix="/{datastore_rdn}/languages")
