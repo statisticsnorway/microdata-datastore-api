@@ -34,7 +34,6 @@ async def get_datastore(
 router.include_router(jobs.router, prefix="/{datastore_rdn}/jobs")
 router.include_router(metadata.router, prefix="/{datastore_rdn}/metadata")
 router.include_router(data.router, prefix="/{datastore_rdn}/data")
-
 router.include_router(
     importable_datasets.router, prefix="/{datastore_rdn}/importable-datasets"
 )

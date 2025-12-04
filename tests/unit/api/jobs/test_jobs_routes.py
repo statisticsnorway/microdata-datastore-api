@@ -152,7 +152,7 @@ def test_get_job_not_found(client, mock_db_client):
 
 
 def test_new_job(client, mock_db_client, mock_auth_client):
-    response = client.post("/jobs", json=NEW_JOB_REQUEST)
+    response = client.post("/datastores/no.dev.test/jobs", json=NEW_JOB_REQUEST)
     assert mock_db_client.new_job.call_count == 2
     assert mock_db_client.update_target.call_count == 2
     mock_auth_client.authorize_data_administrator.assert_called_once()
@@ -188,7 +188,9 @@ def test_update_job_bad_request(client, mock_db_client):
 
 
 def test_update_job_disabled_bump(client):
-    response = client.post("/jobs", json=BUMP_JOB_REQUEST)
+    response = client.post(
+        "/datastores/no.dev.test/jobs", json=BUMP_JOB_REQUEST
+    )
     assert response.status_code == 200
     assert response.json() == [
         {

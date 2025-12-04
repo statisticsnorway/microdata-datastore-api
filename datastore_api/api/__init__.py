@@ -16,6 +16,7 @@ from datastore_api.api import (
 from datastore_api.common.exceptions import (
     AuthError,
     DatastoreNotFoundException,
+    DatastoreRdnMissingException,
     InvalidDraftVersionException,
     InvalidStorageFormatException,
     JobExistsException,
@@ -127,6 +128,13 @@ def _include_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(DatastoreNotFoundException)
     def handle_datastore_not_found(
+        _req: Request, e: NameValidationError
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=404, content={"message": str(e)})
+
+    @app.exception_handler(DatastoreRdnMissingException)
+    def handle_datastore_rdn_not_found(
         _req: Request, e: NameValidationError
     ) -> JSONResponse:
         logger.warning(e, exc_info=True)
