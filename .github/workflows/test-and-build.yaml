@@ -94,13 +94,16 @@ jobs:
     steps:
       - name: Call workflow
         uses: actions/github-script@v7
+        env:
+          INTEGRATION_TEST_REPO: ${{ secrets.INTEGRATION_TEST_REPO }}
+          INTEGRATION_TEST_WORKFLOW: "${{ secrets.INTEGRATION_TEST_WORKFLOW }}.yaml"
         with:
           github-token: ${{ secrets.INTEGRATION_TEST_PAT }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
               owner: 'statisticsnorway',
-              repo: '${{ secrets.INTEGRATION_TEST_REPO }}',
-              workflow_id: '${{ secrets.INTEGRATION_TEST_WORKFLOW }}.yaml',
+              repo: process.env.INTEGRATION_TEST_REPO,
+              workflow_id: process.env.INTEGRATION_TEST_WORKFLOW,
               ref: 'main'
             })
 
@@ -135,13 +138,16 @@ jobs:
     steps:
       - name: Call workflow
         uses: actions/github-script@v7
+        env:
+          DEPLOY_REPO: ${{ secrets.DEPLOY_REPO }}
+          DEPLOY_WORKFLOW: "${{ secrets.DEPLOY_WORKFLOW }}.yaml"
         with:
           github-token: ${{ secrets.DEPLOY_PAT }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
               owner: 'statisticsnorway',
-              repo: '${{ secrets.DEPLOY_REPO }}',
-              workflow_id: '${{ secrets.DEPLOY_WORKFLOW }}.yaml',
+              repo: process.env.DEPLOY_REPO,
+              workflow_id: process.env.DEPLOY_WORKFLOW,
               ref: 'master',
               inputs: {
                 environment: "PROD",
