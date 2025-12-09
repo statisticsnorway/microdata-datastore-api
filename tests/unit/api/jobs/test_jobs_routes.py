@@ -14,6 +14,7 @@ from datastore_api.adapter.db.models import (
 from datastore_api.common.exceptions import NotFoundException
 from datastore_api.main import app
 
+DATASORE_RDN = "no.dev.test"
 NOT_FOUND_MESSAGE = "Not found"
 JOB_ID = "123-123-123-123"
 USER_INFO_DICT = {
@@ -34,7 +35,7 @@ JOB_LIST = [
         ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
-        datastore_rdn="no.ssb.test",
+        datastore_rdn=DATASORE_RDN,
     ),
     Job(
         job_id="123-123-123-123",
@@ -47,7 +48,7 @@ JOB_LIST = [
         ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
-        datastore_rdn="no.ssb.test",
+        datastore_rdn=DATASORE_RDN,
     ),
 ]
 NEW_JOB_REQUEST = {
@@ -86,7 +87,7 @@ UPDATE_JOB_REQUEST = {"status": "initiated", "log": "extra logging"}
 
 DATASTORE = Datastore(
     datastore_id=1,
-    rdn="no.dev.test",
+    rdn=DATASORE_RDN,
     description="Datastore for testing",
     directory="tests/resources/test_datastore",
     name="Test datastore",
@@ -151,18 +152,6 @@ def test_get_job_not_found(client, mock_db_client):
     assert response.json() == {"message": NOT_FOUND_MESSAGE}
 
 
-def test_new_job(client, mock_db_client, mock_auth_client):
-    response = client.post("/datastores/no.dev.test/jobs", json=NEW_JOB_REQUEST)
-    assert mock_db_client.new_job.call_count == 2
-    assert mock_db_client.update_target.call_count == 2
-    mock_auth_client.authorize_data_administrator.assert_called_once()
-    assert response.status_code == 200
-    assert response.json() == [
-        {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
-        {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
-    ]
-
-
 def test_update_job(client, mock_db_client):
     response = client.put(f"/jobs/{JOB_ID}", json=UPDATE_JOB_REQUEST)
     mock_db_client.update_target.assert_called_once()
@@ -187,9 +176,54 @@ def test_update_job_bad_request(client, mock_db_client):
     assert response.json().get("details") is not None
 
 
-def test_update_job_disabled_bump(client):
+# -------- RDN ---------
+def test_get_jobs_rdn(client, mock_db_client):
+    response = client.get(
+        "/datastores/{DATASORE_RDN}/jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
+    )
+    assert response.json() == [
+        job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST
+    ]
+    assert response.status_code == 200
+    mock_db_client.get_jobs.assert_called_once()
+
+
+def test_get_job_rdn(client, mock_db_client):
+    response = client.get(f"/datastores/{DATASORE_RDN}/jobs/{JOB_ID}")
+    mock_db_client.get_job.assert_called_once()
+    mock_db_client.get_job.assert_called_with(JOB_ID)
+    assert response.status_code == 200
+    assert response.json() == JOB_LIST[0].model_dump(
+        exclude_none=True, by_alias=True
+    )
+
+
+def test_get_job_not_found_rdn(client, mock_db_client):
+    mock_db_client.get_job.side_effect = NotFoundException(NOT_FOUND_MESSAGE)
+    response = client.get(f"/datastores/{DATASORE_RDN}/jobs/{JOB_ID}")
+    mock_db_client.get_job.assert_called_once()
+    mock_db_client.get_job.assert_called_with(JOB_ID)
+    assert response.status_code == 404
+    assert response.json() == {"message": NOT_FOUND_MESSAGE}
+
+
+def test_new_job_rdn(client, mock_db_client, mock_auth_client):
     response = client.post(
-        "/datastores/no.dev.test/jobs", json=BUMP_JOB_REQUEST
+        "/datastores/{DATASORE_RDN}/jobs", json=NEW_JOB_REQUEST
+    )
+    assert mock_db_client.new_job.call_count == 2
+    assert mock_db_client.update_target.call_count == 2
+    mock_auth_client.authorize_data_administrator.assert_called_once()
+    assert response.status_code == 200
+    assert response.json() == [
+        {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
+        {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
+    ]
+
+
+def test_update_job_disabled_bump_rdn(client):
+    response = client.post(
+        "/datastores/{DATASORE_RDN}/jobs", json=BUMP_JOB_REQUEST
     )
     assert response.status_code == 200
     assert response.json() == [

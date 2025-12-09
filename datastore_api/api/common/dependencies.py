@@ -28,7 +28,7 @@ def get_datastore_id(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> int:
     """Returns the datastore ID corresponding to the RDN in the request path.
-    If no RDN is present (legacy endpoint), defaults to datastore_id=1."""
+    If no RDN is present it raises an error."""
 
     datastore_rdn = get_datastore_rdn_from_request(request)
     datastore_id = database_client.get_datastore_id_from_rdn(datastore_rdn)
