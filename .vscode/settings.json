@@ -1,6 +1,0 @@
-{
-  "sonarlint.connectedMode.project": {
-    "connectionId": "statisticsnorway",
-    "projectKey": "statisticsnorway_microdata-datastore-api"
-  }
-}
