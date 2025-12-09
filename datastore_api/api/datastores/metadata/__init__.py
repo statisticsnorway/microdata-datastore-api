@@ -44,12 +44,11 @@ def get_data_structures(
     query: MetadataQuery = Depends(get_metadata_query),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> list[dict]:
-    query.include_attributes = True
     return metadata.find_data_structures(
         datastore_root_dir,
         query.names_as_list(),
         query.version,
-        query.include_attributes,
+        True,
         query.skip_code_lists,
     )
 
