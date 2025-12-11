@@ -48,7 +48,7 @@ def get_data_structures(
         datastore_root_dir,
         query.names_as_list(),
         query.version,
-        True,
+        query.include_attributes,
         query.skip_code_lists,
     )
 
