@@ -98,5 +98,5 @@ def setup_logging(app: FastAPI, log_level: int = logging.INFO) -> None:
 
         dont_log = ["/jobs", "/maintenance-statuses/latest", "/health/alive"]
         if not any(s in request.url.path for s in dont_log):
-            logger.info("responded: " + request.url.path)
+            logger.info("responded")
         return response
