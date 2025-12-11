@@ -95,5 +95,8 @@ def setup_logging(app: FastAPI, log_level: int = logging.INFO) -> None:
         response_time_ms.set(response_time)
         response_status.set(response.status_code)
         response.headers["X-Request-ID"] = correlation_id.get()
-        logger.info("responded")
+
+        dont_log = ["/jobs", "/maintenance-statuses/latest", "/health/alive"]
+        if not any(s in request.url.path for s in dont_log):
+            logger.info("responded: " + request.url.path)
         return response
