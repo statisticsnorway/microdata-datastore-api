@@ -9,7 +9,7 @@ from fastapi.responses import PlainTextResponse
 
 from datastore_api.adapter.auth import AuthClient, get_auth_client
 from datastore_api.api.common.dependencies import get_datastore_root_dir
-from datastore_api.api.data.models import (
+from datastore_api.api.datastores.data.models import (
     ErrorMessage,
     InputFixedQuery,
     InputTimePeriodQuery,

@@ -7,7 +7,6 @@ from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import Job, JobStatus, Operation
 from datastore_api.api.common.dependencies import (
     get_datastore_id,
-    get_datastore_rdn_from_request,
 )
 from datastore_api.api.jobs.models import (
     NewJobResponse,
@@ -44,7 +43,7 @@ def get_jobs_for_datastore(
 @router.get("/{job_id}", response_model_exclude_none=True)
 def get_job(
     job_id: str,
-    datastore_rdn: str = Depends(get_datastore_rdn_from_request),
+    datastore_rdn: str,
     authorization: str | None = Cookie(None),
     user_info: str | None = Cookie(None, alias="user-info"),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
@@ -59,12 +58,12 @@ def get_job(
 
 @router.post("", response_model_exclude_none=True)
 def new_job(
+    datastore_rdn: str,
     validated_body: NewJobsRequest,
     authorization: str | None = Cookie(None),
     user_info: str | None = Cookie(None, alias="user-info"),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
-    datastore_rdn: str = Depends(get_datastore_rdn_from_request),
     datastore_id: int = Depends(get_datastore_id),
 ) -> list[NewJobResponse]:
     parsed_user_info = auth_client.authorize_data_administrator(

@@ -13,6 +13,7 @@ from datastore_api.adapter.db.models import (
 )
 from datastore_api.main import app
 
+DATASTORE_RDN = "no.ssb.test"
 JOB_ID = "123-123-123-123"
 USER_INFO_DICT = {
     "userId": "123-123-123",
@@ -27,7 +28,7 @@ TARGET_LIST = [
         status=JobStatus("completed"),
         action=["ADD"],
         last_updated_by=USER_INFO,
-        datastore_rdn="no.ssb.test",
+        datastore_rdn=DATASTORE_RDN,
     ),
     Target(
         name="OTHER_DATASET",
@@ -35,7 +36,7 @@ TARGET_LIST = [
         status=JobStatus("completed"),
         action=["SET_STATUS", "PENDING_RELEASE"],
         last_updated_by=USER_INFO,
-        datastore_rdn="no.ssb.test",
+        datastore_rdn=DATASTORE_RDN,
     ),
 ]
 JOB_LIST = [
@@ -47,7 +48,7 @@ JOB_LIST = [
         ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
-        datastore_rdn="no.ssb.test",
+        datastore_rdn=DATASTORE_RDN,
     ),
     Job(
         job_id="123-123-123-123",
@@ -57,7 +58,7 @@ JOB_LIST = [
         ),
         created_at="2022-05-18T11:40:22.519222",
         created_by=USER_INFO,
-        datastore_rdn="no.ssb.test",
+        datastore_rdn=DATASTORE_RDN,
     ),
 ]
 
@@ -67,6 +68,7 @@ def mock_db_client():
     mock = Mock()
     mock.get_targets.return_value = TARGET_LIST
     mock.get_jobs_for_target.return_value = JOB_LIST
+    mock.get_datastore_id_from_rdn.return_value = 1
     return mock
 
 
@@ -78,7 +80,7 @@ def client(mock_db_client):
 
 
 def test_get_targets(client, mock_db_client):
-    response = client.get("/targets")
+    response = client.get(f"/datastores/{DATASTORE_RDN}/targets")
     assert response.json() == [
         target.model_dump(exclude_none=True, by_alias=True)
         for target in TARGET_LIST
@@ -88,11 +90,14 @@ def test_get_targets(client, mock_db_client):
 
 
 def test_get_target(client, mock_db_client):
-    response = client.get("/targets/MY_DATASET/jobs")
+    response = client.get(
+        f"/datastores/{DATASTORE_RDN}/targets/MY_DATASET/jobs"
+    )
     mock_db_client.get_jobs_for_target.assert_called_once()
     mock_db_client.get_jobs_for_target.assert_called_with(
         name="MY_DATASET", datastore_id=1
     )
+
     assert response.status_code == 200
     assert response.json() == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST

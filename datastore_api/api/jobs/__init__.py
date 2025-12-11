@@ -1,17 +1,13 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Cookie, Depends, Query
+from fastapi import APIRouter, Depends, Query
 
-from datastore_api.adapter import auth, db
+from datastore_api.adapter import db
 from datastore_api.adapter.db.models import Job, JobStatus, Operation
-from datastore_api.api.common.dependencies import get_datastore_id
 from datastore_api.api.jobs.models import (
-    NewJobResponse,
-    NewJobsRequest,
     UpdateJobRequest,
 )
-from datastore_api.common.exceptions import BumpingDisabledException
 
 logger = logging.getLogger()
 
@@ -33,61 +29,6 @@ def get_jobs(
         else None,
         ignore_completed=ignoreCompleted,
     )
-
-
-# TODO: Legacy - remove once all clients use rdn-paths for posting new jobs
-@router.post("", response_model_exclude_none=True)
-def new_job(
-    validated_body: NewJobsRequest,
-    authorization: str | None = Cookie(None),
-    user_info: str | None = Cookie(None, alias="user-info"),
-    database_client: db.DatabaseClient = Depends(db.get_database_client),
-    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
-    datastore_id: int = Depends(get_datastore_id),
-) -> list[NewJobResponse]:
-    parsed_user_info = auth_client.authorize_data_administrator(
-        authorization, user_info
-    )
-    response_list = []
-    for job_request in validated_body.jobs:
-        try:
-            if (
-                job_request.target == "DATASTORE"
-                and job_request.operation == "BUMP"
-                and database_client.get_datastore(datastore_id).bump_enabled
-                is False
-            ):
-                raise BumpingDisabledException(
-                    "Bumping the datastore is disabled"
-                )
-            else:
-                job = database_client.new_job(
-                    job_request.generate_job_from_request(
-                        "",
-                        parsed_user_info,
-                        database_client.get_datastore(datastore_id).rdn,
-                    )
-                )
-                response_list.append(
-                    NewJobResponse(
-                        status="queued",
-                        msg="CREATED",
-                        job_id=str(job.job_id),
-                    )
-                )
-            database_client.update_target(job)
-        except BumpingDisabledException as e:
-            logger.exception(e)
-            response_list.append(
-                NewJobResponse(
-                    status="FAILED",
-                    msg="FAILED: Bumping the datastore is disabled",
-                )
-            )
-        except Exception as e:
-            logger.exception(e)
-            response_list.append({"status": "FAILED", "msg": "FAILED"})
-    return response_list
 
 
 @router.get("/{job_id}", response_model_exclude_none=True)

@@ -1,6 +1,6 @@
 import pytest
 
-from datastore_api.api.data.models import (
+from datastore_api.api.datastores.data.models import (
     InputFixedQuery,
     InputQuery,
     InputTimePeriodQuery,
