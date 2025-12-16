@@ -3,7 +3,7 @@
 
 from datetime import datetime, timedelta
 
-from datastore_api.api.data.models import (
+from datastore_api.api.datastores.data.models import (
     InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,

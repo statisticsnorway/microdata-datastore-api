@@ -47,18 +47,3 @@ def test_get_datastore_id_reads_rdn_from_path(client, mock_db_client):
         "no.ssb.test"
     )
     mock_db_client.get_datastore.assert_called_once_with(3)
-
-
-# TODO: Remove test once legacy routers without rdn is removed
-def test_legacy_path_defaults_to_id_1(client, mock_db_client):
-    response: Response = client.get(
-        "/metadata/data-store",
-        headers={
-            "X-Request-ID": "test-123",
-            "Accept-Language": "no",
-            "Accept": "application/json",
-        },
-    )
-    assert response.status_code == 200
-    mock_db_client.get_datastore_id_from_rdn.assert_not_called()
-    mock_db_client.get_datastore.assert_called_once_with(1)

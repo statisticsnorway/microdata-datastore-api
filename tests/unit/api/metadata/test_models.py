@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from datastore_api.api.metadata.models import MetadataQuery
+from datastore_api.api.datastores.metadata.models import MetadataQuery
 
 
 def test_metadata_query_no_version():

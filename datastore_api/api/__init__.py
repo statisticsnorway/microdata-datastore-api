@@ -8,19 +8,15 @@ from pydantic import ValidationError
 from starlette.exceptions import HTTPException
 
 from datastore_api.api import (
-    data,
     datastores,
-    importable_datasets,
     jobs,
-    languages,
     maintenance_statuses,
-    metadata,
     observability,
-    targets,
 )
 from datastore_api.common.exceptions import (
     AuthError,
     DatastoreNotFoundException,
+    DatastoreRdnMissingException,
     InvalidDraftVersionException,
     InvalidStorageFormatException,
     JobExistsException,
@@ -39,41 +35,12 @@ def setup_api(app: FastAPI) -> None:
 
 
 def _include_routers(app: FastAPI) -> None:
-    app.include_router(datastores.router, prefix="/datastores")
-
-    app.include_router(data.router, prefix="/datastores/{datastore_rdn}/data")
-    app.include_router(
-        metadata.router, prefix="/datastores/{datastore_rdn}/metadata"
-    )
     app.include_router(observability.router, prefix="/health")
-    app.include_router(
-        observability.router, prefix="/datastores/{datastore_rdn}/health"
-    )
+    app.include_router(datastores.router, prefix="/datastores")
     app.include_router(
         maintenance_statuses.router, prefix="/maintenance-statuses"
     )
     app.include_router(jobs.router, prefix="/jobs")
-    app.include_router(
-        languages.router, prefix="/datastores/{datastore_rdn}/languages"
-    )
-    app.include_router(
-        targets.router, prefix="/datastores/{datastore_rdn}/targets"
-    )
-    app.include_router(
-        importable_datasets.router,
-        prefix="/datastores/{datastore_rdn}/importable-datasets",
-    )
-
-    # TODO: Remove legacy routers once all clients use datastore-specific URLs
-    #       and move router definitions into the datastore/-api directory
-    #       when applicable.
-    app.include_router(targets.router, prefix="/targets")
-    app.include_router(languages.router, prefix="/languages")
-    app.include_router(
-        importable_datasets.router, prefix="/importable-datasets"
-    )
-    app.include_router(data.router, prefix="/data")
-    app.include_router(metadata.router, prefix="/metadata")
 
 
 def _include_middleware(app: FastAPI) -> None:
@@ -161,6 +128,13 @@ def _include_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(DatastoreNotFoundException)
     def handle_datastore_not_found(
+        _req: Request, e: NameValidationError
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=404, content={"message": str(e)})
+
+    @app.exception_handler(DatastoreRdnMissingException)
+    def handle_datastore_rdn_not_found(
         _req: Request, e: NameValidationError
     ) -> JSONResponse:
         logger.warning(e, exc_info=True)

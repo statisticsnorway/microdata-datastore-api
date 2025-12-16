@@ -9,9 +9,10 @@ from datastore_api.adapter import db
 from datastore_api.adapter.db.models import Datastore
 from datastore_api.main import app
 
+DATASTORE_RDN = "no.dev.test"
 DATASTORE = Datastore(
     datastore_id=1,
-    rdn="no.dev.test",
+    rdn=DATASTORE_RDN,
     description="Datastore for testing",
     directory="tests/resources/test_datastore",
     name="Test datastore",
@@ -22,7 +23,9 @@ DATASTORE = Datastore(
 @pytest.fixture
 def mock_db_client():
     mock = Mock()
-    mock.get_datastore = Mock(side_effect=lambda datastore_id: DATASTORE)
+    mock.get_datastore_id_from_rdn.return_value = 1
+    mock.get_datastore.return_value = DATASTORE
+
     mock.get_jobs.return_value = []
     return mock
 
@@ -41,7 +44,7 @@ def teardown_module():
 
 
 def test_get_files(client, mock_db_client):
-    response = client.get("/importable-datasets")
+    response = client.get(f"/datastores/{DATASTORE_RDN}/importable-datasets")
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
     assert len(response.json()) == 4
@@ -80,8 +83,13 @@ def test_get_invalid_name_files(client, mock_db_client):
         "tests/resources/test_datastore_input/MY_DATASET.tar",
         "tests/resources/test_datastore_input/DATASET_WITH_INVAL&D_NAM+E.tar",
     )
-    response = client.get("/importable-datasets")
-    mock_db_client.get_datastore.assert_called_once()
+    response = client.get(f"/datastores/{DATASTORE_RDN}/importable-datasets")
+    mock_db_client.get_datastore_id_from_rdn.assert_called_once_with(
+        DATASTORE_RDN
+    )
+    mock_db_client.get_datastore.assert_called_once_with(1)
+    mock_db_client.get_jobs.assert_called_once()
+
     assert response.status_code == 200
     assert len(response.json()) == 4
     expected_datasets = [
@@ -120,7 +128,7 @@ def test_delete_importable_datasets_api(client, mock_db_client):
         "x",
     )
     response = client.delete(
-        "/importable-datasets/DATASET_THAT_SHOULD_BE_DELETED",
+        f"/datastores/{DATASTORE_RDN}/importable-datasets/DATASET_THAT_SHOULD_BE_DELETED",
     )
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
@@ -131,13 +139,15 @@ def test_delete_importable_datasets_api(client, mock_db_client):
 
 def test_delete_nonexisting_dataset(client, mock_db_client):
     response = client.delete(
-        "/importable-datasets/NONEXISTING_DATASET",
+        f"/datastores/{DATASTORE_RDN}/importable-datasets/NONEXISTING_DATASET",
     )
     assert response.status_code == 404
     mock_db_client.get_datastore.assert_called_once()
 
 
 def test_delete_invalid_name_dataset(client, mock_db_client):
-    response = client.delete("/importable-datasets/INVALID_NAME_DATASET++")
+    response = client.delete(
+        f"/datastores/{DATASTORE_RDN}/importable-datasets/INVALID_NAME_DATASET++"
+    )
     assert response.status_code == 400
     mock_db_client.get_datastore.assert_called_once()
