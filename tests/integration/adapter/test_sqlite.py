@@ -22,6 +22,7 @@ from datastore_api.adapter.db.sqlite import (
     NotFoundException,
     SqliteDbClient,
 )
+from datastore_api.api.datastores.models import NewDatastoreRequest
 from datastore_api.api.jobs.models import NewJobRequest
 
 sqlite_file = "test.db"
@@ -143,6 +144,12 @@ BUMP_JOB = Job(
             ],
         ),
     ),
+)
+NEW_DATASTORE = NewDatastoreRequest(
+    rdn="no.new.testdatastore",
+    description="new testdatastore",
+    directory="some/path/here",
+    name="NEW TESTDATASTORE",
 )
 
 
@@ -501,3 +508,12 @@ def test_get_datastore():
 def test_get_datastore_id_from_rdn():
     rdn = "no.dev.test"
     assert sqlite_client.get_datastore_id_from_rdn(rdn) == 2
+
+
+def test_new_datastore():
+    sqlite_client.new_datastore(NEW_DATASTORE)
+    datastores = sqlite_client.get_datastores()
+    assert "no.new.testdatastore" in datastores
+    id = sqlite_client.get_datastore_id_from_rdn("no.new.testdatastore")
+    datastore = sqlite_client.get_datastore(id)
+    assert vars(NEW_DATASTORE).items() <= vars(datastore).items()

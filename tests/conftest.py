@@ -6,6 +6,9 @@ os.environ["COMMIT_ID"] = "abc123"
 os.environ["SQLITE_URL"] = "test.db"
 os.environ["JWT_AUTH"] = "OFF"
 os.environ["JWKS_URL"] = "http://localhost"
+os.environ["ACCESS_CONTROL_FILE"] = (
+    "tests/resources/access_control/allowed_users.json"
+)
 
 import pytest
 from fastapi import testclient
