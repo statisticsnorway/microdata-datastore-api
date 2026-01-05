@@ -15,7 +15,9 @@ from datastore_api.api import (
 )
 from datastore_api.common.exceptions import (
     AuthError,
+    DatastoreExistsException,
     DatastoreNotFoundException,
+    DatastorePathExistsException,
     DatastoreRdnMissingException,
     InvalidDraftVersionException,
     InvalidStorageFormatException,
@@ -146,6 +148,20 @@ def _include_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=401, content={"message": "Unauthorized"}
         )
+
+    @app.exception_handler(DatastoreExistsException)
+    async def handle_datastore_exists_error(
+        _req: Request, e: DatastoreExistsException
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=409, content={"message": str(e)})
+
+    @app.exception_handler(DatastorePathExistsException)
+    async def handle_datastore_path_exists_error(
+        _req: Request, e: DatastorePathExistsException
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=409, content={"message": str(e)})
 
     @app.exception_handler(Exception)
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:

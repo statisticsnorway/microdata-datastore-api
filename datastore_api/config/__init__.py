@@ -1,3 +1,4 @@
+import json
 import os
 from dataclasses import dataclass
 from typing import Literal
@@ -11,6 +12,7 @@ class Environment:
     jwks_url: str
     stack: str
     jwt_auth: Literal["FULL"] | Literal["SKIP_SIGNATURE"] | Literal["OFF"]
+    access_control_file: str
 
 
 def _initialize_environment() -> Environment:
@@ -24,7 +26,22 @@ def _initialize_environment() -> Environment:
         jwks_url=os.environ["JWKS_URL"],
         stack=os.environ["STACK"],
         jwt_auth=jwt_auth,
+        access_control_file=os.environ["ACCESS_CONTROL_FILE"],
     )
 
 
 environment = _initialize_environment()
+
+
+@dataclass
+class AccessControl:
+    allowed_users: list[str]
+
+
+def _initialize_access_control() -> AccessControl:
+    with open(environment.access_control_file, encoding="utf-8") as f:
+        access_control_file = json.load(f)
+    return AccessControl(allowed_users=access_control_file["allowed_users"])
+
+
+access_control = _initialize_access_control()

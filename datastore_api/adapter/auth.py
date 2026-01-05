@@ -13,7 +13,7 @@ from jwt.exceptions import (
 
 from datastore_api.adapter.db.models import UserInfo
 from datastore_api.common.exceptions import AuthError, InternalServerError
-from datastore_api.config import environment
+from datastore_api.config import access_control, environment
 
 logger = logging.getLogger()
 
@@ -26,6 +26,9 @@ ACCREDITATION_ROLE_KEY = "accreditation/role"
 class AuthClient(Protocol):
     def authorize_user(self, authorization_header: str | None) -> str: ...
     def authorize_data_administrator(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo: ...
+    def authorize_datastore_modification(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo: ...
 
@@ -144,6 +147,16 @@ class MicrodataAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
+    def authorize_datastore_modification(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo:
+        parsed_user_info = self.authorize_data_administrator(
+            authorization_cookie, user_info_cookie
+        )
+        if parsed_user_info.user_id not in access_control.allowed_users:
+            raise AuthError("Forbidden: Not allowed to modify datastore")
+        return parsed_user_info
+
 
 class DisabledAuthClient:
     def authorize_user(
@@ -157,6 +170,16 @@ class DisabledAuthClient:
         self,
         authorization_cookie: str | None,  # NOSONAR(S1172)
         user_info_cookie: str | None,  # NOSONAR(S1172)
+    ) -> UserInfo:
+        logger.error("JWT_AUTH is turned off. Returning default UserInfo")
+        return UserInfo(
+            user_id="1234-1234-1234-1234",
+            first_name="Test",
+            last_name="User",
+        )
+
+    def authorize_datastore_modification(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
         logger.error("JWT_AUTH is turned off. Returning default UserInfo")
         return UserInfo(
@@ -285,6 +308,16 @@ class SkipSignatureAuthClient:
             raise AuthError(f"Unauthorized: {e}") from e
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
+
+    def authorize_datastore_modification(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo:
+        parsed_user_info = self.authorize_data_administrator(
+            authorization_cookie, user_info_cookie
+        )
+        if parsed_user_info.user_id not in access_control.allowed_users:
+            raise AuthError("Forbidden: Not allowed to modify datastore")
+        return parsed_user_info
 
 
 def get_auth_client() -> AuthClient:
