@@ -12,11 +12,13 @@ from datastore_api.api.datastores import (
     metadata,
     targets,
 )
-from datastore_api.api.datastores.models import NewDatastoreRequest
+from datastore_api.api.datastores.models import (
+    NewDatastore,
+    NewDatastoreRequest,
+)
 from datastore_api.api.datastores.setup_datastore import setup_datastore
 from datastore_api.common.exceptions import (
     DatastoreExistsException,
-    DatastorePathExistsException,
 )
 
 router = APIRouter()
@@ -40,10 +42,11 @@ async def create_new_datastore(
     auth_client.authorize_datastore_modification(authorization, user_info)
     if validated_body.rdn in db_client.get_datastores():
         raise DatastoreExistsException("Datastore already exists")
-    if validated_body.directory in db_client.get_datastore_dirs():
-        raise DatastorePathExistsException("Datastore directory already exists")
-    db_client.new_datastore(validated_body)
-    setup_datastore(validated_body)
+    new_datastore: NewDatastore = (
+        validated_body.generate_new_datastore_from_request()
+    )
+    db_client.new_datastore(new_datastore)
+    setup_datastore(new_datastore)
     # TODO: create new job for generating the RSA-keys
 
 

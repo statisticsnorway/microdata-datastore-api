@@ -22,7 +22,7 @@ from datastore_api.adapter.db.sqlite import (
     NotFoundException,
     SqliteDbClient,
 )
-from datastore_api.api.datastores.models import NewDatastoreRequest
+from datastore_api.api.datastores.models import NewDatastore
 from datastore_api.api.jobs.models import NewJobRequest
 
 sqlite_file = "test.db"
@@ -145,7 +145,7 @@ BUMP_JOB = Job(
         ),
     ),
 )
-NEW_DATASTORE = NewDatastoreRequest(
+NEW_DATASTORE = NewDatastore(
     rdn="no.new.testdatastore",
     description="new testdatastore",
     directory="some/path/here",

@@ -13,6 +13,7 @@ class Environment:
     stack: str
     jwt_auth: Literal["FULL"] | Literal["SKIP_SIGNATURE"] | Literal["OFF"]
     access_control_file: str
+    datastores_root_dir: str
 
 
 def _initialize_environment() -> Environment:
@@ -27,6 +28,7 @@ def _initialize_environment() -> Environment:
         stack=os.environ["STACK"],
         jwt_auth=jwt_auth,
         access_control_file=os.environ["ACCESS_CONTROL_FILE"],
+        datastores_root_dir=os.environ["DATASTORES_ROOT_DIR"],
     )
 
 

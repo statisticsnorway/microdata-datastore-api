@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.api.common import dependencies
+from datastore_api.api.datastores.models import NewDatastoreRequest
 from datastore_api.main import app
 
 DATASTORE = Datastore(
@@ -22,16 +23,15 @@ DATASTORE = Datastore(
 NEW_DATASTORE_REQUEST = {
     "rdn": "no.new.testdatastore",
     "description": "new testdatastore",
-    "directory": "tests/resources/datastores/new_testdatastore",
     "name": "NEW TESTDATASTORE",
 }
 
-NEW_DATASTORE_REQUEST_WITH_EXISTING_PATH = {
-    "rdn": "no.new.testdatastore",
+NEW_DATASTORE_REQUEST_WITH_ERRORS = {
+    "rdn": "no.new testdatastore",
     "description": "new testdatastore",
-    "directory": "tests/resources/test_datastore",  # already exists
-    "name": "NEW TESTDATASTORE",
+    "name": "NEW TESTDATASTORE &",
 }
+
 USER_INFO_DICT = {
     "userId": "123-123-123",
     "firstName": "Data",
@@ -93,7 +93,7 @@ def test_create_new_datastore(client, mock_auth_client, cleanup_datastores):
     mock_auth_client.authorize_datastore_modification.assert_called_once()
     assert response.status_code == 200
 
-    root_path = Path("tests/resources/datastores/new_testdatastore")
+    root_path = Path("tests/resources/datastores/no_new_testdatastore")
     expected_dirs = [
         root_path,
         root_path / "data",
@@ -116,9 +116,17 @@ def test_create_new_datastore(client, mock_auth_client, cleanup_datastores):
     assert expected_files == actual_files
 
 
-def test_create_new_datastore_with_existing_path(client):
-    response = client.post(
-        "/datastores", json=NEW_DATASTORE_REQUEST_WITH_EXISTING_PATH
-    )
+def test_create_new_datastore_when_path_exists(client, cleanup_datastores):
+    datastore_dir = Path("tests/resources/datastores/no_new_testdatastore")
+    datastore_dir.mkdir(parents=True, exist_ok=True)
+    response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
     assert response.status_code == 409
-    assert response.json() == {"message": "Datastore directory already exists"}
+    assert "Datastore already exists" in response.json()["message"]
+
+
+def test_create_new_datastore_with_invalid_request():
+    with pytest.raises(ValueError):
+        NewDatastoreRequest.validate_rdn("no test.rdn")
+
+    with pytest.raises(ValueError):
+        NewDatastoreRequest.validate_name("TESTDATASTORE &")

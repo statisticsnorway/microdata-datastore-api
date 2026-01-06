@@ -15,7 +15,7 @@ from datastore_api.adapter.db.models import (
     Target,
     UserInfo,
 )
-from datastore_api.api.datastores.models import NewDatastoreRequest
+from datastore_api.api.datastores.models import NewDatastore
 from datastore_api.common.exceptions import (
     JobAlreadyCompleteException,
     JobExistsException,
@@ -808,7 +808,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def new_datastore(self, new_datastore: NewDatastoreRequest) -> None:
+    def new_datastore(self, new_datastore: NewDatastore) -> None:
         """
         Creates a new datasstore.
         """
@@ -839,18 +839,5 @@ class SqliteDbClient:
         except Exception as e:
             conn.rollback()
             raise e
-        finally:
-            conn.close()
-
-    def get_datastore_dirs(self) -> list[str]:
-        conn = self._conn()
-        try:
-            cursor = conn.cursor()
-            rows = cursor.execute(
-                """
-                SELECT directory FROM datastore
-                """,
-            ).fetchall()
-            return [row[0] for row in rows]
         finally:
             conn.close()

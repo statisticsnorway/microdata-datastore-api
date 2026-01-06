@@ -9,6 +9,7 @@ os.environ["JWKS_URL"] = "http://localhost"
 os.environ["ACCESS_CONTROL_FILE"] = (
     "tests/resources/access_control/allowed_users.json"
 )
+os.environ["DATASTORES_ROOT_DIR"] = "tests/resources/datastores/"
 
 import pytest
 from fastapi import testclient
