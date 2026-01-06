@@ -42,10 +42,10 @@ class NewDatastoreRequest(CamelModel, extra="forbid"):
         return value
 
     def generate_datastore_dir_from_rdn(self) -> str:
-        base_dir = Path(DATASTORES_ROOT_DIR).resolve()
+        root_dir = Path(DATASTORES_ROOT_DIR).resolve()
         dir_name = self.rdn.replace(".", "_").lower()
-        datastore_dir = (base_dir / dir_name).resolve()
-        if not datastore_dir.is_relative_to(base_dir):
+        datastore_dir = (root_dir / dir_name).resolve()
+        if not datastore_dir.is_relative_to(root_dir):
             raise ValueError(
                 "Resolved datastore directory is outside allowed base directory"
             )
