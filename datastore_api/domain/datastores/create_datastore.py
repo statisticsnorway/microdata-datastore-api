@@ -13,7 +13,7 @@ from datastore_api.domain.datastores.models import NewDatastore
 DATASTORES_ROOT_DIR = environment.datastores_root_dir
 
 
-def generate_datastore_dir_from_rdn(rdn: str) -> str:
+def get_datastore_dir_from_rdn(rdn: str) -> str:
     root_dir = Path(DATASTORES_ROOT_DIR)
     dir_name = rdn.replace(".", "_").lower()
     datastore_dir = root_dir / dir_name
@@ -27,7 +27,7 @@ def generate_datastore_dir_from_rdn(rdn: str) -> str:
 def generate_new_datastore_from_request(
     request: NewDatastoreRequest,
 ) -> NewDatastore:
-    datastore_dir = generate_datastore_dir_from_rdn(request.rdn)
+    datastore_dir = get_datastore_dir_from_rdn(request.rdn)
     return NewDatastore(
         name=request.name,
         rdn=request.rdn,
