@@ -9,8 +9,8 @@ from datastore_api.adapter.db.models import (
     Target,
 )
 from datastore_api.adapter.db.sqlite import SqliteDbClient
-from datastore_api.api.datastores.models import NewDatastore
 from datastore_api.config import environment
+from datastore_api.domain.datastores.models import NewDatastore
 
 
 class DatabaseClient(Protocol):

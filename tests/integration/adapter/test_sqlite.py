@@ -22,8 +22,8 @@ from datastore_api.adapter.db.sqlite import (
     NotFoundException,
     SqliteDbClient,
 )
-from datastore_api.api.datastores.models import NewDatastore
 from datastore_api.api.jobs.models import NewJobRequest
+from datastore_api.domain.datastores.models import NewDatastore
 
 sqlite_file = "test.db"
 sqlite_client = SqliteDbClient(f"sqlite://{sqlite_file}")

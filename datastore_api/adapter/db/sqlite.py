@@ -15,12 +15,12 @@ from datastore_api.adapter.db.models import (
     Target,
     UserInfo,
 )
-from datastore_api.api.datastores.models import NewDatastore
 from datastore_api.common.exceptions import (
     JobAlreadyCompleteException,
     JobExistsException,
     NotFoundException,
 )
+from datastore_api.domain.datastores.models import NewDatastore
 
 logger = logging.getLogger()
 

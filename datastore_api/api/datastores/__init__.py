@@ -13,12 +13,11 @@ from datastore_api.api.datastores import (
     targets,
 )
 from datastore_api.api.datastores.models import (
-    NewDatastore,
     NewDatastoreRequest,
 )
-from datastore_api.api.datastores.setup_datastore import setup_datastore
-from datastore_api.common.exceptions import (
-    DatastoreExistsException,
+from datastore_api.domain.datastores.create_datastore import (
+    create_new_datastore,
+    generate_new_datastore_from_request,
 )
 
 router = APIRouter()
@@ -32,7 +31,7 @@ async def get_datastores(
 
 
 @router.post("")
-async def create_new_datastore(
+async def new_datastore(
     validated_body: NewDatastoreRequest,
     authorization: str | None = Cookie(None),
     user_info: str | None = Cookie(None, alias="user-info"),
@@ -40,14 +39,8 @@ async def create_new_datastore(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> None:
     auth_client.authorize_datastore_modification(authorization, user_info)
-    if validated_body.rdn in db_client.get_datastores():
-        raise DatastoreExistsException("Datastore already exists")
-    new_datastore: NewDatastore = (
-        validated_body.generate_new_datastore_from_request()
-    )
-    db_client.new_datastore(new_datastore)
-    setup_datastore(new_datastore)
-    # TODO: create new job for generating the RSA-keys
+    new_datastore = generate_new_datastore_from_request(validated_body)
+    create_new_datastore(new_datastore, db_client)
 
 
 @router.get("/{datastore_rdn}")
