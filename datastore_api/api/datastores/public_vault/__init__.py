@@ -3,8 +3,7 @@ from pathlib import Path
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from fastapi import APIRouter, Body, Depends, Response
-from fastapi.security import APIKeyHeader
+from fastapi import APIRouter, Body, Depends, Header, Response
 
 from datastore_api.adapter import auth
 from datastore_api.api.common.dependencies import get_datastore_root_dir
@@ -18,7 +17,6 @@ PUBLIC_KEY_FILE_NAME = "microdata_public_key.pem"
 
 logger = logging.getLogger()
 router = APIRouter()
-api_key_header = APIKeyHeader(name="X-API-KEY")
 
 
 @router.get("")
@@ -51,8 +49,8 @@ def get_public_key(
 
 @router.post("")
 def create_public_key(
+    api_key: str = Header("X-API-KEY", alias="x-api-key"),
     public_key_bytes: bytes = Body(..., media_type="application/x-pem-file"),
-    api_key: str = Depends(api_key_header),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
 ) -> None:

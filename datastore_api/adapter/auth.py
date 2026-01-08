@@ -159,10 +159,8 @@ class MicrodataAuthClient:
         return parsed_user_info
 
     def check_api_key(self, x_api_key: str) -> None:
-        # TODO
-        # if x_api_key != secrets.admin_backend_service_api_key:
-        #    raise AuthError("Invalid API key")
-        ...
+        if x_api_key != secrets.datastore_api_service_key:
+            raise AuthError("Invalid API key")
 
 
 class DisabledAuthClient:
@@ -330,10 +328,8 @@ class SkipSignatureAuthClient:
         return parsed_user_info
 
     def check_api_key(self, x_api_key: str) -> None:
-        # TODO
-        # if x_api_key != secrets.admin_backend_service_api_key:
-        #    raise AuthError("Invalid API key")
-        ...
+        if x_api_key != secrets.datastore_api_service_key:
+            raise AuthError("Invalid API key")
 
 
 def get_auth_client() -> AuthClient:
