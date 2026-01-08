@@ -28,6 +28,7 @@ class AuthClient(Protocol):
     def authorize_data_administrator(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo: ...
+    def check_api_key(self, x_api_key: str) -> None: ...
 
 
 class MicrodataAuthClient:
@@ -144,6 +145,12 @@ class MicrodataAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
+    def check_api_key(self, x_api_key: str) -> None:
+        # TODO
+        # if x_api_key != secrets.admin_backend_service_api_key:
+        #    raise AuthError("Invalid API key")
+        ...
+
 
 class DisabledAuthClient:
     def authorize_user(
@@ -164,6 +171,9 @@ class DisabledAuthClient:
             first_name="Test",
             last_name="User",
         )
+
+    def check_api_key(self, x_api_key: str) -> None:
+        logger.error("JWT_AUTH is turned off. Not checking API key")
 
 
 class SkipSignatureAuthClient:
@@ -285,6 +295,12 @@ class SkipSignatureAuthClient:
             raise AuthError(f"Unauthorized: {e}") from e
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
+
+    def check_api_key(self, x_api_key: str) -> None:
+        # TODO
+        # if x_api_key != secrets.admin_backend_service_api_key:
+        #    raise AuthError("Invalid API key")
+        ...
 
 
 def get_auth_client() -> AuthClient:

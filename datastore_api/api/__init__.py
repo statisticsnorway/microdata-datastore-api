@@ -22,6 +22,9 @@ from datastore_api.common.exceptions import (
     JobExistsException,
     NameValidationError,
     NotFoundException,
+    PublicKeyAlreadyExistsException,
+    PublicKeyInvalidException,
+    PublicKeyNotFoundException,
     RequestValidationException,
 )
 
@@ -146,6 +149,27 @@ def _include_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=401, content={"message": "Unauthorized"}
         )
+
+    @app.exception_handler(PublicKeyAlreadyExistsException)
+    def handle_public_key_exists(
+        _req: Request, e: PublicKeyAlreadyExistsException
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=409, content={"message": str(e)})
+
+    @app.exception_handler(PublicKeyInvalidException)
+    def handle_public_key_invalid(
+        _req: Request, e: PublicKeyInvalidException
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
+    @app.exception_handler(PublicKeyNotFoundException)
+    def handle_public_key_not_found(
+        _req: Request, e: PublicKeyNotFoundException
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=404, content={"message": str(e)})
 
     @app.exception_handler(Exception)
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:
