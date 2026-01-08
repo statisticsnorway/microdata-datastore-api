@@ -15,7 +15,7 @@ DATASTORES_ROOT_DIR = environment.datastores_root_dir
 
 def get_datastore_dir_from_rdn(rdn: str) -> str:
     root_dir = Path(DATASTORES_ROOT_DIR)
-    dir_name = rdn.replace(".", "_").lower()
+    dir_name = rdn.replace(".", "-").lower()
     datastore_dir = root_dir / dir_name
     if not datastore_dir.resolve().is_relative_to(root_dir.resolve()):
         raise ValueError(
