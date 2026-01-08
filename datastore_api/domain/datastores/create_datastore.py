@@ -41,10 +41,12 @@ def create_new_datastore(
     new_datastore: NewDatastore, db_client: db.DatabaseClient
 ) -> None:
     if new_datastore.rdn in db_client.get_datastores():
-        raise DatastoreExistsException("Datastore already exists")
+        raise DatastoreExistsException(
+            f"Datastore rdn {new_datastore.rdn} already exists"
+        )
     if Path(new_datastore.directory).exists():
         raise DatastorePathExistsException(
-            f"Datastore already exists at {new_datastore.directory}"
+            f"Datastore directory already exists at {new_datastore.directory}"
         )
     db_client.insert_new_datastore(new_datastore)
     setup_datastore(new_datastore)
