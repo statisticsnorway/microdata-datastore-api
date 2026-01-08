@@ -300,8 +300,8 @@ def test_get_jobs_for_target():
     assert len(jobs) == 1
 
 
-def test_new_job():
-    job = sqlite_client.new_job(
+def test_insert_new_job():
+    job = sqlite_client.insert_new_job(
         NewJobRequest(
             operation=Operation.ADD,
             target="NEW_DATASET",
@@ -317,7 +317,7 @@ def test_new_job():
     )
     assert len(jobs) == 1
     with pytest.raises(JobExistsException):
-        sqlite_client.new_job(
+        sqlite_client.insert_new_job(
             NewJobRequest(
                 operation=Operation.ADD,
                 target="NEW_DATASET",
@@ -510,8 +510,8 @@ def test_get_datastore_id_from_rdn():
     assert sqlite_client.get_datastore_id_from_rdn(rdn) == 2
 
 
-def test_new_datastore():
-    sqlite_client.new_datastore(NEW_DATASTORE)
+def test_insert_new_datastore():
+    sqlite_client.insert_new_datastore(NEW_DATASTORE)
     datastores = sqlite_client.get_datastores()
     assert "no.new.testdatastore" in datastores
     id = sqlite_client.get_datastore_id_from_rdn("no.new.testdatastore")

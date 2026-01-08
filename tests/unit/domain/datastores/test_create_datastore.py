@@ -37,7 +37,7 @@ EXISTING_DATASTORE = NewDatastore(
 def mock_db_client():
     mock = Mock()
     mock.get_datastores = Mock(side_effect=lambda: ["no.dev.test"])
-    mock.new_datastore = Mock(return_value=None)
+    mock.insert_new_datastore = Mock(return_value=None)
     return mock
 
 
@@ -56,7 +56,7 @@ def test_generate_new_datastore_from_request():
 
 def test_create_new_datastore(mock_db_client, mock_setup_datastore):
     create_new_datastore(NEW_DATASTORE, mock_db_client)
-    mock_db_client.new_datastore.assert_called_once()
+    mock_db_client.insert_new_datastore.assert_called_once()
 
 
 def test_create_new_datastore_when_rdn_exists(

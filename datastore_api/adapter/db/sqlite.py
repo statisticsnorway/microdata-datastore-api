@@ -314,7 +314,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def new_job(self, new_job: Job) -> Job:
+    def insert_new_job(self, new_job: Job) -> Job:
         """
         Creates a new job for supplied command, status and dataset_name, and
         returns job_id of created job.
@@ -808,7 +808,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def new_datastore(self, new_datastore: NewDatastore) -> None:
+    def insert_new_datastore(self, new_datastore: NewDatastore) -> None:
         """
         Inserts a new datastore row.
         """

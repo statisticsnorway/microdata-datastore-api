@@ -101,7 +101,7 @@ def mock_db_client():
     mock.update_target.return_value = None
     mock.get_job.return_value = JOB_LIST[0]
     mock.get_jobs.return_value = JOB_LIST
-    mock.new_job.return_value = JOB_LIST[0]
+    mock.insert_new_job.return_value = JOB_LIST[0]
     mock.update_job.return_value = JOB_LIST[0]
     mock.get_datastore.return_value = DATASTORE
     return mock
@@ -211,7 +211,7 @@ def test_new_job_rdn(client, mock_db_client, mock_auth_client):
     response = client.post(
         "/datastores/{DATASTORE_RDN}/jobs", json=NEW_JOB_REQUEST
     )
-    assert mock_db_client.new_job.call_count == 2
+    assert mock_db_client.insert_new_job.call_count == 2
     assert mock_db_client.update_target.call_count == 2
     mock_auth_client.authorize_data_administrator.assert_called_once()
     assert response.status_code == 200
