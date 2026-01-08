@@ -13,7 +13,7 @@ from jwt.exceptions import (
 
 from datastore_api.adapter.db.models import UserInfo
 from datastore_api.common.exceptions import AuthError, InternalServerError
-from datastore_api.config import environment
+from datastore_api.config import environment, secrets
 
 logger = logging.getLogger()
 
@@ -26,6 +26,9 @@ ACCREDITATION_ROLE_KEY = "accreditation/role"
 class AuthClient(Protocol):
     def authorize_user(self, authorization_header: str | None) -> str: ...
     def authorize_data_administrator(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo: ...
+    def authorize_datastore_modification(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo: ...
     def check_api_key(self, x_api_key: str) -> None: ...
@@ -145,6 +148,16 @@ class MicrodataAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
+    def authorize_datastore_modification(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo:
+        parsed_user_info = self.authorize_data_administrator(
+            authorization_cookie, user_info_cookie
+        )
+        if parsed_user_info.user_id not in secrets.datastore_provisioners:
+            raise AuthError("Forbidden: Not allowed to modify datastore")
+        return parsed_user_info
+
     def check_api_key(self, x_api_key: str) -> None:
         # TODO
         # if x_api_key != secrets.admin_backend_service_api_key:
@@ -164,6 +177,16 @@ class DisabledAuthClient:
         self,
         authorization_cookie: str | None,  # NOSONAR(S1172)
         user_info_cookie: str | None,  # NOSONAR(S1172)
+    ) -> UserInfo:
+        logger.error("JWT_AUTH is turned off. Returning default UserInfo")
+        return UserInfo(
+            user_id="1234-1234-1234-1234",
+            first_name="Test",
+            last_name="User",
+        )
+
+    def authorize_datastore_modification(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
         logger.error("JWT_AUTH is turned off. Returning default UserInfo")
         return UserInfo(
@@ -295,6 +318,16 @@ class SkipSignatureAuthClient:
             raise AuthError(f"Unauthorized: {e}") from e
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
+
+    def authorize_datastore_modification(
+        self, authorization_cookie: str | None, user_info_cookie: str | None
+    ) -> UserInfo:
+        parsed_user_info = self.authorize_data_administrator(
+            authorization_cookie, user_info_cookie
+        )
+        if parsed_user_info.user_id not in secrets.datastore_provisioners:
+            raise AuthError("Forbidden: Not allowed to modify datastore")
+        return parsed_user_info
 
     def check_api_key(self, x_api_key: str) -> None:
         # TODO
