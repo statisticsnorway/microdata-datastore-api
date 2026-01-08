@@ -6,9 +6,7 @@ os.environ["COMMIT_ID"] = "abc123"
 os.environ["SQLITE_URL"] = "test.db"
 os.environ["JWT_AUTH"] = "OFF"
 os.environ["JWKS_URL"] = "http://localhost"
-os.environ["ACCESS_CONTROL_FILE"] = (
-    "tests/resources/access_control/allowed_users.json"
-)
+os.environ["SECRETS_FILE"] = "tests/resources/secrets/secrets.json"
 os.environ["DATASTORES_ROOT_DIR"] = "tests/resources/datastores/"
 
 import pytest

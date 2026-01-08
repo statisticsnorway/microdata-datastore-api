@@ -13,7 +13,7 @@ from jwt.exceptions import (
 
 from datastore_api.adapter.db.models import UserInfo
 from datastore_api.common.exceptions import AuthError, InternalServerError
-from datastore_api.config import access_control, environment
+from datastore_api.config import environment, secrets
 
 logger = logging.getLogger()
 
@@ -153,7 +153,7 @@ class MicrodataAuthClient:
         parsed_user_info = self.authorize_data_administrator(
             authorization_cookie, user_info_cookie
         )
-        if parsed_user_info.user_id not in access_control.allowed_users:
+        if parsed_user_info.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
         return parsed_user_info
 
@@ -315,7 +315,7 @@ class SkipSignatureAuthClient:
         parsed_user_info = self.authorize_data_administrator(
             authorization_cookie, user_info_cookie
         )
-        if parsed_user_info.user_id not in access_control.allowed_users:
+        if parsed_user_info.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
         return parsed_user_info
 

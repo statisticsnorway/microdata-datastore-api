@@ -12,7 +12,7 @@ class Environment:
     jwks_url: str
     stack: str
     jwt_auth: Literal["FULL"] | Literal["SKIP_SIGNATURE"] | Literal["OFF"]
-    access_control_file: str
+    secrets_file: str
     datastores_root_dir: str
 
 
@@ -27,7 +27,7 @@ def _initialize_environment() -> Environment:
         jwks_url=os.environ["JWKS_URL"],
         stack=os.environ["STACK"],
         jwt_auth=jwt_auth,
-        access_control_file=os.environ["ACCESS_CONTROL_FILE"],
+        secrets_file=os.environ["SECRETS_FILE"],
         datastores_root_dir=os.environ["DATASTORES_ROOT_DIR"],
     )
 
@@ -36,14 +36,16 @@ environment = _initialize_environment()
 
 
 @dataclass
-class AccessControl:
-    allowed_users: list[str]
+class Secrets:
+    datastore_provisioners: list[str]
 
 
-def _initialize_access_control() -> AccessControl:
-    with open(environment.access_control_file, encoding="utf-8") as f:
-        access_control_file = json.load(f)
-    return AccessControl(allowed_users=access_control_file["allowed_users"])
+def _initialize_secrets() -> Secrets:
+    with open(environment.secrets_file, encoding="utf-8") as f:
+        secrets_file = json.load(f)
+    return Secrets(
+        datastore_provisioners=secrets_file["datastore_provisioners"]
+    )
 
 
-access_control = _initialize_access_control()
+secrets = _initialize_secrets()
