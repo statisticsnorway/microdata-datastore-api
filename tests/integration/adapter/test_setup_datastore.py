@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from datastore_api.adapter.local_storage.setup_datastore import setup_datastore
+from datastore_api.adapter.local_storage import setup_datastore
 from datastore_api.common.exceptions import DatastorePathExistsException
 from datastore_api.domain.datastores.models import NewDatastore
 

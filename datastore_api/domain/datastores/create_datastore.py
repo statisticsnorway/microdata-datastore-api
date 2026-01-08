@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from datastore_api.adapter import db
-from datastore_api.adapter.local_storage.setup_datastore import setup_datastore
+from datastore_api.adapter.local_storage import setup_datastore
 from datastore_api.api.datastores.models import NewDatastoreRequest
 from datastore_api.common.exceptions import (
     DatastoreExistsException,
