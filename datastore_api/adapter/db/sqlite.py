@@ -810,7 +810,7 @@ class SqliteDbClient:
 
     def new_datastore(self, new_datastore: NewDatastore) -> None:
         """
-        Creates a new datasstore.
+        Inserts a new datastore row.
         """
         conn = self._conn()
         try:
