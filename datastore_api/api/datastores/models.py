@@ -27,4 +27,4 @@ class NewDatastoreRequest(CamelModel, extra="forbid"):
             raise ValueError(
                 "Name may only contain letters (A-Z, a-z) and space"
             )
-        return value
+        return value.strip()
