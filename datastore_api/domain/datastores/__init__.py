@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from datastore_api.adapter import db
@@ -10,6 +11,8 @@ from datastore_api.config import environment
 from datastore_api.domain.datastores.models import NewDatastore
 
 DATASTORES_ROOT_DIR = environment.datastores_root_dir
+
+logger = logging.getLogger()
 
 
 def get_datastore_dir_from_rdn(rdn: str) -> str:
@@ -31,6 +34,10 @@ def create_new_datastore(
             f"Datastore rdn {new_datastore.rdn} already exists"
         )
     if Path(new_datastore.directory).exists():
+        logger.error(
+            f"Datastore directory exists ({new_datastore.directory}) "
+            f"without matching rdn ({new_datastore.rdn}) in the database."
+        )
         raise DatastorePathExistsException(
             f"Datastore directory already exists at {new_datastore.directory}"
         )
