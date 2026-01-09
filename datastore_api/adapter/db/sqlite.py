@@ -20,7 +20,6 @@ from datastore_api.common.exceptions import (
     JobExistsException,
     NotFoundException,
 )
-from datastore_api.domain.datastores.models import NewDatastore
 
 logger = logging.getLogger()
 
@@ -808,7 +807,14 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def insert_new_datastore(self, new_datastore: NewDatastore) -> None:
+    def insert_new_datastore(
+        self,
+        rdn: str,
+        description: str,
+        directory: str,
+        name: str,
+        bump_enabled: bool,
+    ) -> None:
         """
         Inserts a new datastore row.
         """
@@ -828,11 +834,11 @@ class SqliteDbClient:
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 (
-                    new_datastore.rdn,
-                    new_datastore.description,
-                    new_datastore.directory,
-                    new_datastore.name,
-                    new_datastore.bump_enabled,
+                    rdn,
+                    description,
+                    directory,
+                    name,
+                    bump_enabled,
                 ),
             )
             conn.commit()

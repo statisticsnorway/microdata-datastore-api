@@ -23,7 +23,6 @@ from datastore_api.adapter.db.sqlite import (
     SqliteDbClient,
 )
 from datastore_api.api.jobs.models import NewJobRequest
-from datastore_api.domain.datastores.models import NewDatastore
 
 sqlite_file = "test.db"
 sqlite_client = SqliteDbClient(f"sqlite://{sqlite_file}")
@@ -144,12 +143,6 @@ BUMP_JOB = Job(
             ],
         ),
     ),
-)
-NEW_DATASTORE = NewDatastore(
-    rdn="no.new.testdatastore",
-    description="new testdatastore",
-    directory="some/path/here",
-    name="NEW TESTDATASTORE",
 )
 
 
@@ -511,9 +504,24 @@ def test_get_datastore_id_from_rdn():
 
 
 def test_insert_new_datastore():
-    sqlite_client.insert_new_datastore(NEW_DATASTORE)
+    rdn = "no.new.testdatastore"
+    description = "new testdatastore"
+    name = "NEW TESTDATASTORE"
+    directory = "some/dir/here"
+
+    sqlite_client.insert_new_datastore(
+        rdn=rdn,
+        description=description,
+        name=name,
+        directory=directory,
+        bump_enabled=False,
+    )
     datastores = sqlite_client.get_datastores()
     assert "no.new.testdatastore" in datastores
     id = sqlite_client.get_datastore_id_from_rdn("no.new.testdatastore")
     datastore = sqlite_client.get_datastore(id)
-    assert vars(NEW_DATASTORE).items() <= vars(datastore).items()
+    assert datastore.rdn == rdn
+    assert datastore.description == description
+    assert datastore.name == name
+    assert datastore.directory == directory
+    assert not datastore.bump_enabled

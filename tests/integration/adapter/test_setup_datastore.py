@@ -5,14 +5,11 @@ import pytest
 
 from datastore_api.adapter.local_storage import setup_datastore
 from datastore_api.common.exceptions import DatastorePathExistsException
-from datastore_api.domain.datastores.models import NewDatastore
 
-NEW_DATASTORE = NewDatastore(
-    rdn="no.new.testdatastore",
-    description="new testdatastore",
-    directory="tests/resources/datastores/no_new_testdatastore",
-    name="NEW TESTDATASTORE",
-)
+RDN = "no.new.testdatastore"
+DESCRIPTION = "new testdatastore"
+DIRECTORY = "tests/resources/datastores/no_new_testdatastore"
+NAME = "NEW TESTDATASTORE"
 
 
 @pytest.fixture
@@ -22,8 +19,10 @@ def cleanup_datastores():
 
 
 def test_setup_datastore(cleanup_datastores):
-    setup_datastore(NEW_DATASTORE)
-    root_path = Path(NEW_DATASTORE.directory)
+    setup_datastore(
+        rdn=RDN, name=NAME, directory=DIRECTORY, description=DESCRIPTION
+    )
+    root_path = Path(DIRECTORY)
     expected_dirs = [
         root_path,
         root_path / "data",
@@ -47,7 +46,9 @@ def test_setup_datastore(cleanup_datastores):
 
 
 def test_setup_datastore_on_existing_path(cleanup_datastores):
-    datastore_dir = Path(NEW_DATASTORE.directory)
+    datastore_dir = Path(DIRECTORY)
     datastore_dir.mkdir(parents=True, exist_ok=True)
     with pytest.raises(DatastorePathExistsException):
-        setup_datastore(NEW_DATASTORE)
+        setup_datastore(
+            rdn=RDN, name=NAME, directory=DIRECTORY, description=DESCRIPTION
+        )

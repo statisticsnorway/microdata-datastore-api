@@ -3,15 +3,14 @@ import logging
 from pathlib import Path
 
 from datastore_api.common.exceptions import DatastorePathExistsException
-from datastore_api.domain.datastores.models import NewDatastore
 
 """Creates the directory structure of a datastore"""
 
 logger = logging.getLogger()
 
 
-def _create_file_structure(new_datastore: NewDatastore) -> None:
-    root_dir = Path(new_datastore.directory)
+def _create_file_structure(datastore_directory: str) -> None:
+    root_dir = Path(datastore_directory)
 
     directories = [
         "data",
@@ -29,12 +28,12 @@ def _create_file_structure(new_datastore: NewDatastore) -> None:
     )
 
 
-def _create_metadata_all_draft(new_datastore: NewDatastore) -> dict:
+def _create_metadata_all_draft(name: str, rdn: str, description: str) -> dict:
     return {
         "dataStore": {
-            "name": new_datastore.name,
-            "label": new_datastore.rdn,
-            "description": new_datastore.description,
+            "name": name,
+            "label": rdn,
+            "description": description,
             "languageCode": "no",
         },
         "languages": [{"code": "no", "label": "Norsk"}],
@@ -53,11 +52,11 @@ def _create_draft_version() -> dict:
     }
 
 
-def _create_datastore_versions(new_datastore: NewDatastore) -> dict:
+def _create_datastore_versions(name: str, rdn: str, description: str) -> dict:
     return {
-        "name": new_datastore.name,
-        "label": new_datastore.rdn,
-        "description": new_datastore.description,
+        "name": name,
+        "label": rdn,
+        "description": description,
         "versions": [],
     }
 
@@ -68,25 +67,35 @@ def _save_json_file(path: Path, filename: str, json_dict: dict) -> None:
         json.dump(json_dict, f, indent=2)
 
 
-def setup_datastore(new_datastore: NewDatastore) -> None:
-    if Path(new_datastore.directory).exists():
+def setup_datastore(
+    directory: str, name: str, rdn: str, description: str
+) -> None:
+    if Path(directory).exists():
         raise DatastorePathExistsException(
-            f"Datastore already exists at {new_datastore.directory}"
+            f"Datastore already exists at {directory}"
         )
-    _create_file_structure(new_datastore)
+    _create_file_structure(directory)
     _save_json_file(
-        path=Path(new_datastore.directory),
+        path=Path(directory),
         filename="metadata_all__DRAFT.json",
-        json_dict=_create_metadata_all_draft(new_datastore),
+        json_dict=_create_metadata_all_draft(
+            name=name,
+            description=description,
+            rdn=rdn,
+        ),
     )
     _save_json_file(
-        path=Path(new_datastore.directory),
+        path=Path(directory),
         filename="draft_version.json",
         json_dict=_create_draft_version(),
     )
     _save_json_file(
-        path=Path(new_datastore.directory),
+        path=Path(directory),
         filename="datastore_versions.json",
-        json_dict=_create_datastore_versions(new_datastore),
+        json_dict=_create_datastore_versions(
+            name=name,
+            description=description,
+            rdn=rdn,
+        ),
     )
     logger.info("Datastore setup complete")

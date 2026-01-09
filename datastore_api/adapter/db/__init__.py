@@ -10,7 +10,6 @@ from datastore_api.adapter.db.models import (
 )
 from datastore_api.adapter.db.sqlite import SqliteDbClient
 from datastore_api.config import environment
-from datastore_api.domain.datastores.models import NewDatastore
 
 
 class DatabaseClient(Protocol):
@@ -47,7 +46,15 @@ class DatabaseClient(Protocol):
     def get_datastores(self) -> list[str]: ...
     def get_datastore(self, datastore_id: int) -> Datastore: ...
     def get_datastore_id_from_rdn(self, rdn: str) -> int | None: ...
-    def insert_new_datastore(self, new_datastore: NewDatastore) -> None: ...
+    def insert_new_datastore(
+        self,
+        *,
+        rdn: str,
+        description: str,
+        directory: str,
+        name: str,
+        bump_enabled: bool,
+    ) -> None: ...
 
 
 def get_database_client() -> DatabaseClient:

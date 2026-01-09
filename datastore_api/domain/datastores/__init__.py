@@ -2,7 +2,6 @@ from pathlib import Path
 
 from datastore_api.adapter import db
 from datastore_api.adapter.local_storage import setup_datastore
-from datastore_api.api.datastores.models import NewDatastoreRequest
 from datastore_api.common.exceptions import (
     DatastoreExistsException,
     DatastorePathExistsException,
@@ -24,19 +23,6 @@ def get_datastore_dir_from_rdn(rdn: str) -> str:
     return str(datastore_dir)
 
 
-def generate_new_datastore_from_request(
-    request: NewDatastoreRequest,
-) -> NewDatastore:
-    datastore_dir = get_datastore_dir_from_rdn(request.rdn)
-    return NewDatastore(
-        name=request.name,
-        rdn=request.rdn,
-        description=request.description,
-        directory=datastore_dir,
-        bump_enabled=request.bump_enabled,
-    )
-
-
 def create_new_datastore(
     new_datastore: NewDatastore, db_client: db.DatabaseClient
 ) -> None:
@@ -48,5 +34,16 @@ def create_new_datastore(
         raise DatastorePathExistsException(
             f"Datastore directory already exists at {new_datastore.directory}"
         )
-    db_client.insert_new_datastore(new_datastore)
-    setup_datastore(new_datastore)
+    db_client.insert_new_datastore(
+        rdn=new_datastore.rdn,
+        description=new_datastore.description,
+        directory=new_datastore.directory,
+        name=new_datastore.name,
+        bump_enabled=new_datastore.bump_enabled,
+    )
+    setup_datastore(
+        rdn=new_datastore.rdn,
+        description=new_datastore.description,
+        directory=new_datastore.directory,
+        name=new_datastore.name,
+    )
