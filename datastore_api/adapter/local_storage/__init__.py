@@ -9,7 +9,7 @@ from datastore_api.common.exceptions import DatastorePathExistsException
 logger = logging.getLogger()
 
 
-def _create_file_structure(datastore_directory: str) -> None:
+def _create_datastore_file_structure(datastore_directory: str) -> None:
     root_dir = Path(datastore_directory)
 
     directories = [
@@ -74,7 +74,7 @@ def setup_datastore(
         raise DatastorePathExistsException(
             f"Datastore already exists at {directory}"
         )
-    _create_file_structure(directory)
+    _create_datastore_file_structure(directory)
     _save_json_file(
         path=Path(directory),
         filename="metadata_all__DRAFT.json",
