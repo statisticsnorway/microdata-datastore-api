@@ -106,7 +106,12 @@ class SqliteDbClient:
             cursor.execute("""
                 CREATE UNIQUE INDEX IF NOT EXISTS uq_rdn
                 ON datastore(rdn)
-                """)
+            """)
+            conn.commit()
+            cursor.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_dir
+                ON datastore(directory)
+            """)
             conn.commit()
         finally:
             conn.close()
@@ -313,7 +318,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def new_job(self, new_job: Job) -> Job:
+    def insert_new_job(self, new_job: Job) -> Job:
         """
         Creates a new job for supplied command, status and dataset_name, and
         returns job_id of created job.
@@ -804,5 +809,46 @@ class SqliteDbClient:
                 """,
             ).fetchall()
             return {row[0]: row[1] for row in rows}
+        finally:
+            conn.close()
+
+    def insert_new_datastore(
+        self,
+        rdn: str,
+        description: str,
+        directory: str,
+        name: str,
+        bump_enabled: bool,
+    ) -> None:
+        """
+        Inserts a new datastore row.
+        """
+        conn = self._conn()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO datastore (
+                    rdn,
+                    description,
+                    directory,
+                    name,
+                    bump_enabled
+                )
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    rdn,
+                    description,
+                    directory,
+                    name,
+                    bump_enabled,
+                ),
+            )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
         finally:
             conn.close()

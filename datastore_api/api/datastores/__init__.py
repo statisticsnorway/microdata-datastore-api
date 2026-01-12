@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Cookie, Depends
 
-from datastore_api.adapter import db
+from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import Datastore
 from datastore_api.api import observability
 from datastore_api.api.common.dependencies import get_datastore_id
@@ -12,6 +12,12 @@ from datastore_api.api.datastores import (
     metadata,
     targets,
 )
+from datastore_api.api.datastores.models import (
+    NewDatastoreRequest,
+)
+from datastore_api.domain.datastores import (
+    create_new_datastore,
+)
 
 router = APIRouter()
 
@@ -21,6 +27,19 @@ async def get_datastores(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> list[str]:
     return db_client.get_datastores()
+
+
+@router.post("")
+async def new_datastore(
+    validated_body: NewDatastoreRequest,
+    authorization: str | None = Cookie(None),
+    user_info: str | None = Cookie(None, alias="user-info"),
+    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
+    db_client: db.DatabaseClient = Depends(db.get_database_client),
+) -> None:
+    auth_client.authorize_datastore_modification(authorization, user_info)
+    new_datastore = validated_body.generate_new_datastore_from_request()
+    create_new_datastore(new_datastore, db_client)
 
 
 @router.get("/{datastore_rdn}")
