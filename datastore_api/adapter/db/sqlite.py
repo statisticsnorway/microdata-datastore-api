@@ -106,7 +106,12 @@ class SqliteDbClient:
             cursor.execute("""
                 CREATE UNIQUE INDEX IF NOT EXISTS uq_rdn
                 ON datastore(rdn)
-                """)
+            """)
+            conn.commit()
+            cursor.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_dir
+                ON datastore(directory)
+            """)
             conn.commit()
         finally:
             conn.close()
