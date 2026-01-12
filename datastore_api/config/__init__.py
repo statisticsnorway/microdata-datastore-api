@@ -44,7 +44,7 @@ def _initialize_secrets() -> Secrets:
     with open(environment.secrets_file, encoding="utf-8") as f:
         secrets_file = json.load(f)
     return Secrets(
-        datastore_provisioners=secrets_file["datastore_provisioners"]
+        datastore_provisioners=secrets_file["DATASTORE_PROVISIONERS"]
     )
 
 
