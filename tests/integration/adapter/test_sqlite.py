@@ -293,8 +293,8 @@ def test_get_jobs_for_target():
     assert len(jobs) == 1
 
 
-def test_new_job():
-    job = sqlite_client.new_job(
+def test_insert_new_job():
+    job = sqlite_client.insert_new_job(
         NewJobRequest(
             operation=Operation.ADD,
             target="NEW_DATASET",
@@ -310,7 +310,7 @@ def test_new_job():
     )
     assert len(jobs) == 1
     with pytest.raises(JobExistsException):
-        sqlite_client.new_job(
+        sqlite_client.insert_new_job(
             NewJobRequest(
                 operation=Operation.ADD,
                 target="NEW_DATASET",
@@ -501,3 +501,27 @@ def test_get_datastore():
 def test_get_datastore_id_from_rdn():
     rdn = "no.dev.test"
     assert sqlite_client.get_datastore_id_from_rdn(rdn) == 2
+
+
+def test_insert_new_datastore():
+    rdn = "no.new.testdatastore"
+    description = "new testdatastore"
+    name = "NEW TESTDATASTORE"
+    directory = "some/dir/here"
+
+    sqlite_client.insert_new_datastore(
+        rdn=rdn,
+        description=description,
+        name=name,
+        directory=directory,
+        bump_enabled=False,
+    )
+    datastores = sqlite_client.get_datastores()
+    assert "no.new.testdatastore" in datastores
+    id = sqlite_client.get_datastore_id_from_rdn("no.new.testdatastore")
+    datastore = sqlite_client.get_datastore(id)
+    assert datastore.rdn == rdn
+    assert datastore.description == description
+    assert datastore.name == name
+    assert datastore.directory == directory
+    assert not datastore.bump_enabled

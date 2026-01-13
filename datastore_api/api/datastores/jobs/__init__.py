@@ -82,7 +82,7 @@ def new_job(
                     "Bumping the datastore is disabled"
                 )
             else:
-                job = database_client.new_job(
+                job = database_client.insert_new_job(
                     job_request.generate_job_from_request(
                         "", parsed_user_info, datastore_rdn
                     )
