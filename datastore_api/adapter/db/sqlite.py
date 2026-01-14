@@ -854,7 +854,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def delete_datastore(self, rdn: str) -> None:
+    def hard_delete_datastore(self, rdn: str) -> None:
         conn = self._conn()
         try:
             cursor = conn.cursor()

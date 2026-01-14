@@ -57,7 +57,7 @@ def create_new_datastore(
             name=new_datastore.name,
         )
     except Exception as e:
-        db_client.delete_datastore(rdn=new_datastore.rdn)
+        db_client.hard_delete_datastore(rdn=new_datastore.rdn)
         raise DatastoreSetupException(
             f"Failed to set up datastore {new_datastore.rdn}"
         ) from e

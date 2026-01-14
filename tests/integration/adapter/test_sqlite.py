@@ -540,8 +540,8 @@ def existing_datastore():
     return rdn
 
 
-def test_delete_datastore(existing_datastore):
+def test_hard_delete_datastore(existing_datastore):
     rdn = existing_datastore
     assert rdn in sqlite_client.get_datastores()
-    sqlite_client.delete_datastore(rdn)
+    sqlite_client.hard_delete_datastore(rdn)
     assert rdn not in sqlite_client.get_datastores()
