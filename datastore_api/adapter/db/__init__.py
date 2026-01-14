@@ -55,6 +55,7 @@ class DatabaseClient(Protocol):
         name: str,
         bump_enabled: bool,
     ) -> None: ...
+    def delete_datastore(self, rdn: str) -> None: ...
 
 
 def get_database_client() -> DatabaseClient:

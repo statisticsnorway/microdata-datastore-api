@@ -19,6 +19,7 @@ from datastore_api.common.exceptions import (
     DatastoreNotFoundException,
     DatastorePathExistsException,
     DatastoreRdnMissingException,
+    DatastoreSetupException,
     InvalidDraftVersionException,
     InvalidStorageFormatException,
     JobExistsException,
@@ -162,6 +163,13 @@ def _include_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         logger.warning(e, exc_info=True)
         return JSONResponse(status_code=409, content={"message": str(e)})
+
+    @app.exception_handler(DatastoreSetupException)
+    async def handle_datastore_setup_error(
+        _req: Request, e: DatastoreSetupException
+    ) -> JSONResponse:
+        logger.error(e, exc_info=True)
+        return JSONResponse(status_code=500, content={"message": str(e)})
 
     @app.exception_handler(Exception)
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:

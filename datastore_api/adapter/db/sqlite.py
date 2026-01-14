@@ -16,6 +16,7 @@ from datastore_api.adapter.db.models import (
     UserInfo,
 )
 from datastore_api.common.exceptions import (
+    DatastoreNotFoundException,
     JobAlreadyCompleteException,
     JobExistsException,
     NotFoundException,
@@ -847,6 +848,28 @@ class SqliteDbClient:
                 ),
             )
             conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    def delete_datastore(self, rdn: str) -> None:
+        conn = self._conn()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                DELETE FROM datastore
+                WHERE rdn = ?
+                """,
+                (rdn,),
+            )
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise DatastoreNotFoundException(
+                    f"Could not find datastore with rdn: {rdn}"
+                )
         except Exception as e:
             conn.rollback()
             raise e
