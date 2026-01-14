@@ -8,7 +8,7 @@ from datastore_api.common.exceptions import DatastorePathExistsException
 
 RDN = "no.new.testdatastore"
 DESCRIPTION = "new testdatastore"
-DIRECTORY = "tests/resources/datastores/no_new_testdatastore"
+DIRECTORY = "tests/resources/datastores/no-new-testdatastore"
 NAME = "NEW TESTDATASTORE"
 
 
@@ -40,7 +40,11 @@ def test_setup_datastore(cleanup_datastores):
         "draft_version.json",
         "metadata_all__DRAFT.json",
     }
-    actual_files = {file.name for file in root_path.iterdir() if file.is_file()}
+    actual_files = {
+        file.name
+        for file in (root_path / "datastore").iterdir()
+        if file.is_file()
+    }
 
     assert expected_files == actual_files
 
