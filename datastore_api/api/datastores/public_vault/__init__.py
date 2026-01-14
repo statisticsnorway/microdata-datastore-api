@@ -48,7 +48,7 @@ def get_public_key(
 
 
 @router.post("")
-def create_public_key(
+def save_public_key(
     api_key: str = Header("X-API-KEY", alias="x-api-key"),
     public_key_bytes: bytes = Body(..., media_type="application/x-pem-file"),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
@@ -71,4 +71,4 @@ def create_public_key(
         raise PublicKeyInvalidException("Public key is invalid") from e
 
     public_key_location.write_bytes(public_key_bytes)
-    logger.info(f"Created public key at {public_key_location}")
+    logger.info(f"Saved public key at {public_key_location}")

@@ -62,7 +62,7 @@ def client(mock_auth_client: Mock, mock_db_client: Mock):
         os.remove(PUBLIC_KEY_PATH)
 
 
-def test_create_public_key(client: TestClient):
+def test_save_public_key(client: TestClient):
     client.post(
         "/datastores/no.ssb.test/public-key",
         content=PUBLIC_KEY_BYTES,
