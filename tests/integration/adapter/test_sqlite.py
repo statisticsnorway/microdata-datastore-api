@@ -525,3 +525,23 @@ def test_insert_new_datastore():
     assert datastore.name == name
     assert datastore.directory == directory
     assert not datastore.bump_enabled
+
+
+@pytest.fixture
+def existing_datastore():
+    rdn = "no.testdatastore"
+    sqlite_client.insert_new_datastore(
+        rdn=rdn,
+        description="testdatastore for deletion",
+        name="testdatastore",
+        directory="som/dir/here",
+        bump_enabled=False,
+    )
+    return rdn
+
+
+def test_hard_delete_datastore(existing_datastore):
+    rdn = existing_datastore
+    assert rdn in sqlite_client.get_datastores()
+    sqlite_client.hard_delete_datastore(rdn)
+    assert rdn not in sqlite_client.get_datastores()

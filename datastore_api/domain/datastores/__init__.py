@@ -6,6 +6,7 @@ from datastore_api.adapter.local_storage import setup_datastore
 from datastore_api.common.exceptions import (
     DatastoreExistsException,
     DatastorePathExistsException,
+    DatastoreSetupException,
 )
 from datastore_api.config import environment
 from datastore_api.domain.datastores.models import NewDatastore
@@ -48,9 +49,15 @@ def create_new_datastore(
         name=new_datastore.name,
         bump_enabled=new_datastore.bump_enabled,
     )
-    setup_datastore(
-        rdn=new_datastore.rdn,
-        description=new_datastore.description,
-        directory=new_datastore.directory,
-        name=new_datastore.name,
-    )
+    try:
+        setup_datastore(
+            rdn=new_datastore.rdn,
+            description=new_datastore.description,
+            directory=new_datastore.directory,
+            name=new_datastore.name,
+        )
+    except Exception as e:
+        db_client.hard_delete_datastore(rdn=new_datastore.rdn)
+        raise DatastoreSetupException(
+            f"Failed to set up datastore {new_datastore.rdn}"
+        ) from e

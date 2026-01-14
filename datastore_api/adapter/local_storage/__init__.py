@@ -76,7 +76,7 @@ def setup_datastore(
         )
     _create_datastore_file_structure(directory)
     _save_json_file(
-        path=Path(directory),
+        path=Path(directory) / "datastore",
         filename="metadata_all__DRAFT.json",
         json_dict=_create_metadata_all_draft(
             name=name,
@@ -85,12 +85,12 @@ def setup_datastore(
         ),
     )
     _save_json_file(
-        path=Path(directory),
+        path=Path(directory) / "datastore",
         filename="draft_version.json",
         json_dict=_create_draft_version(),
     )
     _save_json_file(
-        path=Path(directory),
+        path=Path(directory) / "datastore",
         filename="datastore_versions.json",
         json_dict=_create_datastore_versions(
             name=name,
