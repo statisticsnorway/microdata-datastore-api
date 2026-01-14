@@ -32,6 +32,7 @@ class Operation(StrEnum):
     REMOVE = "REMOVE"
     ROLLBACK_REMOVE = "ROLLBACK_REMOVE"
     DELETE_ARCHIVE = "DELETE_ARCHIVE"
+    GENERATE_RSA_KEYS = "GENERATE_RSA_KEYS"
 
 
 class ReleaseStatus(StrEnum):
