@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from httpx import Response
 
 from datastore_api.adapter import auth, db
-from datastore_api.api.datastores.public_vault import PUBLIC_KEY_FILE_NAME
+from datastore_api.api.datastores.public_key import PUBLIC_KEY_FILE_NAME
 from datastore_api.main import app
 
 
