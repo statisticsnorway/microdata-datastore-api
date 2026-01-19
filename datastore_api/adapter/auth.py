@@ -31,6 +31,7 @@ class AuthClient(Protocol):
     def authorize_datastore_modification(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo: ...
+    def check_api_key(self, x_api_key: str) -> None: ...
 
 
 class MicrodataAuthClient:
@@ -157,6 +158,10 @@ class MicrodataAuthClient:
             raise AuthError("Forbidden: Not allowed to modify datastore")
         return parsed_user_info
 
+    def check_api_key(self, x_api_key: str) -> None:
+        if x_api_key != secrets.datastore_api_service_key:
+            raise AuthError("Invalid API key")
+
 
 class DisabledAuthClient:
     def authorize_user(
@@ -187,6 +192,9 @@ class DisabledAuthClient:
             first_name="Test",
             last_name="User",
         )
+
+    def check_api_key(self, x_api_key: str) -> None:
+        logger.error("JWT_AUTH is turned off. Not checking API key")
 
 
 class SkipSignatureAuthClient:
@@ -318,6 +326,10 @@ class SkipSignatureAuthClient:
         if parsed_user_info.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
         return parsed_user_info
+
+    def check_api_key(self, x_api_key: str) -> None:
+        if x_api_key != secrets.datastore_api_service_key:
+            raise AuthError("Invalid API key")
 
 
 def get_auth_client() -> AuthClient:
