@@ -78,8 +78,8 @@ def test_get_data_path_from_data_versions_bad_name_raises_not_found_exception():
         )
 
 
-def test_get_data_path_from_data_versions_bad_ver_raises_not_found_exception():
-    with pytest.raises(NotFoundException):
+def test_get_data_path_from_data_versions_bad_ver_raises_file_not_found_error():
+    with pytest.raises(FileNotFoundError):
         datastore_directory.get_data_path_from_data_versions(
             "TEST_STUDIEPOENG", Version.from_str("0.0.0.0"), DATASTORE_ROOT_DIR
         )

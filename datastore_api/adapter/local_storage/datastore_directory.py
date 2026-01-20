@@ -79,30 +79,25 @@ def get_draft_data_file_path(
 def get_data_path_from_data_versions(
     dataset_name: str, version: Version, datastore_root_dir: Path
 ) -> str:
-    try:
-        file_version = version.to_2_underscored()
-        data_versions_file = os.path.join(
-            datastore_root_dir, f"datastore/data_versions__{file_version}.json"
-        )
-        with open(data_versions_file, encoding="utf-8") as f:
-            data_versions = json.load(f)
-        if dataset_name not in data_versions:
-            raise NotFoundException(
-                f"No {dataset_name} in data_versions file "
-                + f"for version {file_version}"
-            )
-        file_name = data_versions[dataset_name]
-        full_path = f"{datastore_root_dir}/data/{dataset_name}/{file_name}"
-        if not os.path.exists(full_path):
-            logger.error(f"{full_path} does not exist")
-            raise NotFoundException(
-                f"No file exists for {dataset_name} in version {version}"
-            )
-        return full_path
-    except FileNotFoundError as e:
+    file_version = version.to_2_underscored()
+    data_versions_file = os.path.join(
+        datastore_root_dir, f"datastore/data_versions__{file_version}.json"
+    )
+    with open(data_versions_file, encoding="utf-8") as f:
+        data_versions = json.load(f)
+    if dataset_name not in data_versions:
         raise NotFoundException(
-            f"data_path_from_data_versions for version {version} not found"
-        ) from e
+            f"No {dataset_name} in data_versions file "
+            + f"for version {file_version}"
+        )
+    file_name = data_versions[dataset_name]
+    full_path = f"{datastore_root_dir}/data/{dataset_name}/{file_name}"
+    if not os.path.exists(full_path):
+        logger.error(f"{full_path} does not exist")
+        raise NotFoundException(
+            f"No file exists for {dataset_name} in version {version}"
+        )
+    return full_path
 
 
 def get_latest_version(datastore_root_dir: Path) -> Version:
