@@ -81,8 +81,8 @@ def get_data_path_from_data_versions(
 ) -> str:
     try:
         file_version = version.to_2_underscored()
-        data_versions_file = Path(
-            f"{datastore_root_dir}/datastore/data_versions__{file_version}.json"
+        data_versions_file = os.path.join(
+            datastore_root_dir, f"datastore/data_versions__{file_version}.json"
         )
         with open(data_versions_file, encoding="utf-8") as f:
             data_versions = json.load(f)

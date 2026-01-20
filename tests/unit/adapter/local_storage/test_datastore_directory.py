@@ -83,7 +83,3 @@ def test_get_data_path_from_data_versions_bad_ver_raises_not_found_exception():
         datastore_directory.get_data_path_from_data_versions(
             "TEST_STUDIEPOENG", Version.from_str("0.0.0.0"), DATASTORE_ROOT_DIR
         )
-
-
-# Dataset Not In Version: Verify NotFoundException when the dataset name is
-# missing from data_versions__.json.
