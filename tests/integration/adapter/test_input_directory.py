@@ -31,3 +31,16 @@ def test_get_importable_datasets():
     assert len(actual_datasets) == 4
     for dataset in expected_datasets:
         assert dataset in actual_datasets
+
+
+def test_get_importable_datasets_filter():
+    actual_datasets = input_directory.get_importable_datasets(
+        INPUT_DIR, ["YET_ANOTHER_DATASET"]
+    )
+    assert len(actual_datasets) == 3
+    my_expected_datasets = expected_datasets[0:3]
+    for dataset in my_expected_datasets:
+        assert dataset in actual_datasets
+
+    for dataset in actual_datasets:
+        assert dataset in my_expected_datasets
