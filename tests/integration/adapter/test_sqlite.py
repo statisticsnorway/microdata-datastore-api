@@ -1,11 +1,12 @@
 import json
-import os
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 from pytest_mock import MockFixture
 
+from datastore_api.adapter.db.migrations import apply_migrations
 from datastore_api.adapter.db.models import (
     DatastoreVersion,
     DataStructureUpdate,
@@ -24,8 +25,7 @@ from datastore_api.adapter.db.sqlite import (
 )
 from datastore_api.api.jobs.models import NewJobRequest
 
-sqlite_file = "test.db"
-sqlite_client = SqliteDbClient(f"sqlite://{sqlite_file}")
+migrations_dir = Path("tests/resources/migrations/valid")
 
 DATASTORE_ID = 1
 USER_INFO_DICT = {
@@ -146,14 +146,18 @@ BUMP_JOB = Job(
 )
 
 
-def teardown_function():
-    os.remove(sqlite_file)
+@pytest.fixture
+def sqlite_db(tmp_path):
+    db_file = tmp_path / "testdatabase.db"
+    yield db_file
 
 
-def setup_function():
+@pytest.fixture(autouse=True)
+def setup_function(sqlite_db):
+    apply_migrations(sqlite_db, migrations_dir)
     global sqlite_client
-    sqlite_client = SqliteDbClient(f"sqlite://{sqlite_file}")
-    conn = sqlite3.connect(sqlite_file)
+    sqlite_client = SqliteDbClient(f"sqlite://{sqlite_db}")
+    conn = sqlite3.connect(sqlite_db)
     conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
     cursor.execute(
