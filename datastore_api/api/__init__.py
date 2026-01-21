@@ -105,11 +105,7 @@ def _include_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content=jsonable_encoder(
-                {
-                    "message": "Bad Request",
-                    "details": e.errors(),
-                    "requestBody": e.body,
-                }
+                {"message": "Bad Request", "details": e.errors()}
             ),
         )
 
