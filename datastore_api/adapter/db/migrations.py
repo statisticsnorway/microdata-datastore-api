@@ -113,4 +113,3 @@ def apply_migrations(db_path: Path, migrations_dir: Path) -> None:
         raise MigrationException(f"Migration failed: {e}") from e
     finally:
         conn.close()
-

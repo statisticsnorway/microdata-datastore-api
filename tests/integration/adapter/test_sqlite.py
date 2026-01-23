@@ -148,7 +148,7 @@ BUMP_JOB = Job(
 
 @pytest.fixture
 def sqlite_db(tmp_path):
-    db_file = tmp_path / "testdatabase.db"
+    db_file = tmp_path / "test.db"
     yield db_file
 
 

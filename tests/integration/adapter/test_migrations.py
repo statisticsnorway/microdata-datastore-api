@@ -11,7 +11,7 @@ from datastore_api.common.exceptions import MigrationException
 
 @pytest.fixture
 def sqlite_db(tmp_path):
-    db_file = tmp_path / "testdatabase.db"
+    db_file = tmp_path / "test.db"
     yield db_file
 
 
@@ -52,7 +52,7 @@ def test_valid_migrations(tmp_path, sqlite_db):
         conn.close()
 
 
-def test_invalid_migration(tmp_path, sqlite_db):
+def test_invalid_migrations(tmp_path, sqlite_db):
     migrations_dir = tmp_path / "migrations"
     _copy_migrations(Path("tests/resources/migrations/invalid"), migrations_dir)
     with pytest.raises(MigrationException):
@@ -113,3 +113,9 @@ def test_migration_older_than_latest_applied_at_forbidden(tmp_path, sqlite_db):
         "Date in filename cannot be older than the latest applied migration"
         in str(e.value)
     )
+
+
+def test_all_migrations_are_valid(sqlite_db):
+    # Test passes if all migration files can be applied without error
+    migrations_dir = Path("migrations")
+    apply_migrations(sqlite_db, migrations_dir)

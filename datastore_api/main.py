@@ -13,14 +13,13 @@ from datastore_api.config.logging import setup_logging
 
 logger = logging.getLogger()
 
-DB_PATH = Path(os.environ["SQLITE_URL"])
-MIGRATIONS_DIRECTORY = Path("migrations")
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator:
     try:
-        apply_migrations(DB_PATH, MIGRATIONS_DIRECTORY)
+        DB_PATH = Path(os.environ["SQLITE_URL"])
+        MIGRATIONS_DIR = Path(os.environ.get("MIGRATIONS_DIR", "migrations"))
+        apply_migrations(DB_PATH, MIGRATIONS_DIR)
     except MigrationException as e:
         logger.error(f"Startup aborted due to migration failure: {e}")
         raise
