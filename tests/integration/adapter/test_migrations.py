@@ -114,6 +114,7 @@ def test_migration_date_older_than_last_applied_forbidden(tmp_path, sqlite_db):
         in str(e.value)
     )
 
+
 def test_migration_invalid_filename_forbidden(tmp_path, sqlite_db):
     migrations_dir = tmp_path / "migrations"
 
@@ -124,10 +125,7 @@ def test_migration_invalid_filename_forbidden(tmp_path, sqlite_db):
     with pytest.raises(MigrationException) as e:
         apply_migrations(sqlite_db, migrations_dir)
 
-    assert (
-        "Cannot parse date from filename"
-        in str(e.value)
-    )
+    assert "Cannot parse date from filename" in str(e.value)
 
 
 def test_all_migrations_are_valid(sqlite_db):
