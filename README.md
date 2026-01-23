@@ -27,6 +27,18 @@ export JWKS_URL=http://localhost
 uv run python datastore_api/main.py
 ```
 
+## Migrations
+The application uses file-based SQLite migrations to manage schema changes.
+Migrations are executed on application startup.
+
+### Rules
+- Migration filenames must start with a valid calendar date (YYYYMMDD) and be placed within the /migrations directory.
+- Migration dates must be newer than the date of the last applied migration.
+- Each migration file is executed once.
+- Applied migrations are tracked in the `migrations` table.
+- If a previously applied migration file is modified (hash mismatch),
+  startup will fail.
+
 ## Pre-commit
 There are currently 3 active rules: Ruff-format, Ruff-lint and sync lock file.
 Install pre-commit 
