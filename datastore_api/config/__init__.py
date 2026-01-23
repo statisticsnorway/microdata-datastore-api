@@ -14,6 +14,7 @@ class Environment:
     jwt_auth: Literal["FULL"] | Literal["SKIP_SIGNATURE"] | Literal["OFF"]
     secrets_file: str
     datastores_root_dir: str
+    migrations_dir: str
 
 
 def _initialize_environment() -> Environment:
@@ -29,6 +30,7 @@ def _initialize_environment() -> Environment:
         jwt_auth=jwt_auth,
         secrets_file=os.environ["SECRETS_FILE"],
         datastores_root_dir=os.environ["DATASTORES_ROOT_DIR"],
+        migrations_dir=os.environ.get("MIGRATIONS_DIR", "migrations"),
     )
 
 
