@@ -44,3 +44,6 @@ lint.select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["ANN"]
+
+[tool.setuptools.packages.find]
+include = ["datastore_api"]
