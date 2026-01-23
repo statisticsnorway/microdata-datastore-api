@@ -10,6 +10,7 @@ from datastore_api.api.datastores import (
     jobs,
     languages,
     metadata,
+    public_key,
     targets,
 )
 from datastore_api.api.datastores.models import (
@@ -58,5 +59,6 @@ router.include_router(
 )
 router.include_router(targets.router, prefix="/{datastore_rdn}/targets")
 router.include_router(languages.router, prefix="/{datastore_rdn}/languages")
+router.include_router(public_key.router, prefix="/{datastore_rdn}/public-key")
 
 router.include_router(observability.router, prefix="/{datastore_rdn}/health")

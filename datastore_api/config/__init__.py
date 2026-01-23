@@ -38,13 +38,15 @@ environment = _initialize_environment()
 @dataclass
 class Secrets:
     datastore_provisioners: list[str]
+    datastore_api_service_key: str
 
 
 def _initialize_secrets() -> Secrets:
     with open(environment.secrets_file, encoding="utf-8") as f:
         secrets_file = json.load(f)
     return Secrets(
-        datastore_provisioners=secrets_file["DATASTORE_PROVISIONERS"]
+        datastore_provisioners=secrets_file["DATASTORE_PROVISIONERS"],
+        datastore_api_service_key=secrets_file["DATASTORE_API_SERVICE_KEY"],
     )
 
 
