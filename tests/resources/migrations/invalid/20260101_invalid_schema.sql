@@ -1,3 +1,4 @@
+-- Invalid sql
 CREATE TABLE IF NOT EXISTS xx (
     job_id INTEGER PRIMARY KEY AUTOINCREMENT,
     target TEXT,
