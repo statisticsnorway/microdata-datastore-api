@@ -93,7 +93,7 @@ def test_run_migrations_with_altered_file_forbidden(tmp_path, sqlite_db):
     assert "has been modified after being applied" in str(e.value)
 
 
-def test_migration_older_than_latest_applied_at_forbidden(tmp_path, sqlite_db):
+def test_migration_date_older_than_last_applied_forbidden(tmp_path, sqlite_db):
     migrations_dir = tmp_path / "migrations"
 
     _copy_migrations(
@@ -110,7 +110,7 @@ def test_migration_older_than_latest_applied_at_forbidden(tmp_path, sqlite_db):
         apply_migrations(sqlite_db, migrations_dir)
 
     assert (
-        "Date in filename cannot be older than the latest applied migration"
+        "Date in filename cannot be older than the last applied migration"
         in str(e.value)
     )
 

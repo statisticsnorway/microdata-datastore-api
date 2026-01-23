@@ -44,26 +44,21 @@ def apply_migrations(db_path: Path, migrations_dir: Path) -> None:
         )
         conn.commit()
 
-        applied_migrations: dict[str, dict] = {
-            filename: {
-                "hash": hash,
-                "applied_at": applied_at,
-            }
-            for filename, hash, applied_at in cursor.execute(
+        applied_migrations: dict[str, str] = {
+            filename: hash
+            for filename, hash in cursor.execute(
                 """
-                SELECT filename, hash, applied_at
+                SELECT filename, hash
                 FROM migrations
                 """
             )
         }
 
-        if applied_migrations:
-            last_applied_at = max(
-                datetime.fromisoformat(migration["applied_at"])
-                for migration in applied_migrations.values()
-            ).date()
-        else:
-            last_applied_at = None
+        last_applied_migration_date = (
+            _parse_migration_date(max(applied_migrations.keys()))
+            if applied_migrations
+            else None
+        )
 
         migration_files = sorted(Path(migrations_dir).glob("*.sql"))
         for migration_file in migration_files:
@@ -73,7 +68,7 @@ def apply_migrations(db_path: Path, migrations_dir: Path) -> None:
             timestamp = datetime.now().isoformat()
 
             if filename in applied_migrations:
-                stored_hash = applied_migrations[filename]["hash"]
+                stored_hash = applied_migrations[filename]
 
                 if hash != stored_hash:
                     raise MigrationException(
@@ -82,10 +77,13 @@ def apply_migrations(db_path: Path, migrations_dir: Path) -> None:
                     )
                 continue
 
-            if last_applied_at and migration_date < last_applied_at:
+            if (
+                last_applied_migration_date
+                and migration_date < last_applied_migration_date
+            ):
                 raise MigrationException(
                     "Date in filename cannot be older than the "
-                    "latest applied migration"
+                    "last applied migration"
                 )
 
             with open(migration_file, "r") as file:
