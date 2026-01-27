@@ -696,6 +696,7 @@ class SqliteDbClient:
                     bump_enabled
                 FROM datastore
                 WHERE datastore_id = ?
+                AND deleted_at IS NULL
                 """,
                 (datastore_id,),
             ).fetchone()
