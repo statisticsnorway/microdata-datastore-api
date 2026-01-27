@@ -1,3 +1,4 @@
+import os
 import shutil
 import sqlite3
 from datetime import datetime
@@ -126,6 +127,29 @@ def test_migration_invalid_filename_forbidden(tmp_path, sqlite_db):
         apply_migrations(sqlite_db, migrations_dir)
 
     assert "Cannot parse date from filename" in str(e.value)
+
+
+def test_migration_after_removing_previously_migrated_file_forbidden(
+    tmp_path, sqlite_db
+):
+    migrations_dir = tmp_path / "migrations"
+
+    _copy_migrations(
+        Path("tests/resources/migrations/valid"),
+        migrations_dir,
+    )
+    apply_migrations(sqlite_db, migrations_dir)
+
+    # Remove one file from the migrations folder
+    os.remove(migrations_dir / "20260102_add_table.sql")
+
+    with pytest.raises(MigrationException) as e:
+        apply_migrations(sqlite_db, migrations_dir)
+
+    assert (
+        "The following file(s) from the migrations table are missing from the "
+        "migrations directory" in str(e.value)
+    )
 
 
 def test_all_migrations_are_valid(sqlite_db):
