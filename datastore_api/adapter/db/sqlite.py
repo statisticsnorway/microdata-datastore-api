@@ -710,7 +710,10 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def get_datastore_id_from_rdn(self, rdn: str) -> int | None:
+    def get_datastore_id_from_rdn(self, rdn: str) -> int:
+        """
+        Returns datastore id for active datastores.
+        """
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -720,14 +723,15 @@ class SqliteDbClient:
                     datastore_id
                 FROM datastore
                 WHERE rdn = ?
+                AND deleted_at IS NULL
                 """,
                 (rdn,),
             ).fetchone()
-            return (
-                int(datastore_id["datastore_id"])
-                if datastore_id is not None
-                else None
-            )
+            if not datastore_id:
+                raise DatastoreNotFoundException(
+                    f"No datastore found for datastore_rdn: {rdn}"
+                )
+            return int(datastore_id["datastore_id"])
         finally:
             conn.close()
 
