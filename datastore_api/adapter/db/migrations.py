@@ -20,12 +20,11 @@ def _parse_migration_date(filename: str) -> date:
             f"Cannot parse date from filename: {filename}. "
             "Migrations filename must start with YYYYMMDD_"
         )
-    d = date(
+    return date(
         year=int(date_from_filename[0:4]),
         month=int(date_from_filename[4:6]),
         day=int(date_from_filename[6:8]),
     )
-    return d
 
 
 def apply_migrations(db_path: Path, migrations_dir: Path) -> None:
