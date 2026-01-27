@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS anothertable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    somename TEXT
+);

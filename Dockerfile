@@ -17,6 +17,7 @@ ENV COMMIT_ID=$COMMIT_ID
 
 WORKDIR /app
 COPY datastore_api datastore_api
+COPY migrations migrations
 
 COPY --from=builder /app/dependencies /app/dependencies
 COPY --from=builder /etc/passwd /etc/passwd

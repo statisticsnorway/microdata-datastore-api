@@ -35,7 +35,6 @@ class SqliteDbClient:
 
     def __init__(self, db_url: str) -> None:
         self.db_path = Path(db_url.replace("sqlite://", ""))
-        self._ensure_schema()
 
     def _conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(
@@ -46,76 +45,6 @@ class SqliteDbClient:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
-
-    def _ensure_schema(self) -> None:
-        conn = self._conn()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS job (
-                    job_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    target TEXT,
-                    datastore_id INTEGER,
-                    status TEXT,
-                    created_at TIMESTAMP,
-                    created_by TEXT,
-                    parameters TEXT,
-                    FOREIGN KEY(datastore_id) REFERENCES datastore(datastore_id)
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS maintenance (
-                    maintenance_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    msg TEXT,
-                    paused BOOLEAN,
-                    timestamp TIMESTAMP
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS target (
-                    name TEXT,
-                    datastore_id INTEGER,
-                    status TEXT,
-                    action TEXT,
-                    last_updated_at TIMESTAMP,
-                    last_updated_by TEXT,
-                    PRIMARY KEY (name, datastore_id)
-                    FOREIGN KEY(datastore_id) REFERENCES datastore(datastore_id)
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS job_log (
-                    job_log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    job_id INTEGER,
-                    msg TEXT,
-                    at TIMESTAMP,
-                    FOREIGN KEY(job_id) REFERENCES job(job_id) ON DELETE CASCADE
-                )
-            """)
-            conn.commit()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS datastore (
-                    datastore_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    rdn TEXT,
-                    description TEXT,
-                    directory TEXT,
-                    name TEXT,
-                    bump_enabled BOOLEAN DEFAULT FALSE
-                )
-            """)
-            conn.commit()
-            cursor.execute("""
-                CREATE UNIQUE INDEX IF NOT EXISTS uq_rdn
-                ON datastore(rdn)
-            """)
-            conn.commit()
-            cursor.execute("""
-                CREATE UNIQUE INDEX IF NOT EXISTS uq_dir
-                ON datastore(directory)
-            """)
-            conn.commit()
-        finally:
-            conn.close()
 
     def _get_job_row_with_logs(
         self, cursor: sqlite3.Cursor, job_id: int | str
