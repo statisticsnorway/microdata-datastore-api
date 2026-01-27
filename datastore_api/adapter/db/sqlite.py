@@ -665,12 +665,16 @@ class SqliteDbClient:
             conn.close()
 
     def get_datastores(self) -> list[str]:
+        """
+        Returns list of active datastores
+        """
         conn = self._conn()
         try:
             cursor = conn.cursor()
             rows = cursor.execute(
                 """
                 SELECT rdn FROM datastore
+                WHERE deleted_at is NULL
                 """,
             ).fetchall()
             return [row[0] for row in rows]
@@ -798,6 +802,35 @@ class SqliteDbClient:
             if cursor.rowcount == 0:
                 raise DatastoreNotFoundException(
                     f"Could not find datastore with rdn: {rdn}"
+                )
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    def delete_datastore(self, datastore_id: int) -> None:
+        conn = self._conn()
+        timestamp = datetime.now().isoformat()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE datastore
+                SET deleted_at = ?
+                WHERE datastore_id = ?
+                AND deleted_at IS NULL
+            """,
+                (
+                    timestamp,
+                    datastore_id,
+                ),
+            )
+            conn.commit()
+            if cursor.rowcount == 0:
+                rdn = self._get_datastore_id_to_rdn_map()[1]
+                raise DatastoreNotFoundException(
+                    f"Could not find active datastore with rdn: {rdn}"
                 )
         except Exception as e:
             conn.rollback()

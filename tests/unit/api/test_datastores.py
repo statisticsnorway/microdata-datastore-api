@@ -78,3 +78,9 @@ def test_create_new_datastore(
     response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
     mock_auth_client.authorize_datastore_modification.assert_called_once()
     assert response.status_code == 200
+
+
+def test_delete_datastore(client, mock_auth_client):
+    response = client.delete("/datastores/no.dev.test")
+    mock_auth_client.authorize_datastore_modification.assert_called_once()
+    assert response.status_code == 200
