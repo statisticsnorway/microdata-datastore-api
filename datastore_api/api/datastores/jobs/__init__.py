@@ -1,10 +1,11 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Cookie, Depends, Query
+from fastapi import APIRouter, Depends, Query
 
-from datastore_api.adapter import auth, db
-from datastore_api.adapter.db.models import Job, JobStatus, Operation
+from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import require_data_administrator
+from datastore_api.adapter.db.models import Job, JobStatus, Operation, UserInfo
 from datastore_api.api.common.dependencies import (
     get_datastore_id,
 )
@@ -22,7 +23,11 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("", response_model_exclude_none=True)
+@router.get(
+    "",
+    response_model_exclude_none=True,
+    dependencies=[Depends(require_data_administrator)],
+)
 def get_jobs_for_datastore(
     status: Optional[str] = Query(None),
     operation: Optional[str] = Query(None),
@@ -40,16 +45,16 @@ def get_jobs_for_datastore(
     )
 
 
-@router.get("/{job_id}", response_model_exclude_none=True)
+@router.get(
+    "/{job_id}",
+    response_model_exclude_none=True,
+    dependencies=[Depends(require_data_administrator)],
+)
 def get_job(
     job_id: str,
     datastore_rdn: str,
-    authorization: str | None = Cookie(None),
-    user_info: str | None = Cookie(None, alias="user-info"),
-    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> Job:
-    auth_client.authorize_data_administrator(authorization, user_info)
     job = database_client.get_job(job_id)
     if job.datastore_rdn != datastore_rdn:
         raise NotFoundException
@@ -60,15 +65,10 @@ def get_job(
 def new_job(
     datastore_rdn: str,
     validated_body: NewJobsRequest,
-    authorization: str | None = Cookie(None),
-    user_info: str | None = Cookie(None, alias="user-info"),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
-    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
     datastore_id: int = Depends(get_datastore_id),
+    parsed_user_info: UserInfo = Depends(require_data_administrator),
 ) -> list[NewJobResponse]:
-    parsed_user_info = auth_client.authorize_data_administrator(
-        authorization, user_info
-    )
     response_list = []
     for job_request in validated_body.jobs:
         try:
