@@ -816,7 +816,7 @@ class SqliteDbClient:
 
     def delete_datastore(self, datastore_id: int) -> None:
         conn = self._conn()
-        timestamp = datetime.now().isoformat()
+        now = datetime.now().isoformat()
         try:
             cursor = conn.cursor()
             cursor.execute(
@@ -827,7 +827,7 @@ class SqliteDbClient:
                 AND deleted_at IS NULL
             """,
                 (
-                    timestamp,
+                    now,
                     datastore_id,
                 ),
             )
