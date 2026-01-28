@@ -33,6 +33,7 @@ async def get_datastores(
 ) -> list[str]:
     return db_client.get_datastores()
 
+
 @router.post("", dependencies=[Depends(require_datastore_provisioner)])
 async def new_datastore(
     validated_body: NewDatastoreRequest,
@@ -42,7 +43,7 @@ async def new_datastore(
     create_new_datastore(new_datastore, db_client)
 
 
-@router.get("/{datastore_rdn}")
+@router.get("/{datastore_rdn}", dependencies=[Depends(require_api_key)])
 async def get_datastore(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
