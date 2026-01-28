@@ -18,6 +18,7 @@ from datastore_api.adapter.db.models import (
     UserInfo,
 )
 from datastore_api.adapter.db.sqlite import (
+    DatastoreNotFoundException,
     JobAlreadyCompleteException,
     JobExistsException,
     NotFoundException,
@@ -25,7 +26,7 @@ from datastore_api.adapter.db.sqlite import (
 )
 from datastore_api.api.jobs.models import NewJobRequest
 
-migrations_dir = Path("tests/resources/migrations/valid")
+migrations_dir = Path("migrations")
 
 DATASTORE_ID = 1
 USER_INFO_DICT = {
@@ -549,3 +550,12 @@ def test_hard_delete_datastore(existing_datastore):
     assert rdn in sqlite_client.get_datastores()
     sqlite_client.hard_delete_datastore(rdn)
     assert rdn not in sqlite_client.get_datastores()
+
+
+def test_delete_datastore(existing_datastore):
+    rdn = existing_datastore
+    id = sqlite_client.get_datastore_id_from_rdn(rdn)
+    sqlite_client.delete_datastore(id)
+    assert rdn not in sqlite_client.get_datastores()
+    with pytest.raises(DatastoreNotFoundException):
+        sqlite_client.get_datastore_id_from_rdn(rdn)

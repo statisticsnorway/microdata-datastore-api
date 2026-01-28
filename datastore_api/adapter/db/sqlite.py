@@ -665,12 +665,16 @@ class SqliteDbClient:
             conn.close()
 
     def get_datastores(self) -> list[str]:
+        """
+        Returns list of active datastores
+        """
         conn = self._conn()
         try:
             cursor = conn.cursor()
             rows = cursor.execute(
                 """
                 SELECT rdn FROM datastore
+                WHERE deleted_at is NULL
                 """,
             ).fetchall()
             return [row[0] for row in rows]
@@ -692,6 +696,7 @@ class SqliteDbClient:
                     bump_enabled
                 FROM datastore
                 WHERE datastore_id = ?
+                AND deleted_at IS NULL
                 """,
                 (datastore_id,),
             ).fetchone()
@@ -706,7 +711,10 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def get_datastore_id_from_rdn(self, rdn: str) -> int | None:
+    def get_datastore_id_from_rdn(self, rdn: str) -> int:
+        """
+        Returns datastore id for active datastores.
+        """
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -716,14 +724,15 @@ class SqliteDbClient:
                     datastore_id
                 FROM datastore
                 WHERE rdn = ?
+                AND deleted_at IS NULL
                 """,
                 (rdn,),
             ).fetchone()
-            return (
-                int(datastore_id["datastore_id"])
-                if datastore_id is not None
-                else None
-            )
+            if not datastore_id:
+                raise DatastoreNotFoundException(
+                    f"No datastore found for datastore_rdn: {rdn}"
+                )
+            return int(datastore_id["datastore_id"])
         finally:
             conn.close()
 
@@ -798,6 +807,35 @@ class SqliteDbClient:
             if cursor.rowcount == 0:
                 raise DatastoreNotFoundException(
                     f"Could not find datastore with rdn: {rdn}"
+                )
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    def delete_datastore(self, datastore_id: int) -> None:
+        conn = self._conn()
+        now = datetime.now().isoformat()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE datastore
+                SET deleted_at = ?
+                WHERE datastore_id = ?
+                AND deleted_at IS NULL
+            """,
+                (
+                    now,
+                    datastore_id,
+                ),
+            )
+            conn.commit()
+            if cursor.rowcount == 0:
+                rdn = self._get_datastore_id_to_rdn_map()[1]
+                raise DatastoreNotFoundException(
+                    f"Could not find active datastore with rdn: {rdn}"
                 )
         except Exception as e:
             conn.rollback()

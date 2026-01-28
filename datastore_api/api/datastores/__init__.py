@@ -51,6 +51,18 @@ async def get_datastore(
     return db_client.get_datastore(datastore_id)
 
 
+@router.delete("/{datastore_rdn}")
+async def delete_datastore(
+    datastore_id: int = Depends(get_datastore_id),
+    authorization: str | None = Cookie(None),
+    user_info: str | None = Cookie(None, alias="user-info"),
+    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
+    db_client: db.DatabaseClient = Depends(db.get_database_client),
+) -> None:
+    auth_client.authorize_datastore_modification(authorization, user_info)
+    db_client.delete_datastore(datastore_id)
+
+
 router.include_router(jobs.router, prefix="/{datastore_rdn}/jobs")
 router.include_router(metadata.router, prefix="/{datastore_rdn}/metadata")
 router.include_router(data.router, prefix="/{datastore_rdn}/data")

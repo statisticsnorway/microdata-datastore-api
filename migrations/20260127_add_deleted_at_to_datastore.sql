@@ -1,0 +1,2 @@
+ALTER TABLE datastore
+ADD COLUMN deleted_at TIMESTAMP;
