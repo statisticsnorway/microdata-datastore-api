@@ -1,8 +1,17 @@
 import logging
+from datetime import datetime
 from pathlib import Path
 
 from datastore_api.adapter import db
+from datastore_api.adapter.db import Operation
+from datastore_api.adapter.db.models import (
+    Job,
+    JobParameters,
+    JobStatus,
+    UserInfo,
+)
 from datastore_api.adapter.local_storage import setup_datastore
+from datastore_api.api.jobs.models import NewJobResponse
 from datastore_api.common.exceptions import (
     DatastoreExistsException,
     DatastorePathExistsException,
@@ -28,8 +37,10 @@ def get_datastore_dir_from_rdn(rdn: str) -> str:
 
 
 def create_new_datastore(
-    new_datastore: NewDatastore, db_client: db.DatabaseClient
-) -> None:
+    new_datastore: NewDatastore,
+    db_client: db.DatabaseClient,
+    user_info: UserInfo,
+) -> NewJobResponse:
     if new_datastore.rdn in db_client.get_datastores():
         raise DatastoreExistsException(
             f"Datastore rdn {new_datastore.rdn} already exists"
@@ -55,6 +66,24 @@ def create_new_datastore(
             description=new_datastore.description,
             directory=new_datastore.directory,
             name=new_datastore.name,
+        )
+        job_params = JobParameters(
+            target="DATASTORE", operation=Operation.GENERATE_RSA_KEYS
+        )
+        job = db_client.insert_new_job(
+            Job(
+                job_id="",
+                status=JobStatus("queued"),
+                parameters=job_params,
+                created_at=datetime.now().isoformat(),
+                created_by=user_info,
+                datastore_rdn=new_datastore.rdn,
+            )
+        )
+        return NewJobResponse(
+            status="queued",
+            msg="CREATED",
+            job_id=str(job.job_id),
         )
     except Exception as e:
         db_client.hard_delete_datastore(rdn=new_datastore.rdn)
