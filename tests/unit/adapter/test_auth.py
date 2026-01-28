@@ -19,25 +19,26 @@ def auth_client():
     return MicrodataAuthClient(
         valid_aud_jobs="test-aud",
         valid_aud_data="test-aud",
+        valid_aud_provision="test-aud",
     )
 
 
-def test_authorize_datastore_modification_ok(auth_client):
-    auth_client.authorize_data_administrator = Mock(
+def test_authorize_datastore_provisioner_ok(auth_client):
+    auth_client.authorize_datastore_user = Mock(
         return_value=USER_INFO_ALLOWED_USER
     )
-    user = auth_client.authorize_datastore_modification(
+    user = auth_client.authorize_datastore_provisioner(
         authorization_cookie=None,
         user_info_cookie=None,
     )
     assert user.user_id == "123-123-125"
 
 
-def test_authorize_datastore_modification_forbidden(auth_client):
-    auth_client.authorize_data_administrator = Mock(
+def test_authorize_datastore_provisioner_forbidden(auth_client):
+    auth_client.authorize_datastore_user = Mock(
         return_value=USER_INFO_DISALLOWED_USER
     )
     with pytest.raises(AuthError):
-        auth_client.authorize_datastore_modification(
+        auth_client.authorize_datastore_provisioner(
             authorization_cookie=None, user_info_cookie=None
         )

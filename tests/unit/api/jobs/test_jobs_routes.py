@@ -185,13 +185,16 @@ def test_update_job_bad_request(client, mock_db_client, mock_auth_client):
 # -------- RDN ---------
 def test_get_jobs_rdn(client, mock_db_client, mock_auth_client):
     response = client.get(
-        "/datastores/{DATASTORE_RDN}/jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
+        f"/datastores/{DATASTORE_RDN}/jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
     )
     assert response.json() == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST
     ]
     assert response.status_code == 200
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     mock_db_client.get_jobs.assert_called_once()
 
 
@@ -200,6 +203,9 @@ def test_get_job_rdn(client, mock_db_client, mock_auth_client):
     mock_db_client.get_job.assert_called_once()
     mock_db_client.get_job.assert_called_with(JOB_ID)
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     assert response.status_code == 200
     assert response.json() == JOB_LIST[0].model_dump(
         exclude_none=True, by_alias=True
@@ -212,17 +218,23 @@ def test_get_job_not_found_rdn(client, mock_db_client, mock_auth_client):
     mock_db_client.get_job.assert_called_once()
     mock_db_client.get_job.assert_called_with(JOB_ID)
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     assert response.status_code == 404
     assert response.json() == {"message": NOT_FOUND_MESSAGE}
 
 
 def test_new_job_rdn(client, mock_db_client, mock_auth_client):
     response = client.post(
-        "/datastores/{DATASTORE_RDN}/jobs", json=NEW_JOB_REQUEST
+        f"/datastores/{DATASTORE_RDN}/jobs", json=NEW_JOB_REQUEST
     )
     assert mock_db_client.insert_new_job.call_count == 2
     assert mock_db_client.update_target.call_count == 2
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     assert response.status_code == 200
     assert response.json() == [
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},

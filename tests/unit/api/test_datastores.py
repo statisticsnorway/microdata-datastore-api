@@ -42,7 +42,7 @@ def mock_db_client():
 @pytest.fixture
 def mock_auth_client():
     mock = Mock()
-    mock.authorize_datastore_modification.return_value = USER_INFO
+    mock.authorize_datastore_provisioner.return_value = USER_INFO
     mock.check_api_key.return_value = None
     return mock
 
@@ -76,11 +76,11 @@ def test_create_new_datastore(client, mock_auth_client, monkeypatch):
         "datastore_api.api.datastores.create_new_datastore", lambda *_: None
     )
     response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
-    mock_auth_client.authorize_datastore_modification.assert_called_once()
+    mock_auth_client.authorize_datastore_provisioner.assert_called_once()
     assert response.status_code == 200
 
 
 def test_delete_datastore(client, mock_auth_client):
     response = client.delete("/datastores/no.dev.test")
-    mock_auth_client.authorize_datastore_modification.assert_called_once()
+    mock_auth_client.authorize_datastore_provisioner.assert_called_once()
     assert response.status_code == 200

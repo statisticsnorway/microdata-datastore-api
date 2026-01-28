@@ -90,6 +90,9 @@ def client(mock_db_client, mock_auth_client):
 def test_get_targets(client, mock_db_client, mock_auth_client):
     response = client.get(f"/datastores/{DATASTORE_RDN}/targets")
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     assert response.json() == [
         target.model_dump(exclude_none=True, by_alias=True)
         for target in TARGET_LIST
@@ -103,6 +106,9 @@ def test_get_target(client, mock_db_client, mock_auth_client):
         f"/datastores/{DATASTORE_RDN}/targets/MY_DATASET/jobs"
     )
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     mock_db_client.get_jobs_for_target.assert_called_once()
     mock_db_client.get_jobs_for_target.assert_called_with(
         name="MY_DATASET", datastore_id=1

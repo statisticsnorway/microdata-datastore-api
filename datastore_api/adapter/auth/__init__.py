@@ -21,14 +21,21 @@ USER_FIRST_NAME_KEY = "user/firstName"
 USER_LAST_NAME_KEY = "user/lastName"
 USER_ID_KEY = "user/uuid"
 ACCREDITATION_ROLE_KEY = "accreditation/role"
+DATA_ADMINISTRATOR_ROLE = "role/dataadministrator"
+DATASTORE_PROVISIONER_ROLE = (
+    "role/dataadministrator"  # TODO: Update once new role is available
+)
 
 
 class AuthClient(Protocol):
     def authorize_user(self, authorization_header: str | None) -> str: ...
     def authorize_data_administrator(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+        self,
+        rdn: str,
+        authorization_cookie: str | None,
+        user_info_cookie: str | None,
     ) -> UserInfo: ...
-    def authorize_datastore_modification(
+    def authorize_datastore_provisioner(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo: ...
     def check_api_key(self, x_api_key: str) -> None: ...
@@ -38,11 +45,15 @@ class MicrodataAuthClient:
     jwks_client: PyJWKClient
     valid_aud_jobs: str
     valid_aud_data: str
+    valid_aud_provision: str
 
-    def __init__(self, valid_aud_jobs: str, valid_aud_data: str) -> None:
+    def __init__(
+        self, valid_aud_jobs: str, valid_aud_data: str, valid_aud_provision: str
+    ) -> None:
         self.jwks_client = PyJWKClient(environment.jwks_url, lifespan=3000)
         self.valid_aud_jobs = valid_aud_jobs
         self.valid_aud_data = valid_aud_data
+        self.valid_aud_provision = valid_aud_provision
 
     def _get_signing_key(self, jwt_token: str) -> PyJWK:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
@@ -81,20 +92,29 @@ class MicrodataAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error: {e}") from e
 
-    def authorize_data_administrator(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+    def authorize_datastore_user(
+        self,
+        required_role: str,
+        authorization_cookie: str | None,
+        user_info_cookie: str | None,
+        rdn: str | None = None,
     ) -> UserInfo:
         if authorization_cookie is None:
             raise AuthError("Unauthorized. No authorization token was provided")
         if user_info_cookie is None:
             raise AuthError("Unauthorized. No user info token was provided")
+        required_aud = (
+            self.valid_aud_jobs
+            if required_role == DATA_ADMINISTRATOR_ROLE
+            else self.valid_aud_provision
+        )
         try:
             signing_key = self._get_signing_key(authorization_cookie)
             decoded_authorization = jwt.decode(
                 authorization_cookie,
                 signing_key,
                 algorithms=["RS256", "RS512"],
-                audience=self.valid_aud_jobs,
+                audience=required_aud,
                 options={
                     "require": [
                         "aud",
@@ -105,8 +125,14 @@ class MicrodataAuthClient:
                 },
             )
             role = decoded_authorization.get(ACCREDITATION_ROLE_KEY)
-            if role != "role/dataadministrator":
-                raise AuthError(f"Can't start job with role: {role}")
+            if role != required_role:
+                raise AuthError(f"Unauthorized with role {role}")
+            if rdn:
+                aud = decoded_authorization.get("aud")
+                if rdn not in aud:
+                    raise AuthError(
+                        f"Not authorized to access datastore: {rdn}"
+                    )
             decoded_user_info = jwt.decode(
                 user_info_cookie,
                 signing_key,
@@ -148,14 +174,25 @@ class MicrodataAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
-    def authorize_datastore_modification(
+    def authorize_datastore_provisioner(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
-        parsed_user_info = self.authorize_data_administrator(
-            authorization_cookie, user_info_cookie
+        parsed_user_info = self.authorize_datastore_user(
+            DATASTORE_PROVISIONER_ROLE, authorization_cookie, user_info_cookie
         )
         if parsed_user_info.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
+        return parsed_user_info
+
+    def authorize_data_administrator(
+        self,
+        rdn: str,
+        authorization_cookie: str | None,
+        user_info_cookie: str | None,
+    ) -> UserInfo:
+        parsed_user_info = self.authorize_datastore_user(
+            DATA_ADMINISTRATOR_ROLE, authorization_cookie, user_info_cookie, rdn
+        )
         return parsed_user_info
 
     def check_api_key(self, x_api_key: str) -> None:
@@ -173,6 +210,7 @@ class DisabledAuthClient:
 
     def authorize_data_administrator(
         self,
+        rdn: str | None,
         authorization_cookie: str | None,  # NOSONAR(S1172)
         user_info_cookie: str | None,  # NOSONAR(S1172)
     ) -> UserInfo:
@@ -183,7 +221,7 @@ class DisabledAuthClient:
             last_name="User",
         )
 
-    def authorize_datastore_modification(
+    def authorize_datastore_provisioner(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
         logger.error("JWT_AUTH is turned off. Returning default UserInfo")
@@ -205,10 +243,14 @@ class SkipSignatureAuthClient:
 
     valid_aud_jobs: str
     valid_aud_data: str
+    valid_aud_provision: str
 
-    def __init__(self, valid_aud_jobs: str, valid_aud_data: str) -> None:
+    def __init__(
+        self, valid_aud_jobs: str, valid_aud_data: str, valid_aud_provision: str
+    ) -> None:
         self.valid_aud_jobs = valid_aud_jobs
         self.valid_aud_data = valid_aud_data
+        self.valid_aud_provision = valid_aud_provision
 
     def authorize_user(self, authorization_header: str | None) -> str:
         logger.error(
@@ -247,8 +289,12 @@ class SkipSignatureAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error: {e}") from e
 
-    def authorize_data_administrator(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+    def authorize_datastore_user(
+        self,
+        required_role: str,
+        authorization_cookie: str | None,
+        user_info_cookie: str | None,
+        rdn: str | None = None,
     ) -> UserInfo:
         logger.error(
             "This auth client reads JWT claims WITHOUT signature validation!"
@@ -257,11 +303,15 @@ class SkipSignatureAuthClient:
             raise AuthError("Unauthorized. No authorization token was provided")
         if user_info_cookie is None:
             raise AuthError("Unauthorized. No user info token was provided")
-
+        required_aud = (
+            self.valid_aud_jobs
+            if required_role == DATA_ADMINISTRATOR_ROLE
+            else self.valid_aud_provision
+        )
         try:
             decoded_authorization = jwt.decode(
                 authorization_cookie,
-                audience=self.valid_aud_jobs,
+                audience=required_aud,
                 options={  # NOSONAR(S5659)
                     "verify_signature": False,
                     "verify_exp": True,
@@ -275,8 +325,14 @@ class SkipSignatureAuthClient:
                 },
             )
             role = decoded_authorization.get(ACCREDITATION_ROLE_KEY)
-            if role != "role/dataadministrator":
-                raise AuthError(f"Can't start job with role: {role}")
+            if role != required_role:
+                raise AuthError(f"Unauthorized with role: {role}")
+            if rdn:
+                aud = decoded_authorization.get("aud")
+                if rdn not in aud:
+                    raise AuthError(
+                        f"Not authorized to access datastore: {rdn}"
+                    )
             decoded_user_info = jwt.decode(
                 user_info_cookie,
                 options={  # NOSONAR(S5659)
@@ -317,14 +373,27 @@ class SkipSignatureAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
-    def authorize_datastore_modification(
+    def authorize_datastore_provisioner(
         self, authorization_cookie: str | None, user_info_cookie: str | None
     ) -> UserInfo:
-        parsed_user_info = self.authorize_data_administrator(
-            authorization_cookie, user_info_cookie
+        parsed_user_info = self.authorize_datastore_user(
+            DATASTORE_PROVISIONER_ROLE,
+            authorization_cookie,
+            user_info_cookie,
         )
         if parsed_user_info.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
+        return parsed_user_info
+
+    def authorize_data_administrator(
+        self,
+        rdn: str,
+        authorization_cookie: str | None,
+        user_info_cookie: str | None,
+    ) -> UserInfo:
+        parsed_user_info = self.authorize_datastore_user(
+            DATA_ADMINISTRATOR_ROLE, authorization_cookie, user_info_cookie, rdn
+        )
         return parsed_user_info
 
     def check_api_key(self, x_api_key: str) -> None:
@@ -340,12 +409,16 @@ def get_auth_client() -> AuthClient:
     valid_aud_data = (
         "datastore-api-data-qa" if stack == "qa" else "datastore-api-data"
     )
+    valid_aud_provision = (
+        "datastore-api-jobs-qa" if stack == "qa" else "datastore-api-jobs"
+    )  # TODO: Update once new aud (datastore-api-provision) is available
 
     match environment.jwt_auth:
         case "FULL":
             return MicrodataAuthClient(
                 valid_aud_jobs=valid_aud_jobs,
                 valid_aud_data=valid_aud_data,
+                valid_aud_provision=valid_aud_provision,
             )
         case "SKIP_SIGNATURE":
             logger.error(
@@ -356,6 +429,7 @@ def get_auth_client() -> AuthClient:
             return SkipSignatureAuthClient(
                 valid_aud_jobs=valid_aud_jobs,
                 valid_aud_data=valid_aud_data,
+                valid_aud_provision=valid_aud_provision,
             )
         case "OFF":
             logger.error('Auth toggled off. Returning "default" as user_id.')

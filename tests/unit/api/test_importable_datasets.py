@@ -54,6 +54,9 @@ def teardown_module():
 def test_get_files(client, mock_db_client, mock_auth_client):
     response = client.get(f"/datastores/{DATASTORE_RDN}/importable-datasets")
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
     assert len(response.json()) == 4
@@ -142,6 +145,9 @@ def test_delete_importable_datasets_api(
         f"/datastores/{DATASTORE_RDN}/importable-datasets/DATASET_THAT_SHOULD_BE_DELETED",
     )
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
     assert not os.path.exists(
