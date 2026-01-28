@@ -1,3 +1,5 @@
+import string
+
 from pydantic import BaseModel, field_validator
 
 from datastore_api.common.models import Version
@@ -8,6 +10,17 @@ class InputQuery(BaseModel):
     version: Version
     population: list | None = None
     includeAttributes: bool = False
+
+    @field_validator("dataStructureName")
+    @classmethod
+    def validate_data_structure_name(cls, v: str) -> str:
+        valid_characters = set(string.ascii_letters + string.digits + "_")
+        if not all(char in valid_characters for char in v):
+            raise ValueError(
+                "dataStructureName must contain only "
+                "alphanumeric characters and underscores"
+            )
+        return v
 
     @field_validator("version", mode="before")
     @classmethod
