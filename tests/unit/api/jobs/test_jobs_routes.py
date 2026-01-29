@@ -111,6 +111,7 @@ def mock_db_client():
 def mock_auth_client():
     mock = Mock()
     mock.authorize_data_administrator.return_value = USER_INFO
+    mock.check_api_key.return_value = None
     return mock
 
 
@@ -122,10 +123,11 @@ def client(mock_db_client, mock_auth_client):
     app.dependency_overrides.clear()
 
 
-def test_get_jobs(client, mock_db_client):
+def test_get_jobs(client, mock_db_client, mock_auth_client):
     response = client.get(
         "jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
     )
+    mock_auth_client.check_api_key.assert_called_once()
     assert response.json() == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST
     ]
@@ -133,8 +135,9 @@ def test_get_jobs(client, mock_db_client):
     mock_db_client.get_jobs.assert_called_once()
 
 
-def test_get_job(client, mock_db_client):
+def test_get_job(client, mock_db_client, mock_auth_client):
     response = client.get(f"/jobs/{JOB_ID}")
+    mock_auth_client.check_api_key.assert_called_once()
     mock_db_client.get_job.assert_called_once()
     mock_db_client.get_job.assert_called_with(JOB_ID)
     assert response.status_code == 200
@@ -143,17 +146,19 @@ def test_get_job(client, mock_db_client):
     )
 
 
-def test_get_job_not_found(client, mock_db_client):
+def test_get_job_not_found(client, mock_db_client, mock_auth_client):
     mock_db_client.get_job.side_effect = NotFoundException(NOT_FOUND_MESSAGE)
     response = client.get(f"/jobs/{JOB_ID}")
+    mock_auth_client.check_api_key.assert_called_once()
     mock_db_client.get_job.assert_called_once()
     mock_db_client.get_job.assert_called_with(JOB_ID)
     assert response.status_code == 404
     assert response.json() == {"message": NOT_FOUND_MESSAGE}
 
 
-def test_update_job(client, mock_db_client):
+def test_update_job(client, mock_db_client, mock_auth_client):
     response = client.put(f"/jobs/{JOB_ID}", json=UPDATE_JOB_REQUEST)
+    mock_auth_client.check_api_key.assert_called_once()
     mock_db_client.update_target.assert_called_once()
     mock_db_client.update_job.assert_called_once()
     mock_db_client.update_job.assert_called_with(
@@ -166,54 +171,70 @@ def test_update_job(client, mock_db_client):
     assert response.json() == {"message": f"Updated job with jobId {JOB_ID}"}
 
 
-def test_update_job_bad_request(client, mock_db_client):
+def test_update_job_bad_request(client, mock_db_client, mock_auth_client):
     response = client.put(
         f"/jobs/{JOB_ID}",
         json={"status": "no-such-status"},
     )
+    mock_auth_client.check_api_key.assert_called_once()
     mock_db_client.update_target.assert_not_called()
     assert response.status_code == 400
     assert response.json().get("details") is not None
 
 
 # -------- RDN ---------
-def test_get_jobs_rdn(client, mock_db_client):
+def test_get_jobs_rdn(client, mock_db_client, mock_auth_client):
     response = client.get(
-        "/datastores/{DATASTORE_RDN}/jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
+        f"/datastores/{DATASTORE_RDN}/jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
     )
     assert response.json() == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST
     ]
     assert response.status_code == 200
+    mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     mock_db_client.get_jobs.assert_called_once()
 
 
-def test_get_job_rdn(client, mock_db_client):
+def test_get_job_rdn(client, mock_db_client, mock_auth_client):
     response = client.get(f"/datastores/{DATASTORE_RDN}/jobs/{JOB_ID}")
     mock_db_client.get_job.assert_called_once()
     mock_db_client.get_job.assert_called_with(JOB_ID)
+    mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     assert response.status_code == 200
     assert response.json() == JOB_LIST[0].model_dump(
         exclude_none=True, by_alias=True
     )
 
 
-def test_get_job_not_found_rdn(client, mock_db_client):
+def test_get_job_not_found_rdn(client, mock_db_client, mock_auth_client):
     mock_db_client.get_job.side_effect = NotFoundException(NOT_FOUND_MESSAGE)
     response = client.get(f"/datastores/{DATASTORE_RDN}/jobs/{JOB_ID}")
     mock_db_client.get_job.assert_called_once()
     mock_db_client.get_job.assert_called_with(JOB_ID)
+    mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     assert response.status_code == 404
     assert response.json() == {"message": NOT_FOUND_MESSAGE}
 
 
 def test_new_job_rdn(client, mock_db_client, mock_auth_client):
     response = client.post(
-        "/datastores/{DATASTORE_RDN}/jobs", json=NEW_JOB_REQUEST
+        f"/datastores/{DATASTORE_RDN}/jobs", json=NEW_JOB_REQUEST
     )
     assert mock_db_client.insert_new_job.call_count == 2
     assert mock_db_client.update_target.call_count == 2
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.authorize_data_administrator.assert_called_with(
+        DATASTORE_RDN, None, None
+    )
     assert response.status_code == 200
     assert response.json() == [
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
