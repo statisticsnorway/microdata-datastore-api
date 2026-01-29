@@ -22,9 +22,8 @@ USER_LAST_NAME_KEY = "user/lastName"
 USER_ID_KEY = "user/uuid"
 ACCREDITATION_ROLE_KEY = "accreditation/role"
 DATA_ADMINISTRATOR_ROLE = "role/dataadministrator"
-DATASTORE_PROVISIONER_ROLE = (
-    "role/dataadministrator"  # TODO: Update once new role is available
-)
+DATASTORE_PROVISIONER_ROLE = "role/dataadministrator"
+# TODO: Update once new role is available
 
 
 class AuthClient(Protocol):
@@ -129,7 +128,8 @@ class MicrodataAuthClient:
                 raise AuthError(f"Unauthorized with role {role}")
             if rdn:
                 aud = decoded_authorization.get("aud")
-                if rdn not in aud:
+                aud_list = [aud] if isinstance(aud, str) else aud
+                if not any(rdn.startswith(a) for a in aud_list):
                     raise AuthError(
                         f"Not authorized to access datastore: {rdn}"
                     )
@@ -329,7 +329,8 @@ class SkipSignatureAuthClient:
                 raise AuthError(f"Unauthorized with role: {role}")
             if rdn:
                 aud = decoded_authorization.get("aud")
-                if rdn not in aud:
+                aud_list = [aud] if isinstance(aud, str) else aud
+                if not any(rdn.startswith(a) for a in aud_list):
                     raise AuthError(
                         f"Not authorized to access datastore: {rdn}"
                     )
