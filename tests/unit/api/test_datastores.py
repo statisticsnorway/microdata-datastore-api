@@ -42,7 +42,8 @@ def mock_db_client():
 @pytest.fixture
 def mock_auth_client():
     mock = Mock()
-    mock.authorize_datastore_modification.return_value = USER_INFO
+    mock.authorize_datastore_provisioner.return_value = USER_INFO
+    mock.check_api_key.return_value = None
     return mock
 
 
@@ -55,10 +56,11 @@ def client(mock_db_client, mock_auth_client):
     app.dependency_overrides.clear()
 
 
-def test_get_datastore(client):
+def test_get_datastore(client, mock_auth_client):
     response = client.get(
         "/datastores/no.dev.test", headers={"X-Request-ID": "abc123"}
     )
+    mock_auth_client.check_api_key.assert_called_once()
     assert response.status_code == 200
     assert response.json() == DATASTORE.model_dump()
 
@@ -69,18 +71,16 @@ def test_get_datastores(client):
     assert response.json() == ["no.dev.test"]
 
 
-def test_create_new_datastore(
-    client, mock_auth_client, mock_db_client, monkeypatch
-):
+def test_create_new_datastore(client, mock_auth_client, monkeypatch):
     monkeypatch.setattr(
         "datastore_api.api.datastores.create_new_datastore", lambda *_: None
     )
     response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
-    mock_auth_client.authorize_datastore_modification.assert_called_once()
+    mock_auth_client.authorize_datastore_provisioner.assert_called_once()
     assert response.status_code == 200
 
 
 def test_delete_datastore(client, mock_auth_client):
     response = client.delete("/datastores/no.dev.test")
-    mock_auth_client.authorize_datastore_modification.assert_called_once()
+    mock_auth_client.authorize_datastore_provisioner.assert_called_once()
     assert response.status_code == 200
