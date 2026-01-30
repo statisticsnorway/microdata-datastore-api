@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, Depends
 
 from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import require_api_key
 from datastore_api.adapter.db.models import MaintenanceStatus
 from datastore_api.common.models import CamelModel
 
@@ -15,7 +16,7 @@ class NewMaintenanceStatusRequest(CamelModel, extra="forbid"):
     paused: bool
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(require_api_key)])
 def set_status(
     maintenance_status_request: NewMaintenanceStatusRequest,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
