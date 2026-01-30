@@ -108,7 +108,8 @@ def mock_db_client():
 @pytest.fixture
 def mock_auth_client():
     mock = Mock()
-    mock.authorize_data_administrator.return_value = USER_INFO
+    mock.authorize_data_administrator.return_value = None
+    mock.parse_user_info.return_value = USER_INFO
     return mock
 
 
@@ -136,6 +137,7 @@ def test_new_job(client, mock_db_client, mock_auth_client):
     assert mock_db_client.insert_new_job.call_count == 2
     assert mock_db_client.update_target.call_count == 2
     mock_auth_client.authorize_data_administrator.assert_called_once()
+    mock_auth_client.parse_user_info.assert_called_once()
     assert response.status_code == 200
     assert response.json() == [
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},

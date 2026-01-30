@@ -23,6 +23,7 @@ USER_INFO_DICT = {
     "lastName": "Admin",
 }
 USER_INFO = UserInfo(**USER_INFO_DICT)
+
 JOB_LIST = [
     Job(
         job_id="123-123-123-123",
@@ -110,7 +111,8 @@ def mock_db_client():
 @pytest.fixture
 def mock_auth_client():
     mock = Mock()
-    mock.authorize_data_administrator.return_value = USER_INFO
+    mock.authorize_data_administrator.return_value = None
+    mock.parse_user_info.return_value = USER_INFO
     mock.check_api_key.return_value = None
     return mock
 
@@ -193,7 +195,7 @@ def test_get_jobs_rdn(client, mock_db_client, mock_auth_client):
     assert response.status_code == 200
     mock_auth_client.authorize_data_administrator.assert_called_once()
     mock_auth_client.authorize_data_administrator.assert_called_with(
-        DATASTORE_RDN, None, None
+        DATASTORE_RDN, None
     )
     mock_db_client.get_jobs.assert_called_once()
 
@@ -204,7 +206,7 @@ def test_get_job_rdn(client, mock_db_client, mock_auth_client):
     mock_db_client.get_job.assert_called_with(JOB_ID)
     mock_auth_client.authorize_data_administrator.assert_called_once()
     mock_auth_client.authorize_data_administrator.assert_called_with(
-        DATASTORE_RDN, None, None
+        DATASTORE_RDN, None
     )
     assert response.status_code == 200
     assert response.json() == JOB_LIST[0].model_dump(
@@ -219,7 +221,7 @@ def test_get_job_not_found_rdn(client, mock_db_client, mock_auth_client):
     mock_db_client.get_job.assert_called_with(JOB_ID)
     mock_auth_client.authorize_data_administrator.assert_called_once()
     mock_auth_client.authorize_data_administrator.assert_called_with(
-        DATASTORE_RDN, None, None
+        DATASTORE_RDN, None
     )
     assert response.status_code == 404
     assert response.json() == {"message": NOT_FOUND_MESSAGE}
@@ -233,8 +235,9 @@ def test_new_job_rdn(client, mock_db_client, mock_auth_client):
     assert mock_db_client.update_target.call_count == 2
     mock_auth_client.authorize_data_administrator.assert_called_once()
     mock_auth_client.authorize_data_administrator.assert_called_with(
-        DATASTORE_RDN, None, None
+        DATASTORE_RDN, None
     )
+    mock_auth_client.parse_user_info.assert_called_once()
     assert response.status_code == 200
     assert response.json() == [
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},

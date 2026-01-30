@@ -1,5 +1,6 @@
 import logging
-from typing import Protocol
+from dataclasses import dataclass
+from typing import Any, Protocol
 
 import jwt
 from fastapi import HTTPException, status
@@ -26,16 +27,24 @@ DATASTORE_PROVISIONER_ROLE = "role/dataadministrator"
 # TODO: Update once new role is available
 
 
+@dataclass(frozen=True)
+class AuthContext:
+    user_id: str
+    signing_key: Any
+
+
 class AuthClient(Protocol):
     def authorize_user(self, authorization_header: str | None) -> str: ...
     def authorize_data_administrator(
         self,
         rdn: str,
         authorization_cookie: str | None,
-        user_info_cookie: str | None,
-    ) -> UserInfo: ...
+    ) -> AuthContext: ...
     def authorize_datastore_provisioner(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+        self, authorization_cookie: str | None
+    ) -> None: ...
+    def parse_user_info(
+        self, auth_context: AuthContext, user_info_cookie: str | None
     ) -> UserInfo: ...
     def check_api_key(self, x_api_key: str) -> None: ...
 
@@ -91,17 +100,15 @@ class MicrodataAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error: {e}") from e
 
-    def authorize_datastore_user(
+    def authorize(
         self,
         required_role: str,
         authorization_cookie: str | None,
-        user_info_cookie: str | None,
         rdn: str | None = None,
-    ) -> UserInfo:
+    ) -> AuthContext:
         if authorization_cookie is None:
             raise AuthError("Unauthorized. No authorization token was provided")
-        if user_info_cookie is None:
-            raise AuthError("Unauthorized. No user info token was provided")
+
         required_aud = (
             self.valid_aud_jobs
             if required_role == DATA_ADMINISTRATOR_ROLE
@@ -125,7 +132,7 @@ class MicrodataAuthClient:
             )
             role = decoded_authorization.get(ACCREDITATION_ROLE_KEY)
             if role != required_role:
-                raise AuthError(f"Unauthorized with role {role}")
+                raise AuthError(f"Unauthorized with role: {role}")
             if rdn:
                 aud = decoded_authorization.get("aud")
                 aud_list = [aud] if isinstance(aud, str) else aud
@@ -133,30 +140,9 @@ class MicrodataAuthClient:
                     raise AuthError(
                         f"Not authorized to access datastore: {rdn}"
                     )
-            decoded_user_info = jwt.decode(
-                user_info_cookie,
-                signing_key,
-                algorithms=["RS256", "RS512"],
-                options={
-                    "require": [
-                        USER_ID_KEY,
-                        USER_FIRST_NAME_KEY,
-                        USER_LAST_NAME_KEY,
-                    ],
-                    "verify_aud": False,
-                },
-            )
-            if decoded_authorization.get(USER_ID_KEY) != decoded_user_info.get(
-                USER_ID_KEY
-            ):
-                raise AuthError("Token mismatch")
-            user_id = decoded_user_info.get(USER_ID_KEY)
-            first_name = decoded_user_info.get(USER_FIRST_NAME_KEY)
-            last_name = decoded_user_info.get(USER_LAST_NAME_KEY)
-            return UserInfo(
-                user_id=str(user_id),
-                first_name=str(first_name),
-                last_name=str(last_name),
+            return AuthContext(
+                user_id=decoded_authorization.get(USER_ID_KEY),
+                signing_key=signing_key,
             )
         except AuthError as e:
             raise e
@@ -174,26 +160,60 @@ class MicrodataAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
-    def authorize_datastore_provisioner(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+    def parse_user_info(
+        self, auth_context: AuthContext, user_info_cookie: str | None
     ) -> UserInfo:
-        parsed_user_info = self.authorize_datastore_user(
-            DATASTORE_PROVISIONER_ROLE, authorization_cookie, user_info_cookie
+        if user_info_cookie is None:
+            raise AuthError("Unauthorized. No user info token was provided")
+        try:
+            decoded_user_info = jwt.decode(
+                user_info_cookie,
+                auth_context.signing_key,
+                algorithms=["RS256", "RS512"],
+                options={
+                    "require": [
+                        USER_ID_KEY,
+                        USER_FIRST_NAME_KEY,
+                        USER_LAST_NAME_KEY,
+                    ],
+                    "verify_aud": False,
+                },
+            )
+        except (
+            InvalidSignatureError,
+            ExpiredSignatureError,
+            DecodeError,
+            MissingRequiredClaimError,
+        ) as e:
+            raise AuthError("Invalid user info token") from e
+        user_id = decoded_user_info.get(USER_ID_KEY)
+        if auth_context.user_id != user_id:
+            raise AuthError("Token mismatch")
+        first_name = decoded_user_info.get(USER_FIRST_NAME_KEY)
+        last_name = decoded_user_info.get(USER_LAST_NAME_KEY)
+        return UserInfo(
+            user_id=str(user_id),
+            first_name=str(first_name),
+            last_name=str(last_name),
         )
-        if parsed_user_info.user_id not in secrets.datastore_provisioners:
+
+    def authorize_datastore_provisioner(
+        self, authorization_cookie: str | None
+    ) -> None:
+        auth_context = self.authorize(
+            DATASTORE_PROVISIONER_ROLE, authorization_cookie
+        )
+        if auth_context.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
-        return parsed_user_info
 
     def authorize_data_administrator(
         self,
         rdn: str,
         authorization_cookie: str | None,
-        user_info_cookie: str | None,
-    ) -> UserInfo:
-        parsed_user_info = self.authorize_datastore_user(
-            DATA_ADMINISTRATOR_ROLE, authorization_cookie, user_info_cookie, rdn
+    ) -> AuthContext:
+        return self.authorize(
+            DATA_ADMINISTRATOR_ROLE, authorization_cookie, rdn=rdn
         )
-        return parsed_user_info
 
     def check_api_key(self, x_api_key: str) -> None:
         if x_api_key != secrets.datastore_api_service_key:
@@ -208,10 +228,9 @@ class DisabledAuthClient:
         logger.error('Auth toggled off. Returning "default" as user_id.')
         return "default"
 
-    def authorize_data_administrator(
+    def parse_user_info(
         self,
-        rdn: str | None,
-        authorization_cookie: str | None,  # NOSONAR(S1172)
+        auth_context: AuthContext,  # NOSONAR(S1172)
         user_info_cookie: str | None,  # NOSONAR(S1172)
     ) -> UserInfo:
         logger.error("JWT_AUTH is turned off. Returning default UserInfo")
@@ -221,15 +240,19 @@ class DisabledAuthClient:
             last_name="User",
         )
 
+    def authorize_data_administrator(
+        self,
+        rdn: str | None,  # NOSONAR(S1172)
+        authorization_cookie: str | None,  # NOSONAR(S1172)
+    ) -> AuthContext:
+        logger.error("JWT_AUTH is turned off. Returning default AuthContext")
+        return AuthContext(user_id="1234-1234-1234-1234", signing_key="")
+
     def authorize_datastore_provisioner(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
-    ) -> UserInfo:
-        logger.error("JWT_AUTH is turned off. Returning default UserInfo")
-        return UserInfo(
-            user_id="1234-1234-1234-1234",
-            first_name="Test",
-            last_name="User",
-        )
+        self,
+        authorization_cookie: str | None,  # NOSONAR(S1172)
+    ) -> None:
+        logger.error("JWT_AUTH is turned off. No checking of auth cookie")
 
     def check_api_key(self, x_api_key: str) -> None:
         logger.error("JWT_AUTH is turned off. Not checking API key")
@@ -289,20 +312,17 @@ class SkipSignatureAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error: {e}") from e
 
-    def authorize_datastore_user(
+    def authorize(
         self,
         required_role: str,
         authorization_cookie: str | None,
-        user_info_cookie: str | None,
         rdn: str | None = None,
-    ) -> UserInfo:
+    ) -> AuthContext:
         logger.error(
             "This auth client reads JWT claims WITHOUT signature validation!"
         )
         if authorization_cookie is None:
             raise AuthError("Unauthorized. No authorization token was provided")
-        if user_info_cookie is None:
-            raise AuthError("Unauthorized. No user info token was provided")
         required_aud = (
             self.valid_aud_jobs
             if required_role == DATA_ADMINISTRATOR_ROLE
@@ -334,30 +354,9 @@ class SkipSignatureAuthClient:
                     raise AuthError(
                         f"Not authorized to access datastore: {rdn}"
                     )
-            decoded_user_info = jwt.decode(
-                user_info_cookie,
-                options={  # NOSONAR(S5659)
-                    "verify_signature": False,
-                    "verify_exp": False,
-                    "verify_aud": False,
-                    "require": [
-                        USER_ID_KEY,
-                        USER_FIRST_NAME_KEY,
-                        USER_LAST_NAME_KEY,
-                    ],
-                },
-            )
-            if decoded_authorization.get(USER_ID_KEY) != decoded_user_info.get(
-                USER_ID_KEY
-            ):
-                raise AuthError("Token mismatch")
-            user_id = decoded_user_info.get(USER_ID_KEY)
-            first_name = decoded_user_info.get(USER_FIRST_NAME_KEY)
-            last_name = decoded_user_info.get(USER_LAST_NAME_KEY)
-            return UserInfo(
-                user_id=str(user_id),
-                first_name=str(first_name),
-                last_name=str(last_name),
+            return AuthContext(
+                user_id=decoded_authorization.get(USER_ID_KEY),
+                signing_key="No signing key: Skipping signature auth client",
             )
         except AuthError as e:
             raise e
@@ -374,28 +373,57 @@ class SkipSignatureAuthClient:
         except Exception as e:
             raise InternalServerError(f"Internal Server Error {e}") from e
 
-    def authorize_datastore_provisioner(
-        self, authorization_cookie: str | None, user_info_cookie: str | None
+    def parse_user_info(
+        self,
+        auth_context: AuthContext,  # NOSONAR(S1172)
+        user_info_cookie: str | None,
     ) -> UserInfo:
-        parsed_user_info = self.authorize_datastore_user(
-            DATASTORE_PROVISIONER_ROLE,
-            authorization_cookie,
-            user_info_cookie,
+        if user_info_cookie is None:
+            raise AuthError("Unauthorized. No user info token was provided")
+        try:
+            decoded_user_info = jwt.decode(
+                user_info_cookie,
+                options={  # NOSONAR(S5659)
+                    "verify_signature": False,
+                    "verify_exp": False,
+                    "verify_aud": False,
+                    "require": [
+                        USER_ID_KEY,
+                        USER_FIRST_NAME_KEY,
+                        USER_LAST_NAME_KEY,
+                    ],
+                },
+            )
+        except (
+            InvalidSignatureError,
+            ExpiredSignatureError,
+            DecodeError,
+            MissingRequiredClaimError,
+        ) as e:
+            raise AuthError("Invalid user info token") from e
+        return UserInfo(
+            user_id=str(decoded_user_info.get(USER_ID_KEY)),
+            first_name=str(decoded_user_info.get(USER_FIRST_NAME_KEY)),
+            last_name=str(decoded_user_info.get(USER_LAST_NAME_KEY)),
         )
-        if parsed_user_info.user_id not in secrets.datastore_provisioners:
+
+    def authorize_datastore_provisioner(
+        self, authorization_cookie: str | None
+    ) -> None:
+        auth_context = self.authorize(
+            DATASTORE_PROVISIONER_ROLE, authorization_cookie
+        )
+        if auth_context.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
-        return parsed_user_info
 
     def authorize_data_administrator(
         self,
         rdn: str,
         authorization_cookie: str | None,
-        user_info_cookie: str | None,
-    ) -> UserInfo:
-        parsed_user_info = self.authorize_datastore_user(
-            DATA_ADMINISTRATOR_ROLE, authorization_cookie, user_info_cookie, rdn
+    ) -> AuthContext:
+        return self.authorize(
+            DATA_ADMINISTRATOR_ROLE, authorization_cookie, rdn=rdn
         )
-        return parsed_user_info
 
     def check_api_key(self, x_api_key: str) -> None:
         if x_api_key != secrets.datastore_api_service_key:

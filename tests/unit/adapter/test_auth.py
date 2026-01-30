@@ -2,15 +2,13 @@ from unittest.mock import Mock
 
 import pytest
 
-from datastore_api.adapter.auth import MicrodataAuthClient
-from datastore_api.adapter.db.models import UserInfo
+from datastore_api.adapter.auth import AuthContext, MicrodataAuthClient
 from datastore_api.common.exceptions import AuthError
 
-USER_INFO_ALLOWED_USER = UserInfo(
-    user_id="123-123-125", first_name="Data", last_name="Admin"
-)
-USER_INFO_DISALLOWED_USER = UserInfo(
-    user_id="111-111-111", first_name="Data", last_name="Admin"
+AUTH_CONTEXT_ALLOWED_USER = AuthContext(user_id="123-123-125", signing_key="")
+
+AUTH_CONTEXT_DISALLOWED_USER = AuthContext(
+    user_id="111-111-111", signing_key=""
 )
 
 
@@ -24,21 +22,15 @@ def auth_client():
 
 
 def test_authorize_datastore_provisioner_ok(auth_client):
-    auth_client.authorize_datastore_user = Mock(
-        return_value=USER_INFO_ALLOWED_USER
-    )
-    user = auth_client.authorize_datastore_provisioner(
+    auth_client.authorize = Mock(return_value=AUTH_CONTEXT_ALLOWED_USER)
+    auth_client.authorize_datastore_provisioner(
         authorization_cookie=None,
-        user_info_cookie=None,
     )
-    assert user.user_id == "123-123-125"
 
 
 def test_authorize_datastore_provisioner_forbidden(auth_client):
     auth_client.authorize_datastore_user = Mock(
-        return_value=USER_INFO_DISALLOWED_USER
+        return_value=AUTH_CONTEXT_DISALLOWED_USER
     )
     with pytest.raises(AuthError):
-        auth_client.authorize_datastore_provisioner(
-            authorization_cookie=None, user_info_cookie=None
-        )
+        auth_client.authorize_datastore_provisioner(authorization_cookie=None)

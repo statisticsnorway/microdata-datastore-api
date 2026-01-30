@@ -55,7 +55,7 @@ def test_get_files(client, mock_db_client, mock_auth_client):
     response = client.get(f"/datastores/{DATASTORE_RDN}/importable-datasets")
     mock_auth_client.authorize_data_administrator.assert_called_once()
     mock_auth_client.authorize_data_administrator.assert_called_with(
-        DATASTORE_RDN, None, None
+        DATASTORE_RDN, None
     )
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
@@ -146,7 +146,7 @@ def test_delete_importable_datasets_api(
     )
     mock_auth_client.authorize_data_administrator.assert_called_once()
     mock_auth_client.authorize_data_administrator.assert_called_with(
-        DATASTORE_RDN, None, None
+        DATASTORE_RDN, None
     )
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
