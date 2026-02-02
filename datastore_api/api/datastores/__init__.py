@@ -5,7 +5,7 @@ from datastore_api.adapter.auth.dependencies import (
     require_api_key,
     require_datastore_provisioner,
 )
-from datastore_api.adapter.db.models import Datastore
+from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.api import observability
 from datastore_api.api.common.dependencies import get_datastore_id
 from datastore_api.api.datastores import (
@@ -35,12 +35,11 @@ async def get_datastores(
     return db_client.get_datastores()
 
 
-
 @router.post("")
 async def new_datastore(
     validated_body: NewDatastoreRequest,
     db_client: db.DatabaseClient = Depends(db.get_database_client),
-    user_info = Depends(require_datastore_provisioner),
+    user_info: UserInfo = Depends(require_datastore_provisioner),
 ) -> NewJobResponse:
     new_datastore = validated_body.generate_new_datastore_from_request()
     return create_new_datastore(new_datastore, db_client, user_info)

@@ -42,7 +42,7 @@ class AuthClient(Protocol):
     ) -> AuthContext: ...
     def authorize_datastore_provisioner(
         self, authorization_cookie: str | None
-    ) -> None: ...
+    ) -> AuthContext: ...
     def parse_user_info(
         self, auth_context: AuthContext, user_info_cookie: str | None
     ) -> UserInfo: ...
@@ -199,12 +199,13 @@ class MicrodataAuthClient:
 
     def authorize_datastore_provisioner(
         self, authorization_cookie: str | None
-    ) -> None:
+    ) -> AuthContext:
         auth_context = self.authorize(
             DATASTORE_PROVISIONER_ROLE, authorization_cookie
         )
         if auth_context.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
+        return auth_context
 
     def authorize_data_administrator(
         self,
@@ -251,8 +252,9 @@ class DisabledAuthClient:
     def authorize_datastore_provisioner(
         self,
         authorization_cookie: str | None,  # NOSONAR(S1172)
-    ) -> None:
-        logger.error("JWT_AUTH is turned off. No checking of auth cookie")
+    ) -> AuthContext:
+        logger.error("JWT_AUTH is turned off. Returning default AuthContext")
+        return AuthContext(user_id="1234-1234-1234-1234", signing_key="")
 
     def check_api_key(self, x_api_key: str) -> None:
         logger.error("JWT_AUTH is turned off. Not checking API key")
@@ -409,12 +411,13 @@ class SkipSignatureAuthClient:
 
     def authorize_datastore_provisioner(
         self, authorization_cookie: str | None
-    ) -> None:
+    ) -> AuthContext:
         auth_context = self.authorize(
             DATASTORE_PROVISIONER_ROLE, authorization_cookie
         )
         if auth_context.user_id not in secrets.datastore_provisioners:
             raise AuthError("Forbidden: Not allowed to modify datastore")
+        return auth_context
 
     def authorize_data_administrator(
         self,
