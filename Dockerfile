@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:bookworm-slim as builder
+FROM ghcr.io/astral-sh/uv:trixie-slim AS builder
 
 WORKDIR /app
 COPY pyproject.toml uv.lock /app/

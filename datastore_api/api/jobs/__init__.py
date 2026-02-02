@@ -52,6 +52,10 @@ def update_job(
         validated_body.log,
     )
     database_client.update_target(job)
-    if job.parameters.target == "DATASTORE" and job.status == "completed":
+    if (
+        job.parameters.target == "DATASTORE"
+        and job.status == "completed"
+        and job.parameters.operation == Operation.BUMP
+    ):
         database_client.update_bump_targets(job)
     return {"message": f"Updated job with jobId {job_id}"}
