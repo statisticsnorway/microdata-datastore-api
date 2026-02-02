@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from datastore_api.adapter import auth, db
 from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.api.common import dependencies
+from datastore_api.api.jobs.models import NewJobResponse
 from datastore_api.main import app
 
 DATASTORE = Datastore(
@@ -73,7 +74,8 @@ def test_get_datastores(client):
 
 def test_create_new_datastore(client, mock_auth_client, monkeypatch):
     monkeypatch.setattr(
-        "datastore_api.api.datastores.create_new_datastore", lambda *_: None
+        "datastore_api.api.datastores.create_new_datastore",
+        lambda *_: NewJobResponse(status="queued", msg="CREATED", job_id="123"),
     )
     response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
     mock_auth_client.authorize_datastore_provisioner.assert_called_once()

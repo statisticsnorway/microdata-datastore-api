@@ -2,6 +2,7 @@ import logging
 from typing import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -103,7 +104,9 @@ def _include_exception_handlers(app: FastAPI) -> None:
         logger.warning("Validation error: %s", e, exc_info=True)
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content={"message": "Bad Request", "details": e.errors()},
+            content=jsonable_encoder(
+                {"message": "Bad Request", "details": e.errors()}
+            ),
         )
 
     @app.exception_handler(InvalidStorageFormatException)

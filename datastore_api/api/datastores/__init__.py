@@ -20,6 +20,7 @@ from datastore_api.api.datastores import (
 from datastore_api.api.datastores.models import (
     NewDatastoreRequest,
 )
+from datastore_api.api.jobs.models import NewJobResponse
 from datastore_api.domain.datastores import (
     create_new_datastore,
 )
@@ -34,13 +35,15 @@ async def get_datastores(
     return db_client.get_datastores()
 
 
-@router.post("", dependencies=[Depends(require_datastore_provisioner)])
+
+@router.post("")
 async def new_datastore(
     validated_body: NewDatastoreRequest,
     db_client: db.DatabaseClient = Depends(db.get_database_client),
-) -> None:
+    user_info = Depends(require_datastore_provisioner),
+) -> NewJobResponse:
     new_datastore = validated_body.generate_new_datastore_from_request()
-    create_new_datastore(new_datastore, db_client)
+    return create_new_datastore(new_datastore, db_client, user_info)
 
 
 @router.get("/{datastore_rdn}", dependencies=[Depends(require_api_key)])
