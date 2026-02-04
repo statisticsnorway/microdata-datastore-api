@@ -5,7 +5,8 @@ from unittest.mock import Mock
 import pytest
 from fastapi.testclient import TestClient
 
-from datastore_api.adapter import auth, db
+from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import authorize_data_administrator
 from datastore_api.adapter.db.models import Datastore
 from datastore_api.main import app
 
@@ -31,16 +32,18 @@ def mock_db_client():
 
 
 @pytest.fixture
-def mock_auth_client():
-    mock = Mock()
-    mock.authorize_data_administrator.return_value = None
-    return mock
+def mock_auth_deps():
+    return {
+        "data_administrator": Mock(return_value=None),
+    }
 
 
 @pytest.fixture
-def client(mock_db_client, mock_auth_client):
+def client(mock_db_client, mock_auth_deps):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
-    app.dependency_overrides[auth.get_auth_client] = lambda: mock_auth_client
+    app.dependency_overrides[authorize_data_administrator] = (
+        lambda: mock_auth_deps["data_administrator"]()
+    )
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -51,12 +54,9 @@ def teardown_module():
     )
 
 
-def test_get_files(client, mock_db_client, mock_auth_client):
+def test_get_files(client, mock_db_client, mock_auth_deps):
     response = client.get(f"/datastores/{DATASTORE_RDN}/importable-datasets")
-    mock_auth_client.authorize_data_administrator.assert_called_once()
-    mock_auth_client.authorize_data_administrator.assert_called_with(
-        DATASTORE_RDN, None
-    )
+    mock_auth_deps["data_administrator"].assert_called_once()
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
     assert len(response.json()) == 4
@@ -134,9 +134,7 @@ def test_get_invalid_name_files(client, mock_db_client):
         assert dataset in response.json()
 
 
-def test_delete_importable_datasets_api(
-    client, mock_db_client, mock_auth_client
-):
+def test_delete_importable_datasets_api(client, mock_db_client, mock_auth_deps):
     open(
         "tests/resources/test_datastore_input/DATASET_THAT_SHOULD_BE_DELETED.tar",
         "x",
@@ -144,10 +142,7 @@ def test_delete_importable_datasets_api(
     response = client.delete(
         f"/datastores/{DATASTORE_RDN}/importable-datasets/DATASET_THAT_SHOULD_BE_DELETED",
     )
-    mock_auth_client.authorize_data_administrator.assert_called_once()
-    mock_auth_client.authorize_data_administrator.assert_called_with(
-        DATASTORE_RDN, None
-    )
+    mock_auth_deps["data_administrator"].assert_called_once()
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
     assert not os.path.exists(
