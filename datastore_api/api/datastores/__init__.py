@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends
 
 from datastore_api.adapter import db
 from datastore_api.adapter.auth.dependencies import (
-    require_api_key,
-    require_datastore_provisioner,
+    authorize_datastore_provisioner,
 )
 from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.api import observability
@@ -39,13 +38,13 @@ async def get_datastores(
 async def new_datastore(
     validated_body: NewDatastoreRequest,
     db_client: db.DatabaseClient = Depends(db.get_database_client),
-    user_info: UserInfo = Depends(require_datastore_provisioner),
+    user_info: UserInfo = Depends(authorize_datastore_provisioner),
 ) -> NewJobResponse:
     new_datastore = validated_body.generate_new_datastore_from_request()
     return create_new_datastore(new_datastore, db_client, user_info)
 
 
-@router.get("/{datastore_rdn}", dependencies=[Depends(require_api_key)])
+@router.get("/{datastore_rdn}")
 async def get_datastore(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
@@ -53,8 +52,13 @@ async def get_datastore(
     return db_client.get_datastore(datastore_id)
 
 
+# TODO: This endpoint should be secured with authorize_data_administrator
+# once convenience endpoint /{datastore_rdn}/datastore_directory is created
+# for and used by job-executor.
+
+
 @router.delete(
-    "/{datastore_rdn}", dependencies=[Depends(require_datastore_provisioner)]
+    "/{datastore_rdn}", dependencies=[Depends(authorize_datastore_provisioner)]
 )
 async def delete_datastore(
     datastore_id: int = Depends(get_datastore_id),

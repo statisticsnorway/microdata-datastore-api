@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends
 
 from datastore_api.adapter import db
-from datastore_api.adapter.auth.dependencies import require_data_administrator
+from datastore_api.adapter.auth.dependencies import authorize_data_administrator
 from datastore_api.adapter.db import DatabaseClient
 from datastore_api.adapter.local_storage import input_directory
 from datastore_api.adapter.local_storage.input_directory import (
@@ -34,7 +34,7 @@ as it is non-breaking.
 """
 
 
-@router.get("", dependencies=[Depends(require_data_administrator)])
+@router.get("", dependencies=[Depends(authorize_data_administrator)])
 def get_importable_datasets(
     db_client: DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
@@ -57,7 +57,7 @@ def get_importable_datasets(
 
 
 @router.delete(
-    "/{dataset_name}", dependencies=[Depends(require_data_administrator)]
+    "/{dataset_name}", dependencies=[Depends(authorize_data_administrator)]
 )
 def delete_importable_datasets(
     dataset_name: str,

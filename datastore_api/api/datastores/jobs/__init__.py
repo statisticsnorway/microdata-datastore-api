@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, Query
 
 from datastore_api.adapter import db
 from datastore_api.adapter.auth.dependencies import (
-    require_data_administrator,
-    require_data_administrator_with_user_info,
+    authorize_data_administrator,
+    authorize_data_administrator_with_user_info,
 )
 from datastore_api.adapter.db.models import Job, JobStatus, Operation, UserInfo
 from datastore_api.api.common.dependencies import (
@@ -29,7 +29,7 @@ router = APIRouter()
 @router.get(
     "",
     response_model_exclude_none=True,
-    dependencies=[Depends(require_data_administrator)],
+    dependencies=[Depends(authorize_data_administrator)],
 )
 def get_jobs_for_datastore(
     status: Optional[str] = Query(None),
@@ -51,7 +51,7 @@ def get_jobs_for_datastore(
 @router.get(
     "/{job_id}",
     response_model_exclude_none=True,
-    dependencies=[Depends(require_data_administrator)],
+    dependencies=[Depends(authorize_data_administrator)],
 )
 def get_job(
     job_id: str,
@@ -71,7 +71,7 @@ def new_job(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
     parsed_user_info: UserInfo = Depends(
-        require_data_administrator_with_user_info
+        authorize_data_administrator_with_user_info
     ),
 ) -> list[NewJobResponse]:
     response_list = []

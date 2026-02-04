@@ -5,7 +5,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from fastapi import APIRouter, Body, Depends, Response
 
-from datastore_api.adapter.auth.dependencies import require_api_key
+from datastore_api.adapter.auth.dependencies import authorize_api_key
 from datastore_api.api.common.dependencies import get_datastore_root_dir
 from datastore_api.common.exceptions import (
     PublicKeyAlreadyExistsException,
@@ -47,7 +47,7 @@ def get_public_key(
         ) from e
 
 
-@router.post("", dependencies=[Depends(require_api_key)])
+@router.post("", dependencies=[Depends(authorize_api_key)])
 def save_public_key(
     public_key_bytes: bytes = Body(..., media_type="application/x-pem-file"),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),

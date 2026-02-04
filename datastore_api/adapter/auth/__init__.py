@@ -22,218 +22,184 @@ USER_FIRST_NAME_KEY = "user/firstName"
 USER_LAST_NAME_KEY = "user/lastName"
 USER_ID_KEY = "user/uuid"
 ACCREDITATION_ROLE_KEY = "accreditation/role"
-DATA_ADMINISTRATOR_ROLE = "role/dataadministrator"
-DATASTORE_PROVISIONER_ROLE = "role/dataadministrator"
-# TODO: Update once new role is available
 
 
 @dataclass(frozen=True)
-class AuthContext:
-    user_id: str
-    signing_key: Any
+class TokenPolicy:
+    user_id_claim: str
+    required_claims: list[str] | None = None
+    verify_aud: bool = True
+
+    def to_pyjwk_options(self, verify_signature: bool = True) -> dict[str, Any]:
+        options = {}
+        options["verify_aud"] = self.verify_aud
+        options["verify_signature"] = verify_signature
+        if self.required_claims:
+            options["require"] = self.required_claims
+        return options
+
+
+USER_INFO_TOKEN_POLICY = TokenPolicy(
+    user_id_claim=USER_ID_KEY,
+    required_claims=[
+        USER_ID_KEY,
+        USER_FIRST_NAME_KEY,
+        USER_LAST_NAME_KEY,
+    ],
+    verify_aud=False,
+)
+
+
+def _decode_jwt(
+    jwt_token: str,
+    policy: TokenPolicy,
+    signing_key: PyJWK | None,
+    audience: str | None = None,
+    verify_signature: bool = True,
+) -> dict[str, Any]:
+    if verify_signature and signing_key is None:
+        raise InternalServerError(
+            "Signing key required when verify_signature=True"
+        )
+    signing_key_for_decode: Any = signing_key if verify_signature else None
+    try:
+        decoded_jwt = jwt.decode(
+            jwt_token,
+            signing_key_for_decode,
+            algorithms=["RS256", "RS512"],
+            audience=audience if policy.verify_aud else None,
+            options=policy.to_pyjwk_options(verify_signature),
+        )
+        return decoded_jwt
+    except (
+        InvalidSignatureError,
+        ExpiredSignatureError,
+        InvalidAudienceError,
+        MissingRequiredClaimError,
+        DecodeError,
+    ) as e:
+        raise AuthError(f"Invalid token: {e}") from e
+    except Exception as e:
+        raise InternalServerError(f"Internal Server Error {e}") from e
+
+
+def _validate_role(required_role: str, decoded_jwt: dict[str, Any]) -> None:
+    # Ensure that token contains the expected accreditation role
+    role = decoded_jwt.get(ACCREDITATION_ROLE_KEY)
+    if role != required_role:
+        raise AuthError(f"Unauthorized with role: {role}")
+
+
+def _validate_rdn_in_aud(rdn: str, decoded_jwt: dict[str, Any]) -> None:
+    # Ensure the requested datastore RDN is covered by at least one audience
+    aud = decoded_jwt.get("aud")
+    if not aud:
+        raise AuthError("Missing audience")
+    aud_list = [aud] if isinstance(aud, str) else aud
+    if not any(rdn.startswith(a) for a in aud_list):
+        raise AuthError(f"Not authorized to access datastore: {rdn}")
+
+
+def _validate_and_parse_user_info_from_token(
+    user_info_token: str, signing_key: PyJWK | None, decoded_jwt: dict[str, Any]
+) -> UserInfo:
+    # Decode user-info token and verify it belongs to same user as auth token
+    decoded_user_info = _decode_jwt(
+        jwt_token=user_info_token,
+        policy=USER_INFO_TOKEN_POLICY,
+        signing_key=signing_key,
+    )
+    user_id = decoded_user_info.get(USER_ID_KEY)
+    if decoded_jwt.get(USER_ID_KEY) != user_id:
+        raise AuthError("Token mismatch")
+    return UserInfo(
+        user_id=str(user_id),
+        first_name=str(decoded_user_info.get(USER_FIRST_NAME_KEY)),
+        last_name=str(decoded_user_info.get(USER_LAST_NAME_KEY)),
+    )
+
+
+def _validate_user_id(decoded_jwt: dict[str, Any]) -> None:
+    # Ensure token contains a non-empty subject identifier
+    user_id = decoded_jwt.get("sub")
+    if user_id in [None, ""]:
+        raise AuthError("No valid user_id")
 
 
 class AuthClient(Protocol):
-    def authorize_user(self, authorization_header: str | None) -> str: ...
-    def authorize_data_administrator(
+    def authorize_jwt(
         self,
-        rdn: str,
-        authorization_cookie: str | None,
-    ) -> AuthContext: ...
-    def authorize_datastore_provisioner(
-        self, authorization_cookie: str | None
-    ) -> AuthContext: ...
-    def parse_user_info(
-        self, auth_context: AuthContext, user_info_cookie: str | None
-    ) -> UserInfo: ...
-    def check_api_key(self, x_api_key: str) -> None: ...
+        required_aud: str,
+        decode_policy: TokenPolicy,
+        required_role: str | None = None,
+        authorization_token: str | None = None,
+        user_info_token: str | None = None,
+        rdn: str | None = None,
+    ) -> UserInfo | None: ...
+    def authorize_api_key(self, x_api_key: str) -> None: ...
 
 
 class MicrodataAuthClient:
     jwks_client: PyJWKClient
-    valid_aud_jobs: str
-    valid_aud_data: str
-    valid_aud_provision: str
 
-    def __init__(
-        self, valid_aud_jobs: str, valid_aud_data: str, valid_aud_provision: str
-    ) -> None:
+    def __init__(self) -> None:
         self.jwks_client = PyJWKClient(environment.jwks_url, lifespan=3000)
-        self.valid_aud_jobs = valid_aud_jobs
-        self.valid_aud_data = valid_aud_data
-        self.valid_aud_provision = valid_aud_provision
 
     def _get_signing_key(self, jwt_token: str) -> PyJWK:
         return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
 
-    def authorize_user(self, authorization_header: str | None) -> str:
-        if authorization_header is None:
+    def authorize_jwt(
+        self,
+        required_aud: str,
+        decode_policy: TokenPolicy,
+        required_role: str | None = None,
+        authorization_token: str | None = None,
+        user_info_token: str | None = None,
+        rdn: str | None = None,
+    ) -> UserInfo | None:
+        if authorization_token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Unauthorized. No token was provided",
             )
-
         try:
-            jwt_token = authorization_header.removeprefix("Bearer ")
-            signing_key = self._get_signing_key(jwt_token)
-
-            decoded_jwt = jwt.decode(
-                jwt_token,
-                signing_key,
-                algorithms=["RS256", "RS512"],
-                audience=self.valid_aud_data,
-            )
-            user_id = decoded_jwt.get("sub")
-            if user_id in [None, ""]:
-                raise AuthError("No valid user_id")
-            return user_id
-        except (
-            InvalidSignatureError,
-            ExpiredSignatureError,
-            InvalidAudienceError,
-            AuthError,
-            DecodeError,
-            ValueError,
-            AttributeError,
-        ) as e:
-            raise AuthError("Unauthorized: Invalid token") from e
-        except Exception as e:
-            raise InternalServerError(f"Internal Server Error: {e}") from e
-
-    def authorize(
-        self,
-        required_role: str,
-        authorization_cookie: str | None,
-        rdn: str | None = None,
-    ) -> AuthContext:
-        if authorization_cookie is None:
-            raise AuthError("Unauthorized. No authorization token was provided")
-
-        required_aud = (
-            self.valid_aud_jobs
-            if required_role == DATA_ADMINISTRATOR_ROLE
-            else self.valid_aud_provision
-        )
-        try:
-            signing_key = self._get_signing_key(authorization_cookie)
-            decoded_authorization = jwt.decode(
-                authorization_cookie,
-                signing_key,
-                algorithms=["RS256", "RS512"],
-                audience=required_aud,
-                options={
-                    "require": [
-                        "aud",
-                        "sub",
-                        ACCREDITATION_ROLE_KEY,
-                        USER_ID_KEY,
-                    ]
-                },
-            )
-            role = decoded_authorization.get(ACCREDITATION_ROLE_KEY)
-            if role != required_role:
-                raise AuthError(f"Unauthorized with role: {role}")
-            if rdn:
-                aud = decoded_authorization.get("aud")
-                aud_list = [aud] if isinstance(aud, str) else aud
-                if not any(rdn.startswith(a) for a in aud_list):
-                    raise AuthError(
-                        f"Not authorized to access datastore: {rdn}"
-                    )
-            return AuthContext(
-                user_id=decoded_authorization.get(USER_ID_KEY),
+            signing_key = self._get_signing_key(authorization_token)
+            decoded_jwt = _decode_jwt(
+                jwt_token=authorization_token,
+                policy=decode_policy,
                 signing_key=signing_key,
+                audience=required_aud,
+                verify_signature=True,
             )
+            if required_role:
+                _validate_role(required_role, decoded_jwt)
+            if rdn:
+                _validate_rdn_in_aud(rdn, decoded_jwt)
+            if user_info_token:
+                return _validate_and_parse_user_info_from_token(
+                    user_info_token, signing_key, decoded_jwt
+                )
+            if decode_policy.user_id_claim == "sub":
+                _validate_user_id(decoded_jwt)
+
         except AuthError as e:
             raise e
-        except (
-            InvalidSignatureError,
-            ExpiredSignatureError,
-            InvalidAudienceError,
-            MissingRequiredClaimError,
-            DecodeError,
-            ValueError,
-            AttributeError,
-            KeyError,
-        ) as e:
-            raise AuthError(f"Unauthorized: {e}") from e
-        except Exception as e:
-            raise InternalServerError(f"Internal Server Error {e}") from e
 
-    def parse_user_info(
-        self, auth_context: AuthContext, user_info_cookie: str | None
-    ) -> UserInfo:
-        if user_info_cookie is None:
-            raise AuthError("Unauthorized. No user info token was provided")
-        try:
-            decoded_user_info = jwt.decode(
-                user_info_cookie,
-                auth_context.signing_key,
-                algorithms=["RS256", "RS512"],
-                options={
-                    "require": [
-                        USER_ID_KEY,
-                        USER_FIRST_NAME_KEY,
-                        USER_LAST_NAME_KEY,
-                    ],
-                    "verify_aud": False,
-                },
-            )
-        except (
-            InvalidSignatureError,
-            ExpiredSignatureError,
-            DecodeError,
-            MissingRequiredClaimError,
-        ) as e:
-            raise AuthError("Invalid user info token") from e
-        user_id = decoded_user_info.get(USER_ID_KEY)
-        if auth_context.user_id != user_id:
-            raise AuthError("Token mismatch")
-        first_name = decoded_user_info.get(USER_FIRST_NAME_KEY)
-        last_name = decoded_user_info.get(USER_LAST_NAME_KEY)
-        return UserInfo(
-            user_id=str(user_id),
-            first_name=str(first_name),
-            last_name=str(last_name),
-        )
-
-    def authorize_datastore_provisioner(
-        self, authorization_cookie: str | None
-    ) -> AuthContext:
-        auth_context = self.authorize(
-            DATASTORE_PROVISIONER_ROLE, authorization_cookie
-        )
-        if auth_context.user_id not in secrets.datastore_provisioners:
-            raise AuthError("Forbidden: Not allowed to modify datastore")
-        return auth_context
-
-    def authorize_data_administrator(
-        self,
-        rdn: str,
-        authorization_cookie: str | None,
-    ) -> AuthContext:
-        return self.authorize(
-            DATA_ADMINISTRATOR_ROLE, authorization_cookie, rdn=rdn
-        )
-
-    def check_api_key(self, x_api_key: str) -> None:
+    def authorize_api_key(self, x_api_key: str) -> None:
         if x_api_key != secrets.datastore_api_service_key:
             raise AuthError("Invalid API key")
 
 
 class DisabledAuthClient:
-    def authorize_user(
+    def authorize_jwt(
         self,
-        authorization_header: str | None,  # NOSONAR(S1172)
-    ) -> str:
-        logger.error('Auth toggled off. Returning "default" as user_id.')
-        return "default"
-
-    def parse_user_info(
-        self,
-        auth_context: AuthContext,  # NOSONAR(S1172)
-        user_info_cookie: str | None,  # NOSONAR(S1172)
-    ) -> UserInfo:
+        required_aud: str,
+        decode_policy: TokenPolicy,
+        required_role: str | None = None,
+        authorization_token: str | None = None,
+        user_info_token: str | None = None,
+        rdn: str | None = None,
+    ) -> UserInfo | None:
         logger.error("JWT_AUTH is turned off. Returning default UserInfo")
         return UserInfo(
             user_id="1234-1234-1234-1234",
@@ -241,22 +207,7 @@ class DisabledAuthClient:
             last_name="User",
         )
 
-    def authorize_data_administrator(
-        self,
-        rdn: str | None,  # NOSONAR(S1172)
-        authorization_cookie: str | None,  # NOSONAR(S1172)
-    ) -> AuthContext:
-        logger.error("JWT_AUTH is turned off. Returning default AuthContext")
-        return AuthContext(user_id="1234-1234-1234-1234", signing_key="")
-
-    def authorize_datastore_provisioner(
-        self,
-        authorization_cookie: str | None,  # NOSONAR(S1172)
-    ) -> AuthContext:
-        logger.error("JWT_AUTH is turned off. Returning default AuthContext")
-        return AuthContext(user_id="1234-1234-1234-1234", signing_key="")
-
-    def check_api_key(self, x_api_key: str) -> None:
+    def authorize_api_key(self, x_api_key: str) -> None:
         logger.error("JWT_AUTH is turned off. Not checking API key")
 
 
@@ -266,205 +217,61 @@ class SkipSignatureAuthClient:
     Only use this in development/testing environments.
     """
 
-    valid_aud_jobs: str
-    valid_aud_data: str
-    valid_aud_provision: str
-
-    def __init__(
-        self, valid_aud_jobs: str, valid_aud_data: str, valid_aud_provision: str
-    ) -> None:
-        self.valid_aud_jobs = valid_aud_jobs
-        self.valid_aud_data = valid_aud_data
-        self.valid_aud_provision = valid_aud_provision
-
-    def authorize_user(self, authorization_header: str | None) -> str:
-        logger.error(
-            "This auth client reads JWT claims WITHOUT signature validation!"
-        )
-        if authorization_header is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Unauthorized. No token was provided",
-            )
-
-        try:
-            jwt_token = authorization_header.removeprefix("Bearer ")
-            decoded_jwt = jwt.decode(
-                jwt_token,
-                audience=self.valid_aud_data,
-                options={  # NOSONAR(S5659)
-                    "verify_signature": False,
-                    "verify_exp": True,
-                    "verify_aud": True,
-                },
-            )
-            user_id = decoded_jwt.get("sub")
-            if user_id in [None, ""]:
-                raise AuthError("No valid user_id in token")
-            return user_id
-        except (
-            ExpiredSignatureError,
-            InvalidAudienceError,
-            AuthError,
-            DecodeError,
-            ValueError,
-            AttributeError,
-        ) as e:
-            raise AuthError("Unauthorized: Invalid token") from e
-        except Exception as e:
-            raise InternalServerError(f"Internal Server Error: {e}") from e
-
-    def authorize(
+    def authorize_jwt(
         self,
-        required_role: str,
-        authorization_cookie: str | None,
+        required_aud: str,
+        decode_policy: TokenPolicy,
+        required_role: str | None = None,
+        authorization_token: str | None = None,
+        user_info_token: str | None = None,
         rdn: str | None = None,
-    ) -> AuthContext:
+    ) -> UserInfo | None:
         logger.error(
             "This auth client reads JWT claims WITHOUT signature validation!"
         )
-        if authorization_cookie is None:
+        if authorization_token is None:
             raise AuthError("Unauthorized. No authorization token was provided")
-        required_aud = (
-            self.valid_aud_jobs
-            if required_role == DATA_ADMINISTRATOR_ROLE
-            else self.valid_aud_provision
-        )
+
         try:
-            decoded_authorization = jwt.decode(
-                authorization_cookie,
+            decoded_jwt = _decode_jwt(
+                jwt_token=authorization_token,
+                policy=decode_policy,
+                signing_key=None,
                 audience=required_aud,
-                options={  # NOSONAR(S5659)
-                    "verify_signature": False,
-                    "verify_exp": True,
-                    "verify_aud": True,
-                    "require": [
-                        "aud",
-                        "sub",
-                        ACCREDITATION_ROLE_KEY,
-                        USER_ID_KEY,
-                    ],
-                },
+                verify_signature=False,
             )
-            role = decoded_authorization.get(ACCREDITATION_ROLE_KEY)
-            if role != required_role:
-                raise AuthError(f"Unauthorized with role: {role}")
+            if required_role:
+                _validate_role(required_role, decoded_jwt)
             if rdn:
-                aud = decoded_authorization.get("aud")
-                aud_list = [aud] if isinstance(aud, str) else aud
-                if not any(rdn.startswith(a) for a in aud_list):
-                    raise AuthError(
-                        f"Not authorized to access datastore: {rdn}"
-                    )
-            return AuthContext(
-                user_id=decoded_authorization.get(USER_ID_KEY),
-                signing_key="No signing key: Skipping signature auth client",
-            )
+                _validate_rdn_in_aud(rdn, decoded_jwt)
+            if user_info_token:
+                return _validate_and_parse_user_info_from_token(
+                    user_info_token, None, decoded_jwt
+                )
+            if decode_policy.user_id_claim == "sub":
+                _validate_user_id(decoded_jwt)
+
         except AuthError as e:
             raise e
-        except (
-            ExpiredSignatureError,
-            InvalidAudienceError,
-            MissingRequiredClaimError,
-            DecodeError,
-            ValueError,
-            AttributeError,
-            KeyError,
-        ) as e:
-            raise AuthError(f"Unauthorized: {e}") from e
-        except Exception as e:
-            raise InternalServerError(f"Internal Server Error {e}") from e
 
-    def parse_user_info(
-        self,
-        auth_context: AuthContext,  # NOSONAR(S1172)
-        user_info_cookie: str | None,
-    ) -> UserInfo:
-        if user_info_cookie is None:
-            raise AuthError("Unauthorized. No user info token was provided")
-        try:
-            decoded_user_info = jwt.decode(
-                user_info_cookie,
-                options={  # NOSONAR(S5659)
-                    "verify_signature": False,
-                    "verify_exp": False,
-                    "verify_aud": False,
-                    "require": [
-                        USER_ID_KEY,
-                        USER_FIRST_NAME_KEY,
-                        USER_LAST_NAME_KEY,
-                    ],
-                },
-            )
-        except (
-            InvalidSignatureError,
-            ExpiredSignatureError,
-            DecodeError,
-            MissingRequiredClaimError,
-        ) as e:
-            raise AuthError("Invalid user info token") from e
-        return UserInfo(
-            user_id=str(decoded_user_info.get(USER_ID_KEY)),
-            first_name=str(decoded_user_info.get(USER_FIRST_NAME_KEY)),
-            last_name=str(decoded_user_info.get(USER_LAST_NAME_KEY)),
-        )
-
-    def authorize_datastore_provisioner(
-        self, authorization_cookie: str | None
-    ) -> AuthContext:
-        auth_context = self.authorize(
-            DATASTORE_PROVISIONER_ROLE, authorization_cookie
-        )
-        if auth_context.user_id not in secrets.datastore_provisioners:
-            raise AuthError("Forbidden: Not allowed to modify datastore")
-        return auth_context
-
-    def authorize_data_administrator(
-        self,
-        rdn: str,
-        authorization_cookie: str | None,
-    ) -> AuthContext:
-        return self.authorize(
-            DATA_ADMINISTRATOR_ROLE, authorization_cookie, rdn=rdn
-        )
-
-    def check_api_key(self, x_api_key: str) -> None:
+    def authorize_api_key(self, x_api_key: str) -> None:
         if x_api_key != secrets.datastore_api_service_key:
             raise AuthError("Invalid API key")
 
 
 def get_auth_client() -> AuthClient:
-    stack = environment.stack
-    valid_aud_jobs = (
-        "datastore-api-jobs-qa" if stack == "qa" else "datastore-api-jobs"
-    )
-    valid_aud_data = (
-        "datastore-api-data-qa" if stack == "qa" else "datastore-api-data"
-    )
-    valid_aud_provision = (
-        "datastore-api-jobs-qa" if stack == "qa" else "datastore-api-jobs"
-    )  # TODO: Update once new aud (datastore-api-provision) is available
-
     match environment.jwt_auth:
         case "FULL":
-            return MicrodataAuthClient(
-                valid_aud_jobs=valid_aud_jobs,
-                valid_aud_data=valid_aud_data,
-                valid_aud_provision=valid_aud_provision,
-            )
+            return MicrodataAuthClient()
         case "SKIP_SIGNATURE":
             logger.error(
                 "SKIP_SIGNATURE is enabled. "
                 "JWT tokens will be read WITHOUT signature validation. "
                 "This should only be used in development/testing environments."
             )
-            return SkipSignatureAuthClient(
-                valid_aud_jobs=valid_aud_jobs,
-                valid_aud_data=valid_aud_data,
-                valid_aud_provision=valid_aud_provision,
-            )
+            return SkipSignatureAuthClient()
         case "OFF":
-            logger.error('Auth toggled off. Returning "default" as user_id.')
+            logger.error("Auth toggled off. Returning default UserInfo.")
             return DisabledAuthClient()
         case _:
             raise InternalServerError(
