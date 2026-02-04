@@ -101,14 +101,17 @@ def _validate_rdn_in_aud(rdn: str, decoded_jwt: dict[str, Any]) -> None:
 
 
 def _validate_and_parse_user_info_from_token(
-    user_info_token: str, signing_key: PyJWK | None, decoded_jwt: dict[str, Any], verify_signature: bool = True,
+    user_info_token: str,
+    signing_key: PyJWK | None,
+    decoded_jwt: dict[str, Any],
+    verify_signature: bool = True,
 ) -> UserInfo:
     # Decode user-info token and verify it belongs to same user as auth token
     decoded_user_info = _decode_jwt(
         jwt_token=user_info_token,
         policy=USER_INFO_TOKEN_POLICY,
         signing_key=signing_key,
-        verify_signature=verify_signature
+        verify_signature=verify_signature,
     )
     user_id = decoded_user_info.get(USER_ID_KEY)
     if decoded_jwt.get(USER_ID_KEY) != user_id:
