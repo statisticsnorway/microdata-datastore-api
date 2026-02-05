@@ -31,8 +31,8 @@ def _create_datastore_file_structure(datastore_directory: str) -> None:
 def _create_metadata_all_draft(name: str, rdn: str, description: str) -> dict:
     return {
         "dataStore": {
-            "name": name,
-            "label": rdn,
+            "name": rdn,
+            "label": name,
             "description": description,
             "languageCode": "no",
         },
@@ -54,8 +54,8 @@ def _create_draft_version() -> dict:
 
 def _create_datastore_versions(name: str, rdn: str, description: str) -> dict:
     return {
-        "name": name,
-        "label": rdn,
+        "name": rdn,
+        "label": name,
         "description": description,
         "versions": [],
     }
