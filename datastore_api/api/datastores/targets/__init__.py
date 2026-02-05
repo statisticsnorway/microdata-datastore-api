@@ -3,14 +3,21 @@ import logging
 from fastapi import APIRouter, Depends
 
 from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import authorize_data_administrator
 from datastore_api.adapter.db.models import Job, Target
-from datastore_api.api.common.dependencies import get_datastore_id
+from datastore_api.api.common.dependencies import (
+    get_datastore_id,
+)
 
 logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("", response_model_exclude_none=True)
+@router.get(
+    "",
+    response_model_exclude_none=True,
+    dependencies=[Depends(authorize_data_administrator)],
+)
 def get_targets(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
@@ -18,7 +25,11 @@ def get_targets(
     return database_client.get_targets(datastore_id)
 
 
-@router.get("/{name}/jobs", response_model_exclude_none=True)
+@router.get(
+    "/{name}/jobs",
+    response_model_exclude_none=True,
+    dependencies=[Depends(authorize_data_administrator)],
+)
 def get_target_jobs(
     name: str,
     database_client: db.DatabaseClient = Depends(db.get_database_client),

@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
 
-from datastore_api.adapter.auth import AuthClient, get_auth_client
+from datastore_api.adapter.auth.dependencies import authorize_user
 from datastore_api.api.common.dependencies import get_datastore_root_dir
 from datastore_api.api.datastores.data.models import (
     ErrorMessage,
@@ -21,11 +21,13 @@ router = APIRouter()
 logger = logging.getLogger()
 
 
-@router.post("/event/stream", responses={404: {"model": ErrorMessage}})
+@router.post(
+    "/event/stream",
+    responses={404: {"model": ErrorMessage}},
+    dependencies=[Depends(authorize_user)],
+)
 def stream_result_event(
     input_query: InputTimePeriodQuery,
-    authorization: str = Header(None),
-    auth_client: AuthClient = Depends(get_auth_client),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> PlainTextResponse:
     """
@@ -33,7 +35,6 @@ def stream_result_event(
     and stream result as response.
     """
     logger.info(f"Entering /data/event/stream with input query: {input_query}")
-    auth_client.authorize_user(authorization)
     result_data = data.process_event_request(
         input_query.dataStructureName,
         input_query.version,
@@ -48,11 +49,13 @@ def stream_result_event(
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
 
 
-@router.post("/status/stream", responses={404: {"model": ErrorMessage}})
+@router.post(
+    "/status/stream",
+    responses={404: {"model": ErrorMessage}},
+    dependencies=[Depends(authorize_user)],
+)
 def stream_result_status(
     input_query: InputTimeQuery,
-    authorization: str = Header(None),
-    auth_client: AuthClient = Depends(get_auth_client),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> PlainTextResponse:
     """
@@ -60,7 +63,6 @@ def stream_result_status(
     and stream result as response.
     """
     logger.info(f"Entering /data/status/stream with input query: {input_query}")
-    auth_client.authorize_user(authorization)
     result_data = data.process_status_request(
         input_query.dataStructureName,
         input_query.version,
@@ -74,11 +76,13 @@ def stream_result_status(
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
 
 
-@router.post("/fixed/stream", responses={404: {"model": ErrorMessage}})
+@router.post(
+    "/fixed/stream",
+    responses={404: {"model": ErrorMessage}},
+    dependencies=[Depends(authorize_user)],
+)
 def stream_result_fixed(
     input_query: InputFixedQuery,
-    authorization: str = Header(None),
-    auth_client: AuthClient = Depends(get_auth_client),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> PlainTextResponse:
     """
@@ -86,7 +90,6 @@ def stream_result_fixed(
     and stream result as response.
     """
     logger.info(f"Entering /data/fixed/stream with input query: {input_query}")
-    auth_client.authorize_user(authorization)
     result_data = data.process_fixed_request(
         input_query.dataStructureName,
         input_query.version,

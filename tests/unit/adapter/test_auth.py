@@ -3,41 +3,41 @@ from unittest.mock import Mock
 import pytest
 
 from datastore_api.adapter.auth import MicrodataAuthClient
+from datastore_api.adapter.auth.dependencies import (
+    authorize_datastore_provisioner,
+)
 from datastore_api.adapter.db.models import UserInfo
 from datastore_api.common.exceptions import AuthError
 
-USER_INFO_ALLOWED_USER = UserInfo(
-    user_id="123-123-125", first_name="Data", last_name="Admin"
+ALLOWED_USER = UserInfo(
+    user_id="123-123-125", first_name="Test", last_name="Testerson"
 )
-USER_INFO_DISALLOWED_USER = UserInfo(
-    user_id="111-111-111", first_name="Data", last_name="Admin"
+
+DISALLOWED_USER = UserInfo(
+    user_id="111-111-111", first_name="Test", last_name="Testerson"
 )
 
 
 @pytest.fixture
 def auth_client():
-    return MicrodataAuthClient(
-        valid_aud_jobs="test-aud",
-        valid_aud_data="test-aud",
-    )
+    return MicrodataAuthClient()
 
 
-def test_authorize_datastore_modification_ok(auth_client):
-    auth_client.authorize_data_administrator = Mock(
-        return_value=USER_INFO_ALLOWED_USER
+def test_authorize_datastore_provisioner_ok(auth_client):
+    auth_client.authorize_jwt = Mock(return_value=ALLOWED_USER)
+    result = authorize_datastore_provisioner(
+        authorization="token",
+        user_info="user-info-token",
+        auth_client=auth_client,
     )
-    user = auth_client.authorize_datastore_modification(
-        authorization_cookie=None,
-        user_info_cookie=None,
-    )
-    assert user.user_id == "123-123-125"
+
+    assert result == ALLOWED_USER
+    auth_client.authorize_jwt.assert_called_once()
 
 
-def test_authorize_datastore_modification_forbidden(auth_client):
-    auth_client.authorize_data_administrator = Mock(
-        return_value=USER_INFO_DISALLOWED_USER
-    )
+def test_authorize_datastore_provisioner_forbidden(auth_client):
+    auth_client.authorize_jwt = Mock(return_value=DISALLOWED_USER)
     with pytest.raises(AuthError):
-        auth_client.authorize_datastore_modification(
-            authorization_cookie=None, user_info_cookie=None
+        authorize_datastore_provisioner(
+            authorization=None, user_info=None, auth_client=auth_client
         )
