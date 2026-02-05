@@ -52,7 +52,8 @@ def authorize_datastore_provisioner(
         authorization_token=authorization,
         user_info_token=user_info,
     )
-    assert parsed_user_info
+    if not parsed_user_info:
+        raise AuthError("Missing user information token")
     if parsed_user_info.user_id not in secrets.datastore_provisioners:
         raise AuthError("Forbidden: Not allowed to modify datastore")
 
@@ -87,7 +88,8 @@ def authorize_data_administrator_with_user_info(
         user_info_token=user_info,
         rdn=datastore_rdn,
     )
-    assert parsed_user_info
+    if not parsed_user_info:
+        raise AuthError("Missing user information token")
     return parsed_user_info
 
 
