@@ -12,7 +12,7 @@ NEW_DATASTORE_REQUEST = NewDatastoreRequest(
 NEW_DATASTORE = NewDatastore(
     rdn="no.new.testdatastore",
     description="new testdatastore",
-    directory="tests/resources/datastores/no-new-testdatastore",
+    directory="tests/resources/datastores/no.new.testdatastore",
     name="NEW TESTDATASTORE",
     bump_enabled=False,
 )

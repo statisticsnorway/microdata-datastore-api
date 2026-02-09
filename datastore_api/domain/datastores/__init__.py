@@ -27,8 +27,7 @@ logger = logging.getLogger()
 
 def get_datastore_dir_from_rdn(rdn: str) -> str:
     root_dir = Path(DATASTORES_ROOT_DIR)
-    dir_name = rdn.replace(".", "-").lower()
-    datastore_dir = root_dir / dir_name
+    datastore_dir = root_dir / rdn
     if not datastore_dir.resolve().is_relative_to(root_dir.resolve()):
         raise ValueError(
             "Resolved datastore directory is outside allowed base directory"
