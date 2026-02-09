@@ -112,7 +112,6 @@ def _validate_and_parse_user_info_from_token(
     decoded_jwt: dict[str, Any],
     verify_signature: bool = True,
 ) -> UserInfo:
-    # Decode user-info token and verify it belongs to same user as auth token
     decoded_user_info = _decode_jwt(
         jwt_token=user_info_token,
         policy=USER_INFO_TOKEN_POLICY,
