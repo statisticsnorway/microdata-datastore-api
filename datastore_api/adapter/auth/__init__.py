@@ -91,7 +91,13 @@ def _validate_role(required_role: str, decoded_jwt: dict[str, Any]) -> None:
 
 
 def _validate_rdn_in_aud(rdn: str, decoded_jwt: dict[str, Any]) -> None:
-    # Ensure the requested datastore RDN is covered by at least one audience
+    """
+    Validates that at least one of the audience claims matches the
+    rdn of the request. An RDN is considered a match if:
+    - It matches completely. E.g.: my.rdn.here == my.rdn.here
+    - A prefix that aligns exactly with the RDN hierarchy from
+      left to right. E.g.: my.rdn has access to my.rdn.here and my.rdn.there
+    """
     aud = decoded_jwt.get("aud")
     if not aud:
         raise AuthError("Missing audience")
