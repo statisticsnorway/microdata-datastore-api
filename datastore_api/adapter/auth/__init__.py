@@ -31,9 +31,10 @@ class TokenPolicy:
     verify_aud: bool = True
 
     def to_pyjwk_options(self, verify_signature: bool = True) -> dict[str, Any]:
-        options = {}
-        options["verify_aud"] = self.verify_aud
-        options["verify_signature"] = verify_signature
+        options = {
+            "verify_aud": self.verify_aud,
+            "verify_signature" verify_signature,
+        }
         if self.required_claims:
             options["require"] = self.required_claims
         return options
