@@ -85,7 +85,6 @@ def _decode_jwt(
 
 
 def _validate_role(required_role: str, decoded_jwt: dict[str, Any]) -> None:
-    # Ensure that token contains the expected accreditation role
     role = decoded_jwt.get(ACCREDITATION_ROLE_KEY)
     if role != required_role:
         raise AuthError(f"Unauthorized with role: {role}")
