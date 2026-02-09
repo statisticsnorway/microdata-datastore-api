@@ -129,7 +129,6 @@ def _validate_and_parse_user_info_from_token(
 
 
 def _validate_user_id(decoded_jwt: dict[str, Any]) -> None:
-    # Ensure token contains a non-empty subject identifier
     user_id = decoded_jwt.get("sub")
     if user_id in [None, ""]:
         raise AuthError("No valid user_id")
