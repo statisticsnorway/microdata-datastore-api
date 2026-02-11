@@ -152,7 +152,34 @@ def test_migration_after_removing_previously_migrated_file_forbidden(
     )
 
 
+def test_no_migrations_dir_forbidden(sqlite_db, tmp_path):
+    migrations_dir = Path(tmp_path / "dir-that-does-not-exist")
+    with pytest.raises(MigrationException) as e:
+        apply_migrations(sqlite_db, migrations_dir)
+    assert ("Migrations directory does not exist") in str(e)
+
+
+def test_empty_migrations_dir_forbidden(sqlite_db, tmp_path):
+    os.mkdir(tmp_path / "empty_dir")
+    migrations_dir = tmp_path / "empty_dir"
+    with pytest.raises(MigrationException) as e:
+        apply_migrations(sqlite_db, migrations_dir)
+    assert ("Migrations directory cannot be empty") in str(e)
+
+
+def test_non_sql_in_migrations_dir_forbidden(sqlite_db, tmp_path):
+    migrations_dir = tmp_path / "migrations"
+    _copy_migrations(
+        Path("tests/resources/migrations/valid"),
+        migrations_dir,
+    )
+    with open(migrations_dir / "text_file.txt", "w") as f:
+        f.write("some text here")
+    with pytest.raises(MigrationException) as e:
+        apply_migrations(sqlite_db, migrations_dir)
+    assert ("Migrations directory contains non-sql files") in str(e)
+
+
 def test_all_migrations_are_valid(sqlite_db):
-    # Test passes if all migration files can be applied without error
     migrations_dir = Path("migrations")
     apply_migrations(sqlite_db, migrations_dir)

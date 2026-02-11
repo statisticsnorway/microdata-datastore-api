@@ -27,6 +27,20 @@ def _parse_migration_date(filename: str) -> date:
     )
 
 
+def _validate_migrations_directory(migrations_dir: Path) -> None:
+    if not migrations_dir.is_dir():
+        raise MigrationException("Migrations directory does not exist")
+    files = [f for f in migrations_dir.iterdir() if f.is_file()]
+    if not files:
+        raise MigrationException("Migrations directory cannot be empty")
+    invalid_files = [f for f in files if f.suffix.lower() != ".sql"]
+    if invalid_files:
+        raise MigrationException(
+            f"Migrations directory contains non-sql files: "
+            f"{[f.name for f in invalid_files]}"
+        )
+
+
 def _validate_applied_migrations(
     applied_migrations: dict[str, str], disk_migrations: dict[str, str]
 ) -> None:
@@ -55,8 +69,10 @@ def _validate_applied_migrations(
 
 
 def apply_migrations(db_path: Path, migrations_dir: Path) -> None:
+    _validate_migrations_directory(migrations_dir)
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("BEGIN EXCLUSIVE")
     cursor = conn.cursor()
     try:
         cursor.execute(
@@ -68,7 +84,6 @@ def apply_migrations(db_path: Path, migrations_dir: Path) -> None:
             )
             """
         )
-        conn.commit()
 
         applied_migrations: dict[str, str] = {
             filename: hash
@@ -113,25 +128,29 @@ def apply_migrations(db_path: Path, migrations_dir: Path) -> None:
                 with open(migration_file, "r") as file:
                     migration_sql = file.read()
                     try:
-                        with conn:
-                            cursor.executescript(migration_sql)
-                            cursor.execute(
-                                """
-                                INSERT INTO migrations (
-                                    filename,
-                                    hash,
-                                    applied_at
-                                )
-                                VALUES (?, ?, ?)
-                                """,
-                                (filename, hash, now),
+                        for stmt in migration_sql.split(";"):
+                            stmt = stmt.strip()
+                            if stmt:
+                                cursor.execute(stmt)
+                        cursor.execute(
+                            """
+                            INSERT INTO migrations (
+                                filename,
+                                hash,
+                                applied_at
                             )
+                            VALUES (?, ?, ?)
+                            """,
+                            (filename, hash, now),
+                        )
                         logger.info(f"Applied migration: {migration_file}")
                     except Exception as e:
                         raise MigrationException(
-                            f"Migration failed: {migration_file}, {e}"
+                            f"Migration failed for {migration_file}, {e}"
                         ) from e
+        conn.commit()
     except Exception as e:
+        conn.rollback()
         raise MigrationException(f"Migration failed: {e}") from e
     finally:
         conn.close()
