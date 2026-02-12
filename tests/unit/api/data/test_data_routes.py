@@ -7,19 +7,13 @@ import pytest
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
-from datastore_api.adapter import auth, db
+from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import authorize_user
 from datastore_api.domain import data
 from datastore_api.main import app
 
 FAKE_RESULT_FILE_NAME = "fake_result_file_name"
 MOCK_RESULT = pq.read_table("tests/resources/results/mocked_result.parquet")
-
-
-@pytest.fixture
-def mock_auth_client():
-    mock = Mock()
-    mock.authorize_user.return_value = ""
-    return mock
 
 
 @pytest.fixture
@@ -32,9 +26,9 @@ def mock_db_client():
 
 
 @pytest.fixture
-def client(mock_auth_client: Mock, mock_db_client: Mock):
-    app.dependency_overrides[auth.get_auth_client] = lambda: mock_auth_client
+def client(mock_db_client: Mock):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
+    app.dependency_overrides[authorize_user] = lambda: None
     yield TestClient(app)
     app.dependency_overrides.clear()
 
