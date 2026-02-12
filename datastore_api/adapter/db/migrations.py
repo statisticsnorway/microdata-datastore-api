@@ -28,7 +28,7 @@ def _parse_migration_date(filename: str) -> date:
 
 
 def _validate_migrations_directory(migrations_dir: Path) -> None:
-    if not migrations_dir.is_dir():
+    if not migrations_dir.exists():
         raise MigrationException("Migrations directory does not exist")
     files = [f for f in migrations_dir.iterdir() if f.is_file()]
     if not files:
