@@ -5,7 +5,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from fastapi import APIRouter, Body, Depends, Response
 
-from datastore_api.adapter.auth.dependencies import authorize_api_key
+from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
+    authorize_data_administrator,
+)
 from datastore_api.api.common.dependencies import get_datastore_root_dir
 from datastore_api.common.exceptions import (
     PublicKeyAlreadyExistsException,
@@ -19,7 +22,7 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(authorize_data_administrator)])
 def get_public_key(
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> Response:
