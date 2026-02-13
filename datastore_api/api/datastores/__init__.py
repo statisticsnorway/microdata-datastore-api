@@ -66,6 +66,14 @@ async def delete_datastore(
     db_client.delete_datastore(datastore_id)
 
 
+@router.get("/{datastore_rdn}/directory")
+async def get_datastore_directory(
+    db_client: db.DatabaseClient = Depends(db.get_database_client),
+    datastore_id: int = Depends(get_datastore_id),
+) -> str:
+    return db_client.get_datastore(datastore_id).directory
+
+
 router.include_router(jobs.router, prefix="/{datastore_rdn}/jobs")
 router.include_router(metadata.router, prefix="/{datastore_rdn}/metadata")
 router.include_router(data.router, prefix="/{datastore_rdn}/data")
