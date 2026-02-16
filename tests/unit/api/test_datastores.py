@@ -82,6 +82,15 @@ def test_create_new_datastore(
     assert response.status_code == 200
 
 
+def test_get_datastore_directory(client):
+    response = client.get(
+        "/datastores/no.dev.test/directory",
+        headers={"X-Request-ID": "abc123"},
+    )
+    assert response.status_code == 200
+    assert response.json() == DATASTORE.directory
+
+
 def test_delete_datastore(client, mock_auth_client):
     response = client.delete("/datastores/no.dev.test")
     mock_auth_client.authorize_datastore_modification.assert_called_once()
