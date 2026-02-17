@@ -12,17 +12,15 @@ from datastore_api.config.logging import setup_logging
 logger = logging.getLogger()
 
 
-def setup_db() -> None:
+def setup_db(db_path: Path, migrations_dir: Path) -> None:
     try:
-        DB_PATH = Path(environment.sqlite_url)
-        MIGRATIONS_DIR = Path(environment.migrations_dir)
-        apply_migrations(DB_PATH, MIGRATIONS_DIR)
+        apply_migrations(db_path, migrations_dir)
     except MigrationException as e:
         logger.error(f"Startup aborted due to migration failure: {e}")
         raise
 
 
-setup_db()
+setup_db(Path(environment.sqlite_url), Path(environment.migrations_dir))
 app = FastAPI()
 setup_logging(app)
 setup_api(app)
