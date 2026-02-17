@@ -41,8 +41,8 @@ def mock_auth_deps():
 @pytest.fixture
 def client(mock_db_client, mock_auth_deps):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
-    app.dependency_overrides[authorize_data_administrator] = (
-        lambda: mock_auth_deps["data_administrator"]()
+    app.dependency_overrides[authorize_data_administrator] = lambda: (
+        mock_auth_deps["data_administrator"]()
     )
     yield TestClient(app)
     app.dependency_overrides.clear()

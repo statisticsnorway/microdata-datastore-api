@@ -128,8 +128,8 @@ def client(mock_db_client, mock_auth_deps):
     app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
         "api_key"
     ]()
-    app.dependency_overrides[authorize_data_administrator] = (
-        lambda: mock_auth_deps["data_administrator"]()
+    app.dependency_overrides[authorize_data_administrator] = lambda: (
+        mock_auth_deps["data_administrator"]()
     )
     app.dependency_overrides[authorize_data_administrator_with_user_info] = (
         lambda: mock_auth_deps["data_administrator_user_info"]()

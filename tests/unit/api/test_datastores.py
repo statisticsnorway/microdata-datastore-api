@@ -54,8 +54,8 @@ def mock_auth_deps():
 def client(mock_db_client, mock_auth_deps):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
     app.dependency_overrides[dependencies.get_datastore_id] = lambda: 1
-    app.dependency_overrides[authorize_datastore_provisioner] = (
-        lambda: mock_auth_deps["datastore_provisioner"]()
+    app.dependency_overrides[authorize_datastore_provisioner] = lambda: (
+        mock_auth_deps["datastore_provisioner"]()
     )
     yield TestClient(app)
     app.dependency_overrides.clear()
