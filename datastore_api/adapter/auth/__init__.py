@@ -11,6 +11,7 @@ from jwt.exceptions import (
     InvalidAudienceError,
     InvalidSignatureError,
 )
+from jwt.types import Options
 
 from datastore_api.adapter.db.models import UserInfo
 from datastore_api.common.exceptions import AuthError, InternalServerError
@@ -30,13 +31,12 @@ class TokenPolicy:
     required_claims: list[str] | None = None
     verify_aud: bool = True
 
-    def to_pyjwk_options(self, verify_signature: bool = True) -> dict[str, Any]:
-        options: dict[str, Any] = {
-            "verify_aud": self.verify_aud,
-            "verify_signature": verify_signature,
-        }
-        if self.required_claims:
-            options["require"] = self.required_claims
+    def to_pyjwk_options(self, verify_signature: bool = True) -> Options:
+        options = Options(
+            verify_aud=self.verify_aud,
+            verify_signature=verify_signature,
+            require=self.required_claims or [],
+        )
         return options
 
 
@@ -59,19 +59,29 @@ def _decode_jwt(
     verify_signature: bool = True,
 ) -> dict[str, Any]:
     if verify_signature and signing_key is None:
-        raise InternalServerError(
-            "Signing key required when verify_signature=True"
-        )
-    signing_key_for_decode: Any = signing_key if verify_signature else None
+        raise AuthError("Signing key required when verify_signature=True")
+
     try:
-        decoded_jwt = jwt.decode(
-            jwt_token,
-            signing_key_for_decode,
-            algorithms=["RS256", "RS512"],
-            audience=audience if policy.verify_aud else None,
-            options=policy.to_pyjwk_options(verify_signature),
-        )
+        options = policy.to_pyjwk_options(verify_signature)
+        audience = audience if policy.verify_aud else None
+
+        if signing_key is None:
+            decoded_jwt = jwt.decode(
+                jwt_token,
+                options=options,
+                algorithms=["RS256", "RS512"],
+                audience=audience,
+            )
+        else:
+            decoded_jwt = jwt.decode(
+                jwt_token,
+                signing_key,
+                options=options,
+                algorithms=["RS256", "RS512"],
+                audience=audience,
+            )
         return decoded_jwt
+
     except (
         InvalidSignatureError,
         ExpiredSignatureError,
