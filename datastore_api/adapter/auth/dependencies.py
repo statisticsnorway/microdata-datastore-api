@@ -94,13 +94,11 @@ def authorize_data_administrator_with_user_info(
 
 
 def authorize_user(
-    authorization_header: str | None = Header(None),
+    authorization: str | None = Header(None),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
 ) -> None:
     authorizaton_token: str | None = (
-        authorization_header.removeprefix("Bearer ")
-        if authorization_header
-        else None
+        authorization.removeprefix("Bearer ") if authorization else None
     )
     auth_client.authorize_jwt(
         required_aud=valid_aud_data,
