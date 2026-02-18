@@ -3,9 +3,12 @@ from pathlib import Path
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from fastapi import APIRouter, Body, Depends, Header, Response
+from fastapi import APIRouter, Body, Depends, Response
 
-from datastore_api.adapter import auth
+from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
+    authorize_data_administrator,
+)
 from datastore_api.api.common.dependencies import get_datastore_root_dir
 from datastore_api.common.exceptions import (
     PublicKeyAlreadyExistsException,
@@ -19,7 +22,7 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(authorize_data_administrator)])
 def get_public_key(
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> Response:
@@ -47,14 +50,11 @@ def get_public_key(
         ) from e
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(authorize_api_key)])
 def save_public_key(
-    api_key: str = Header("X-API-KEY", alias="x-api-key"),
     public_key_bytes: bytes = Body(..., media_type="application/x-pem-file"),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
-    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
 ) -> None:
-    auth_client.check_api_key(api_key)
     public_key_location = datastore_root_dir / "vault" / PUBLIC_KEY_FILE_NAME
 
     if public_key_location.exists():

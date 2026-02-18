@@ -3,7 +3,10 @@ from unittest.mock import Mock
 import pytest
 from fastapi.testclient import TestClient
 
-from datastore_api.adapter import auth, db
+from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import (
+    authorize_datastore_provisioner,
+)
 from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.api.common import dependencies
 from datastore_api.api.jobs.models import NewJobResponse
@@ -41,22 +44,24 @@ def mock_db_client():
 
 
 @pytest.fixture
-def mock_auth_client():
-    mock = Mock()
-    mock.authorize_datastore_modification.return_value = USER_INFO
-    return mock
+def mock_auth_deps():
+    return {
+        "datastore_provisioner": Mock(return_value=USER_INFO),
+    }
 
 
 @pytest.fixture
-def client(mock_db_client, mock_auth_client):
+def client(mock_db_client, mock_auth_deps):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
-    app.dependency_overrides[auth.get_auth_client] = lambda: mock_auth_client
     app.dependency_overrides[dependencies.get_datastore_id] = lambda: 1
+    app.dependency_overrides[authorize_datastore_provisioner] = lambda: (
+        mock_auth_deps["datastore_provisioner"]()
+    )
     yield TestClient(app)
     app.dependency_overrides.clear()
 
 
-def test_get_datastore(client):
+def test_get_datastore(client, mock_auth_deps):
     response = client.get(
         "/datastores/no.dev.test", headers={"X-Request-ID": "abc123"}
     )
@@ -70,19 +75,17 @@ def test_get_datastores(client):
     assert response.json() == ["no.dev.test"]
 
 
-def test_create_new_datastore(
-    client, mock_auth_client, mock_db_client, monkeypatch
-):
+def test_create_new_datastore(client, mock_auth_deps, monkeypatch):
     monkeypatch.setattr(
         "datastore_api.api.datastores.create_new_datastore",
         lambda *_: NewJobResponse(status="queued", msg="CREATED", job_id="123"),
     )
     response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
-    mock_auth_client.authorize_datastore_modification.assert_called_once()
+    mock_auth_deps["datastore_provisioner"].assert_called_once()
     assert response.status_code == 200
 
 
-def test_delete_datastore(client, mock_auth_client):
+def test_delete_datastore(client, mock_auth_deps):
     response = client.delete("/datastores/no.dev.test")
-    mock_auth_client.authorize_datastore_modification.assert_called_once()
+    mock_auth_deps["datastore_provisioner"].assert_called_once()
     assert response.status_code == 200

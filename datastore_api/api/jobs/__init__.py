@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import authorize_api_key
 from datastore_api.adapter.db.models import Job, JobStatus, Operation
 from datastore_api.api.jobs.models import (
     UpdateJobRequest,
@@ -14,7 +15,11 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("", response_model_exclude_none=True)
+@router.get(
+    "",
+    response_model_exclude_none=True,
+    dependencies=[Depends(authorize_api_key)],
+)
 def get_jobs(
     status: Optional[str] = Query(None),
     operation: Optional[str] = Query(None),
@@ -31,7 +36,11 @@ def get_jobs(
     )
 
 
-@router.get("/{job_id}", response_model_exclude_none=True)
+@router.get(
+    "/{job_id}",
+    response_model_exclude_none=True,
+    dependencies=[Depends(authorize_api_key)],
+)
 def get_job(
     job_id: str,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
@@ -39,7 +48,7 @@ def get_job(
     return database_client.get_job(job_id)
 
 
-@router.put("/{job_id}")
+@router.put("/{job_id}", dependencies=[Depends(authorize_api_key)])
 def update_job(
     job_id: str,
     validated_body: UpdateJobRequest,
