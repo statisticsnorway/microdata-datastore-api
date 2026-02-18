@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 import jwt
-from fastapi import HTTPException, status
 from jwt import MissingRequiredClaimError, PyJWK, PyJWKClient
 from jwt.exceptions import (
     DecodeError,
@@ -176,10 +175,7 @@ class MicrodataAuthClient:
         rdn: str | None = None,
     ) -> UserInfo | None:
         if authorization_token is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Unauthorized. No token was provided",
-            )
+            raise AuthError("Unauthorized. No token was provided")
         try:
             signing_key = self._get_signing_key(authorization_token)
             decoded_jwt = _decode_jwt(
