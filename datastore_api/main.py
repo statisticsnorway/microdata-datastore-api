@@ -1,6 +1,4 @@
 import logging
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -14,19 +12,16 @@ from datastore_api.config.logging import setup_logging
 logger = logging.getLogger()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator:
+def setup_db(db_path: Path, migrations_dir: Path) -> None:
     try:
-        DB_PATH = Path(environment.sqlite_url)
-        MIGRATIONS_DIR = Path(environment.migrations_dir)
-        apply_migrations(DB_PATH, MIGRATIONS_DIR)
+        apply_migrations(db_path, migrations_dir)
     except MigrationException as e:
         logger.error(f"Startup aborted due to migration failure: {e}")
         raise
-    yield
 
 
-app = FastAPI(lifespan=lifespan)
+setup_db(Path(environment.sqlite_url), Path(environment.migrations_dir))
+app = FastAPI()
 setup_logging(app)
 setup_api(app)
 
