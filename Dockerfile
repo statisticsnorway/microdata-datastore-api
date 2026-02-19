@@ -25,4 +25,4 @@ COPY --from=builder /etc/group /etc/group
 
 USER microdata
 ENV PYTHONPATH "${PYTHONPATH}:/app:/app/dependencies"
-CMD ["-m", "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--logger-class", "datastore_api.config.logging.gunicorn.CustomLogger", "datastore_api.main:app", "--preload", "--workers", "2", "--bind", "0.0.0.0:8000"] 
+CMD ["-m", "gunicorn", "--no-control-socket", "-k", "uvicorn.workers.UvicornWorker", "--logger-class", "datastore_api.config.logging.gunicorn.CustomLogger", "datastore_api.main:app", "--preload", "--workers", "2", "--bind", "0.0.0.0:8000"] 
