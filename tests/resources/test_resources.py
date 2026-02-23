@@ -10,27 +10,14 @@ from datastore_api.api.datastores.data.models import (
 )
 
 valid_jwt_payload = {
-    "aud": "datastore",
+    "aud": ["no.ssb.fdb", "datastore-api-jobs"],
     "exp": (datetime.now() + timedelta(hours=1)).timestamp(),
+    "accreditation/role": "role/dataadministrator",
     "sub": "testuser",
+    "user/uuid": "12345",
 }
 
-jwt_payload_missing_user_id = {
-    "aud": "datastore",
-    "exp": (datetime.now() + timedelta(hours=1)).timestamp(),
-}
-
-jwt_payload_wrong_audience = {
-    "aud": "wrong",
-    "exp": (datetime.now() + timedelta(hours=1)).timestamp(),
-    "sub": "testuser",
-}
-
-jwt_payload_expired = {
-    "aud": "datastore",
-    "exp": (datetime.now() - timedelta(hours=1)).timestamp(),
-    "sub": "testuser",
-}
+# TODO: Add more payloads for testing
 
 PERSON_INCOME_ALL = (
     ";unit_id;value\n"

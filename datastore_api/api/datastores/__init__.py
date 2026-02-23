@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Cookie, Depends
+from fastapi import APIRouter, Depends
 
-from datastore_api.adapter import auth, db
-from datastore_api.adapter.db.models import Datastore
+from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import (
+    authorize_datastore_provisioner,
+)
+from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.api import observability
 from datastore_api.api.common.dependencies import get_datastore_id
 from datastore_api.api.datastores import (
@@ -32,16 +35,11 @@ async def get_datastores(
 
 
 @router.post("")
-async def post_create_new_datastore(
+async def new_datastore(
     validated_body: NewDatastoreRequest,
-    authorization: str | None = Cookie(None),
-    user_info: str | None = Cookie(None, alias="user-info"),
-    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
     db_client: db.DatabaseClient = Depends(db.get_database_client),
+    user_info: UserInfo = Depends(authorize_datastore_provisioner),
 ) -> NewJobResponse:
-    user_info = auth_client.authorize_datastore_modification(
-        authorization, user_info
-    )
     new_datastore = validated_body.generate_new_datastore_from_request()
     return create_new_datastore(new_datastore, db_client, user_info)
 
@@ -54,15 +52,18 @@ async def get_datastore(
     return db_client.get_datastore(datastore_id)
 
 
-@router.delete("/{datastore_rdn}")
+# TODO: This endpoint should be secured with authorize_data_administrator
+# once convenience endpoint /{datastore_rdn}/datastore_directory is created
+# for and used by job-executor.
+
+
+@router.delete(
+    "/{datastore_rdn}", dependencies=[Depends(authorize_datastore_provisioner)]
+)
 async def delete_datastore(
     datastore_id: int = Depends(get_datastore_id),
-    authorization: str | None = Cookie(None),
-    user_info: str | None = Cookie(None, alias="user-info"),
-    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
     db_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> None:
-    auth_client.authorize_datastore_modification(authorization, user_info)
     db_client.delete_datastore(datastore_id)
 
 
