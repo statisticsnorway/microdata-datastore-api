@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 
 from datastore_api.adapter import db
 from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
     authorize_datastore_provisioner,
 )
 from datastore_api.adapter.db.models import Datastore, UserInfo
@@ -52,11 +53,6 @@ async def get_datastore(
     return db_client.get_datastore(datastore_id)
 
 
-# TODO: This endpoint should be secured with authorize_data_administrator
-# once convenience endpoint /{datastore_rdn}/datastore_directory is created
-# for and used by job-executor.
-
-
 @router.delete(
     "/{datastore_rdn}", dependencies=[Depends(authorize_datastore_provisioner)]
 )
@@ -67,7 +63,9 @@ async def delete_datastore(
     db_client.delete_datastore(datastore_id)
 
 
-@router.get("/{datastore_rdn}/directory")
+@router.get(
+    "/{datastore_rdn}/directory", dependencies=[Depends(authorize_api_key)]
+)
 async def get_datastore_directory(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
