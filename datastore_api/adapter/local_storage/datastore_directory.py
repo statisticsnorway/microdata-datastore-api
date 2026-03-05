@@ -53,7 +53,7 @@ def get_metadata_all(version: Version, datastore_root_dir: Path) -> dict:
             cache_info = _get_versioned_metadata_all.cache_info()
             logger.info(
                 f"Cache info for versioned metadata: hits={cache_info.hits}, "
-                + "misses={cache_info.misses}, currsize={cache_info.currsize}"
+                f"misses={cache_info.misses}, currsize={cache_info.currsize}"
             )
             return result
     except FileNotFoundError as e:
