@@ -18,12 +18,14 @@ uv run pytest
 ### Running the application
 You can run the application locally with hot reloading:
 ```sh
-export DOCKER_HOST_NAME=localhost \
-export STACK=test \
-export COMMIT_ID=abc123 \
-export SQLITE_URL=test.db \
-export JWT_AUTH=OFF \
-export JWKS_URL=http://localhost
+DOCKER_HOST_NAME=localhost \
+STACK=dev \
+COMMIT_ID=abc123 \
+SQLITE_URL=test.db \
+JWT_AUTH=OFF \
+JWKS_URL=http://localhost \
+SECRETS_FILE=tests/resources/secrets/secrets.json \
+DATASTORES_ROOT_DIR=tests/resources \
 uv run python datastore_api/main.py
 ```
 
