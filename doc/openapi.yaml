@@ -1,75 +1,411 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
-  title: Datastore api
+  title: Datastore API
   version: 1.0.0
 paths:
-  /metadata/data-store:
+  /health/alive:
     get:
-      summary: Get data store information
+      summary: Alive
+      operationId: alive_health_alive_get
       responses:
         '200':
-          description: Data store versions
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DatastoreVersions'
-  /metadata/data-structures:
+                type: string
+                title: Response Alive Health Alive Get
+  /health/ready:
     get:
-      summary: Get data structures
-      parameters:
-        - name: names
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-        - name: version
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: include_attributes
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: skip_code_lists
-          in: query
-          required: false
-          schema:
-            type: boolean
+      summary: Ready
+      operationId: ready_health_ready_get
       responses:
         '200':
-          description: Data structures
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Metadata'
-  /metadata/data-structures/status:
+                type: string
+                title: Response Ready Health Ready Get
+  /datastores:
     get:
-      summary: Get current status of data structures
-      parameters:
-        - name: names
-          in: query
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
+      summary: Get Datastores
+      operationId: get_datastores_datastores_get
       responses:
         '200':
-          description: Current status of data structures
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
                   type: string
+                title: Response Get Datastores Datastores Get
     post:
-      summary: Get current status of data structures
+      summary: New Datastore
+      operationId: new_datastore_datastores_post
+      parameters:
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: user-info
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User-Info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewDatastoreRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewJobResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}:
+    get:
+      summary: Get Datastore
+      operationId: get_datastore_datastores__datastore_rdn__get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: user-info
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User-Info
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Datastore'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      summary: Delete Datastore
+      operationId: delete_datastore_datastores__datastore_rdn__delete
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: user-info
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User-Info
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/directory:
+    get:
+      summary: Get Datastore Directory
+      operationId: get_datastore_directory_datastores__datastore_rdn__directory_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+                title: Response Get Datastore Directory Datastores  Datastore Rdn  Directory
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/jobs:
+    get:
+      summary: Get Jobs For Datastore
+      operationId: get_jobs_for_datastore_datastores__datastore_rdn__jobs_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: operation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Operation
+      - name: ignoreCompleted
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Ignorecompleted
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+                title: Response Get Jobs For Datastore Datastores  Datastore Rdn  Jobs
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      summary: New Job
+      operationId: new_job_datastores__datastore_rdn__jobs_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: user-info
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User-Info
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewJobsRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NewJobResponse'
+                title: Response New Job Datastores  Datastore Rdn  Jobs Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/jobs/{job_id}:
+    get:
+      summary: Get Job
+      operationId: get_job_datastores__datastore_rdn__jobs__job_id__get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/metadata/data-store:
+    get:
+      summary: Get Data Store
+      operationId: get_data_store_datastores__datastore_rdn__metadata_data_store_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Data Store Datastores  Datastore Rdn  Metadata
+                  Data Store Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/metadata/data-structures/status:
+    get:
+      summary: Get Data Structure Current Status
+      operationId: get_data_structure_current_status_datastores__datastore_rdn__metadata_data_structures_status_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: names
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Names
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Data Structure Current Status Datastores  Datastore
+                  Rdn  Metadata Data Structures Status Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      summary: Get Data Structure Current Status As Post
+      operationId: get_data_structure_current_status_as_post_datastores__datastore_rdn__metadata_data_structures_status_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
       requestBody:
         required: true
         content:
@@ -78,63 +414,190 @@ paths:
               $ref: '#/components/schemas/NameParam'
       responses:
         '200':
-          description: Current status of data structures
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-  /metadata/all-data-structures:
-    get:
-      summary: Get all data structures ever
-      responses:
-        '200':
-          description: All data structures ever
+                type: object
+                additionalProperties:
+                  anyOf:
+                  - type: object
+                    additionalProperties: true
+                  - type: 'null'
+                title: Response Get Data Structure Current Status As Post Datastores  Datastore
+                  Rdn  Metadata Data Structures Status Post
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-  /metadata/all:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/metadata/data-structures:
     get:
-      summary: Get all metadata
+      summary: Get Data Structures
+      operationId: get_data_structures_datastores__datastore_rdn__metadata_data_structures_get
       parameters:
-        - name: version
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: skip_code_lists
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: names
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Names
+      - name: version
+        in: query
+        required: true
+        schema:
+          type: string
+          description: Semantic version (e.g. 1.2.3.4)
+          title: Version
+        description: Semantic version (e.g. 1.2.3.4)
+      - name: include_attributes
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Include Attributes
+      - name: skip_code_lists
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Skip Code Lists
       responses:
         '200':
-          description: All metadata
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MetadataAll'
-  /languages:
-    get:
-      summary: Get languages
-      responses:
-        '200':
-          description: Languages
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LanguageInfo'
-  /data/event/stream:
+                  type: object
+                  additionalProperties: true
+                title: Response Get Data Structures Datastores  Datastore Rdn  Metadata
+                  Data Structures Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/metadata/all-data-structures:
+    get:
+      summary: Get All Data Structures Ever
+      operationId: get_all_data_structures_ever_datastores__datastore_rdn__metadata_all_data_structures_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                title: Response Get All Data Structures Ever Datastores  Datastore
+                  Rdn  Metadata All Data Structures Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/metadata/all:
+    get:
+      summary: Get All Metadata
+      operationId: get_all_metadata_datastores__datastore_rdn__metadata_all_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: names
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Names
+      - name: version
+        in: query
+        required: true
+        schema:
+          type: string
+          description: Semantic version (e.g. 1.2.3.4)
+          title: Version
+        description: Semantic version (e.g. 1.2.3.4)
+      - name: include_attributes
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Include Attributes
+      - name: skip_code_lists
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Skip Code Lists
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get All Metadata Datastores  Datastore Rdn  Metadata
+                  All Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/data/event/stream:
     post:
-      summary: Return result event data as bytes
-      security:
-        - bearerAuth: []
+      summary: Stream Result Event
+      description: 'Create Result set of data with temporality type event,
+
+        and stream result as response.'
+      operationId: stream_result_event_datastores__datastore_rdn__data_event_stream_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
       requestBody:
         required: true
         content:
@@ -143,22 +606,44 @@ paths:
               $ref: '#/components/schemas/InputTimePeriodQuery'
       responses:
         '200':
-          description: Event data as bytes
+          description: Successful Response
           content:
-            text/plain:
-              schema:
-                type: string
+            application/json:
+              schema: {}
         '404':
-          description: Not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-  /data/status/stream:
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/data/status/stream:
     post:
-      summary: Return result status data as bytes
-      security:
-        - bearerAuth: []
+      summary: Stream Result Status
+      description: 'Create result set of data with temporality type status,
+
+        and stream result as response.'
+      operationId: stream_result_status_datastores__datastore_rdn__data_status_stream_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
       requestBody:
         required: true
         content:
@@ -167,22 +652,44 @@ paths:
               $ref: '#/components/schemas/InputTimeQuery'
       responses:
         '200':
-          description: Status data as bytes
+          description: Successful Response
           content:
-            text/plain:
-              schema:
-                type: string
+            application/json:
+              schema: {}
         '404':
-          description: Not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-  /data/fixed/stream:
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/data/fixed/stream:
     post:
-      summary: Result fixed data as bytes
-      security:
-        - bearerAuth: []
+      summary: Stream Result Fixed
+      description: 'Create result set of data with temporality type fixed,
+
+        and stream result as response.'
+      operationId: stream_result_fixed_datastores__datastore_rdn__data_fixed_stream_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
       requestBody:
         required: true
         content:
@@ -191,288 +698,1036 @@ paths:
               $ref: '#/components/schemas/InputFixedQuery'
       responses:
         '200':
-          description: Fixed data as bytes
+          description: Successful Response
           content:
-            text/plain:
-              schema:
-                type: string
+            application/json:
+              schema: {}
         '404':
-          description: Not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-  /health/alive:
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/importable-datasets:
     get:
-      summary: Check if the service is alive
+      summary: Get Importable Datasets
+      operationId: get_importable_datasets_datastores__datastore_rdn__importable_datasets_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
       responses:
         '200':
-          description: Service is alive
+          description: Successful Response
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-  /health/ready:
-    get:
-      summary: Check if the service is ready
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportableDataset'
+                title: Response Get Importable Datasets Datastores  Datastore Rdn  Importable
+                  Datasets Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/importable-datasets/{dataset_name}:
+    delete:
+      summary: Delete Importable Datasets
+      operationId: delete_importable_datasets_datastores__datastore_rdn__importable_datasets__dataset_name__delete
+      parameters:
+      - name: dataset_name
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Dataset Name
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
       responses:
         '200':
-          description: Service is ready
+          description: Successful Response
           content:
-            text/plain:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Delete Importable Datasets Datastores  Datastore Rdn  Importable
+                  Datasets  Dataset Name  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/targets:
+    get:
+      summary: Get Targets
+      operationId: get_targets_datastores__datastore_rdn__targets_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Target'
+                title: Response Get Targets Datastores  Datastore Rdn  Targets Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/targets/{name}/jobs:
+    get:
+      summary: Get Target Jobs
+      operationId: get_target_jobs_datastores__datastore_rdn__targets__name__jobs_get
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Name
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+                title: Response Get Target Jobs Datastores  Datastore Rdn  Targets  Name  Jobs
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/languages:
+    get:
+      summary: Get Languages
+      operationId: get_languages_datastores__datastore_rdn__languages_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Language'
+                type: array
+                title: Response Get Languages Datastores  Datastore Rdn  Languages
+                  Get
+  /datastores/{datastore_rdn}/public-key:
+    get:
+      summary: Get Public Key
+      operationId: get_public_key_datastores__datastore_rdn__public_key_get
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      summary: Save Public Key
+      operationId: save_public_key_datastores__datastore_rdn__public_key_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/x-pem-file:
+            schema:
+              type: string
+              format: binary
+              title: Public Key Bytes
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/health/alive:
+    get:
+      summary: Alive
+      operationId: alive_datastores__datastore_rdn__health_alive_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
               schema:
                 type: string
+                title: Response Alive Datastores  Datastore Rdn  Health Alive Get
+  /datastores/{datastore_rdn}/health/ready:
+    get:
+      summary: Ready
+      operationId: ready_datastores__datastore_rdn__health_ready_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+                title: Response Ready Datastores  Datastore Rdn  Health Ready Get
+  /maintenance-statuses:
+    post:
+      summary: Set Status
+      operationId: set_status_maintenance_statuses_post
+      parameters:
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewMaintenanceStatusRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceStatus'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      summary: Get History
+      operationId: get_history_maintenance_statuses_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceStatus'
+                title: Response Get History Maintenance Statuses Get
+  /maintenance-statuses/latest:
+    get:
+      summary: Get Status
+      operationId: get_status_maintenance_statuses_latest_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceStatus'
+  /jobs:
+    get:
+      summary: Get Jobs
+      operationId: get_jobs_jobs_get
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: operation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Operation
+      - name: ignoreCompleted
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Ignorecompleted
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+                title: Response Get Jobs Jobs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /jobs/{job_id}:
+    get:
+      summary: Get Job
+      operationId: get_job_jobs__job_id__get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      summary: Update Job
+      operationId: update_job_jobs__job_id__put
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateJobRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Update Job Jobs  Job Id  Put
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     DataStructureUpdate:
-      type: object
       properties:
         name:
           type: string
+          title: Name
         description:
           type: string
+          title: Description
         operation:
           type: string
+          title: Operation
         releaseStatus:
           type: string
-    DatastoreVersion:
+          title: Releasestatus
+      additionalProperties: false
       type: object
+      required:
+      - name
+      - description
+      - operation
+      - releaseStatus
+      title: DataStructureUpdate
+    Datastore:
+      properties:
+        datastoreId:
+          type: integer
+          title: Datastoreid
+        rdn:
+          type: string
+          title: Rdn
+        description:
+          type: string
+          title: Description
+        directory:
+          type: string
+          title: Directory
+        name:
+          type: string
+          title: Name
+        bumpEnabled:
+          type: boolean
+          title: Bumpenabled
+      type: object
+      required:
+      - datastoreId
+      - rdn
+      - description
+      - directory
+      - name
+      - bumpEnabled
+      title: Datastore
+    DatastoreVersion:
       properties:
         version:
           type: string
+          title: Version
         description:
           type: string
+          title: Description
         releaseTime:
           type: integer
+          title: Releasetime
         languageCode:
           type: string
+          title: Languagecode
         updateType:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Updatetype
         dataStructureUpdates:
-          type: array
           items:
             $ref: '#/components/schemas/DataStructureUpdate'
-    DatastoreVersions:
-      type: object
-      properties:
-        name:
-          type: string
-        label:
-          type: string
-        description:
-          type: string
-        versions:
           type: array
-          items:
-            $ref: '#/components/schemas/DatastoreVersion'
-    NameParam:
+          title: Datastructureupdates
       type: object
-      properties:
-        names:
-          type: array
-          items:
-            type: string
-    MetadataQuery:
-      type: object
-      properties:
-        names:
-          type: array
-          items:
-            type: string
-        version:
-          type: string
-        include_attributes:
-          type: boolean
-        skip_code_lists:
-          type: boolean
-    DataType:
-      type: string
-      enum:
-        - String
-        - Long
-        - Double
-        - Instant
-    TimePeriod:
-      type: object
-      properties:
-        start:
-          type: integer
-        stop:
-          type: integer
-    KeyType:
-      type: object
-      properties:
-        name:
-          type: string
-        label:
-          type: string
-        description:
-          type: string
-    CodeListItem:
-      type: object
-      properties:
-        category:
-          type: string
-        code:
-          type: string
-    DescribedValueDomain:
-      type: object
-      properties:
-        description:
-          type: string
-        unitOfMeasure:
-          type: string
-    EnumeratedValueDomain:
-      type: object
-      properties:
-        codeList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CodeListItem'
-        missingValues:
-          type: array
-          items:
-            type: string
-    ValueDomain:
-      type: object
-      oneOf:
-        - $ref: '#/components/schemas/DescribedValueDomain'
-        - $ref: '#/components/schemas/EnumeratedValueDomain'
-    RepresentedVariable:
-      type: object
-      properties:
-        description:
-          type: string
-        validPeriod:
-          $ref: '#/components/schemas/TimePeriod'
-        valueDomain:
-          $ref: '#/components/schemas/ValueDomain'
-    Variable:
-      type: object
-      properties:
-        name:
-          type: string
-        label:
-          type: string
-        notPseudonym:
-          type: boolean
-        dataType:
-          type: string
-        format:
-          type: string
-        variableRole:
-          type: string
-        keyType:
-          $ref: '#/components/schemas/KeyType'
-        representedVariables:
-          type: array
-          items:
-            $ref: '#/components/schemas/RepresentedVariable'
-    Metadata:
-      type: object
-      properties:
-        name: 
-          type: string
-        temporality: 
-          type: string
-        languageCode: 
-          type: string
-        sensitivityLevel: 
-          type: string
-        populationDescription:
-          type: string
-        subjectFields:
-          type: array
-          items:
-            type: string
-        temporal_coverage:
-          $ref: '#/components/schemas/TimePeriod'
-        measureVariable:
-          type: array
-          items:
-            $ref: '#/components/schemas/Variable'
-        identifier_variables:
-          type: array
-          items:
-            $ref: '#/components/schemas/Variable'
-        attributeVariables:
-          type: array
-          items:
-            $ref: '#/components/schemas/Variable'
-        temporalStatusDates:
-          type: array
-          items:
-            type: integer
-    DataStoreInfo:
-      type: object
-      properties:
-        name:
-          type: string
-        label:
-          type: string
-        description:
-          type: string
-        languageCode:
-          type: string
-    LanguageInfo:
-      type: object
-      properties:
-        code:
-          type: string
-        label:
-          type: string
-    MetadataAll:
-      type: object
-      properties:
-        dataStore:
-          $ref: '#/components/schemas/DataStoreInfo'
-        dataStructures:
-          type: array
-          items:
-            $ref: '#/components/schemas/Metadata'
-        languages:
-          type: array
-          items:
-            $ref: '#/components/schemas/LanguageInfo'
-    InputQuery:
-      type: object
-      properties:
-        dataStructureName:
-          type: string
-        version:
-          type: string
-        population:
-          type: array
-          items:
-            type: string
-        includeAttributes:
-          type: boolean
-    InputTimePeriodQuery:
-      allOf:
-        - $ref: '#/components/schemas/InputQuery'
-        - type: object
-          properties:
-            startDate:
-              type: integer
-            stopDate:
-              type: integer
-    InputTimeQuery:
-      allOf:
-        - $ref: '#/components/schemas/InputQuery'
-        - type: object
-          properties:
-            date:
-              type: integer
-    InputFixedQuery:
-      allOf:
-        - $ref: '#/components/schemas/InputQuery'
+      required:
+      - version
+      - description
+      - releaseTime
+      - languageCode
+      - updateType
+      - dataStructureUpdates
+      title: DatastoreVersion
     ErrorMessage:
-      type: object
       properties:
         detail:
           type: string
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: ErrorMessage
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ImportableDataset:
+      properties:
+        datasetName:
+          type: string
+          title: Datasetname
+        hasMetadata:
+          type: boolean
+          title: Hasmetadata
+        hasData:
+          type: boolean
+          title: Hasdata
+        isArchived:
+          type: boolean
+          title: Isarchived
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - datasetName
+      - hasMetadata
+      - hasData
+      title: ImportableDataset
+    InputFixedQuery:
+      properties:
+        dataStructureName:
+          type: string
+          title: Datastructurename
+        version:
+          $ref: '#/components/schemas/Version'
+        population:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          title: Population
+        includeAttributes:
+          type: boolean
+          title: Includeattributes
+          default: false
+      type: object
+      required:
+      - dataStructureName
+      - version
+      title: InputFixedQuery
+    InputTimePeriodQuery:
+      properties:
+        dataStructureName:
+          type: string
+          title: Datastructurename
+        version:
+          $ref: '#/components/schemas/Version'
+        population:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          title: Population
+        includeAttributes:
+          type: boolean
+          title: Includeattributes
+          default: false
+        startDate:
+          type: integer
+          title: Startdate
+        stopDate:
+          type: integer
+          title: Stopdate
+      type: object
+      required:
+      - dataStructureName
+      - version
+      - startDate
+      - stopDate
+      title: InputTimePeriodQuery
+    InputTimeQuery:
+      properties:
+        dataStructureName:
+          type: string
+          title: Datastructurename
+        version:
+          $ref: '#/components/schemas/Version'
+        population:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          title: Population
+        includeAttributes:
+          type: boolean
+          title: Includeattributes
+          default: false
+        date:
+          type: integer
+          title: Date
+      type: object
+      required:
+      - dataStructureName
+      - version
+      - date
+      title: InputTimeQuery
+    Job:
+      properties:
+        jobId:
+          anyOf:
+          - type: string
+          - type: integer
+          title: Jobid
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        parameters:
+          $ref: '#/components/schemas/JobParameters'
+        log:
+          items:
+            $ref: '#/components/schemas/Log'
+          type: array
+          title: Log
+          default: []
+        createdAt:
+          type: string
+          title: Createdat
+        createdBy:
+          $ref: '#/components/schemas/UserInfo'
+        datastoreRdn:
+          type: string
+          title: Datastorerdn
+      type: object
+      required:
+      - jobId
+      - status
+      - parameters
+      - createdAt
+      - createdBy
+      - datastoreRdn
+      title: Job
+    JobParameters:
+      properties:
+        operation:
+          $ref: '#/components/schemas/Operation'
+        target:
+          type: string
+          title: Target
+        bumpManifesto:
+          anyOf:
+          - $ref: '#/components/schemas/DatastoreVersion'
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        releaseStatus:
+          anyOf:
+          - $ref: '#/components/schemas/ReleaseStatus'
+          - type: 'null'
+        bumpFromVersion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Bumpfromversion
+        bumpToVersion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Bumptoversion
+      type: object
+      required:
+      - operation
+      - target
+      title: JobParameters
+    JobStatus:
+      type: string
+      enum:
+      - queued
+      - initiated
+      - validating
+      - decrypting
+      - transforming
+      - pseudonymizing
+      - enriching
+      - converting
+      - partitioning
+      - built
+      - importing
+      - completed
+      - failed
+      title: JobStatus
+    Language:
+      properties:
+        code:
+          type: string
+          title: Code
+        label:
+          type: string
+          title: Label
+      type: object
+      required:
+      - code
+      - label
+      title: Language
+    Log:
+      properties:
+        at:
+          type: string
+          title: At
+        message:
+          type: string
+          title: Message
+      additionalProperties: false
+      type: object
+      required:
+      - at
+      - message
+      title: Log
+    MaintenanceStatus:
+      properties:
+        paused:
+          type: boolean
+          title: Paused
+        msg:
+          type: string
+          title: Msg
+        timestamp:
+          type: string
+          title: Timestamp
+      type: object
+      required:
+      - paused
+      - msg
+      - timestamp
+      title: MaintenanceStatus
+    NameParam:
+      properties:
+        names:
+          type: string
+          title: Names
+      additionalProperties: false
+      type: object
+      required:
+      - names
+      title: NameParam
+    NewDatastoreRequest:
+      properties:
+        rdn:
+          type: string
+          title: Rdn
+        description:
+          type: string
+          title: Description
+        name:
+          type: string
+          title: Name
+        bumpEnabled:
+          type: boolean
+          title: Bumpenabled
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - rdn
+      - description
+      - name
+      title: NewDatastoreRequest
+    NewJobRequest:
+      properties:
+        operation:
+          $ref: '#/components/schemas/Operation'
+        target:
+          type: string
+          title: Target
+        releaseStatus:
+          anyOf:
+          - $ref: '#/components/schemas/ReleaseStatus'
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        bumpManifesto:
+          anyOf:
+          - $ref: '#/components/schemas/DatastoreVersion'
+          - type: 'null'
+        bumpFromVersion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Bumpfromversion
+        bumpToVersion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Bumptoversion
+      additionalProperties: false
+      type: object
+      required:
+      - operation
+      - target
+      title: NewJobRequest
+    NewJobResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+        msg:
+          type: string
+          title: Msg
+        job_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Job Id
+      type: object
+      required:
+      - status
+      - msg
+      title: NewJobResponse
+    NewJobsRequest:
+      properties:
+        jobs:
+          items:
+            $ref: '#/components/schemas/NewJobRequest'
+          type: array
+          title: Jobs
+      additionalProperties: false
+      type: object
+      required:
+      - jobs
+      title: NewJobsRequest
+    NewMaintenanceStatusRequest:
+      properties:
+        msg:
+          type: string
+          title: Msg
+        paused:
+          type: boolean
+          title: Paused
+      additionalProperties: false
+      type: object
+      required:
+      - msg
+      - paused
+      title: NewMaintenanceStatusRequest
+    Operation:
+      type: string
+      enum:
+      - BUMP
+      - ADD
+      - CHANGE
+      - PATCH_METADATA
+      - SET_STATUS
+      - DELETE_DRAFT
+      - REMOVE
+      - ROLLBACK_REMOVE
+      - DELETE_ARCHIVE
+      - GENERATE_RSA_KEYS
+      title: Operation
+    ReleaseStatus:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING_RELEASE
+      - PENDING_DELETE
+      title: ReleaseStatus
+    Target:
+      properties:
+        name:
+          type: string
+          title: Name
+        lastUpdatedAt:
+          type: string
+          title: Lastupdatedat
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        lastUpdatedBy:
+          $ref: '#/components/schemas/UserInfo'
+        action:
+          items:
+            type: string
+          type: array
+          title: Action
+        datastoreRdn:
+          type: string
+          title: Datastorerdn
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - lastUpdatedAt
+      - status
+      - lastUpdatedBy
+      - action
+      - datastoreRdn
+      title: Target
+    UpdateJobRequest:
+      properties:
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/JobStatus'
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        log:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Log
+      additionalProperties: false
+      type: object
+      title: UpdateJobRequest
+    UserInfo:
+      properties:
+        userId:
+          type: string
+          title: Userid
+        firstName:
+          type: string
+          title: Firstname
+        lastName:
+          type: string
+          title: Lastname
+      additionalProperties: false
+      type: object
+      required:
+      - userId
+      - firstName
+      - lastName
+      title: UserInfo
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    Version:
+      properties:
+        major:
+          type: string
+          title: Major
+        minor:
+          type: string
+          title: Minor
+        patch:
+          type: string
+          title: Patch
+        draft:
+          type: string
+          title: Draft
+      type: object
+      required:
+      - major
+      - minor
+      - patch
+      - draft
+      title: Version

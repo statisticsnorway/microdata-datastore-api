@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+import yaml
 from fastapi import FastAPI
 
 from datastore_api.adapter.db.migrations import apply_migrations
@@ -21,9 +22,14 @@ def setup_db(db_path: Path, migrations_dir: Path) -> None:
 
 
 setup_db(Path(environment.sqlite_url), Path(environment.migrations_dir))
-app = FastAPI()
+app = FastAPI(title="Datastore API", version="1.0.0")
 setup_logging(app)
 setup_api(app)
+
+# update OpenAPI docs
+if environment.stack == "dev":
+    with open("doc/openapi.yaml", "w") as f:
+        yaml.dump(app.openapi(), f, sort_keys=False)
 
 
 if __name__ == "__main__":
