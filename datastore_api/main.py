@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 
-import yaml
 from fastapi import FastAPI
 
 from datastore_api.adapter.db.migrations import apply_migrations
@@ -28,6 +27,8 @@ setup_api(app)
 
 # update OpenAPI docs
 if environment.stack == "dev":
+    import yaml
+
     with open("doc/openapi.yaml", "w") as f:
         yaml.dump(app.openapi(), f, sort_keys=False)
 
