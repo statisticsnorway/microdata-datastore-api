@@ -31,7 +31,7 @@ router = APIRouter()
 @router.get("")
 async def get_datastores(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
-) -> list[str]:
+) -> list[Datastore]:
     return db_client.get_datastores()
 
 

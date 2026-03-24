@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from datastore_api.adapter.db.models import UserInfo
+from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.common.exceptions import DatastoreExistsException
 from datastore_api.domain.datastores import (
     create_new_datastore,
@@ -25,6 +25,14 @@ EXISTING_DATASTORE = NewDatastore(
     name="TESTDATASTORE",
     bump_enabled=False,
 )
+DATASTORE = Datastore(
+    datastore_id=1,
+    rdn="no.dev.test",
+    description="testdatastore",
+    directory="tests/resources/datastores/no_dev_test",
+    name="TESTDATASTORE",
+    bump_enabled=False,
+)
 
 USER_INFO = UserInfo(
     user_id="123-123-125", first_name="Data", last_name="Admin"
@@ -34,7 +42,7 @@ USER_INFO = UserInfo(
 @pytest.fixture
 def mock_db_client():
     mock = Mock()
-    mock.get_datastores = Mock(side_effect=lambda: ["no.dev.test"])
+    mock.get_datastores = Mock(side_effect=lambda: [DATASTORE])
     mock.insert_new_datastore = Mock(return_value=None)
     mock.insert_new_job = Mock(return_value=SimpleNamespace(job_id="121"))
     return mock

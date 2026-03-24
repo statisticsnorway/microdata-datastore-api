@@ -664,7 +664,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def get_datastores(self) -> list[str]:
+    def get_datastores(self) -> list[Datastore]:
         """
         Returns list of active datastores
         """
@@ -673,11 +673,28 @@ class SqliteDbClient:
             cursor = conn.cursor()
             rows = cursor.execute(
                 """
-                SELECT rdn FROM datastore
+                SELECT
+                    datastore_id,
+                    rdn,
+                    description,
+                    directory,
+                    name,
+                    bump_enabled
+                FROM datastore
                 WHERE deleted_at is NULL
                 """,
             ).fetchall()
-            return [row[0] for row in rows]
+            return [
+                Datastore(
+                    datastore_id=row["datastore_id"],
+                    rdn=row["rdn"],
+                    description=row["description"],
+                    directory=row["directory"],
+                    name=row["name"],
+                    bump_enabled=row["bump_enabled"],
+                )
+                for row in rows
+            ]
         finally:
             conn.close()
 
