@@ -28,7 +28,7 @@ from datastore_api.domain.datastores import (
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(authorize_datastore_provisioner)])
 async def get_datastores(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
 ) -> list[Datastore]:
