@@ -45,6 +45,14 @@ async def new_datastore(
     return create_new_datastore(new_datastore, db_client, user_info)
 
 
+@router.get("/rdns")
+async def get_datastores_rdns(
+    db_client: db.DatabaseClient = Depends(db.get_database_client),
+) -> list[str]:
+    datastores = db_client.get_datastores()
+    return [datastore.rdn for datastore in datastores]
+
+
 @router.get(
     "/{datastore_rdn}", dependencies=[Depends(authorize_datastore_provisioner)]
 )

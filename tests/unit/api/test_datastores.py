@@ -85,6 +85,14 @@ def test_create_new_datastore(client, mock_auth_deps, monkeypatch):
     assert response.status_code == 200
 
 
+def test_get_datastores_rdns(client):
+    response = client.get(
+        "/datastores/rdns", headers={"X-Request-ID": "abc123"}
+    )
+    assert response.status_code == 200
+    assert response.json() == ["no.dev.test"]
+
+
 def test_get_datastore_directory(client):
     response = client.get(
         "/datastores/no.dev.test/directory",
