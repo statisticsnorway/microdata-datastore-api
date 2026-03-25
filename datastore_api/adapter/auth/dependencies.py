@@ -7,8 +7,7 @@ from datastore_api.common.exceptions import AuthError
 from datastore_api.config import environment, secrets
 
 DATA_ADMINISTRATOR_ROLE = "role/dataadministrator"
-DATASTORE_PROVISIONER_ROLE = "role/dataadministrator"
-# TODO: Update once new role is available
+DATASTORE_PROVISIONER_ROLE = "role/datastoreprovisioner"
 
 USER_TOKEN_POLICY = TokenPolicy(user_id_claim="sub", required_claims=None)
 ACCREDITATION_TOKEN_POLICY = TokenPolicy(
@@ -29,8 +28,8 @@ valid_aud_data = (
     "datastore-api-data-qa" if stack == "qa" else "datastore-api-data"
 )
 valid_aud_provision = (
-    "datastore-api-jobs-qa" if stack == "qa" else "datastore-api-jobs"
-)  # TODO: Update once new aud (datastore-api-provision) is available
+    "datastore-api-provision-qa" if stack == "qa" else "datastore-api-provision"
+)
 
 
 def authorize_api_key(
