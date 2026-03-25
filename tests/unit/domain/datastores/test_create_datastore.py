@@ -25,13 +25,10 @@ EXISTING_DATASTORE = NewDatastore(
     name="TESTDATASTORE",
     bump_enabled=False,
 )
+
 DATASTORE = Datastore(
     datastore_id=1,
-    rdn="no.dev.test",
-    description="testdatastore",
-    directory="tests/resources/datastores/no_dev_test",
-    name="TESTDATASTORE",
-    bump_enabled=False,
+    **EXISTING_DATASTORE.model_dump(),
 )
 
 USER_INFO = UserInfo(
@@ -62,8 +59,6 @@ def test_create_new_datastore(mock_db_client, mock_setup_datastore):
     mock_setup_datastore.assert_called_once()
 
 
-def test_create_new_datastore_when_rdn_exists(
-    mock_db_client, mock_setup_datastore
-):
+def test_create_new_datastore_when_rdn_exists(mock_db_client):
     with pytest.raises(DatastoreExistsException):
         create_new_datastore(EXISTING_DATASTORE, mock_db_client, USER_INFO)
