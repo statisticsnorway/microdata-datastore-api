@@ -28,8 +28,8 @@ valid_aud_data = (
     "datastore-api-data-qa" if stack == "qa" else "datastore-api-data"
 )
 valid_aud_provision = (
-    "datastore-api-jobs-qa" if stack == "qa" else "datastore-api-jobs"
-)  # TODO: Update once new aud (datastore-api-provision) is available
+    "datastore-api-provision-qa" if stack == "qa" else "datastore-api-provision"
+)
 
 
 def authorize_api_key(
