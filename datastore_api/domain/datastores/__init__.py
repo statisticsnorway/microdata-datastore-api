@@ -40,7 +40,7 @@ def create_new_datastore(
     db_client: db.DatabaseClient,
     user_info: UserInfo,
 ) -> NewJobResponse:
-    if new_datastore.rdn in db_client.get_datastores():
+    if any(new_datastore.rdn in ds.rdn for ds in db_client.get_datastores()):
         raise DatastoreExistsException(
             f"Datastore rdn {new_datastore.rdn} already exists"
         )

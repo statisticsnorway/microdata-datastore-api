@@ -39,7 +39,7 @@ USER_INFO = UserInfo(**USER_INFO_DICT)
 def mock_db_client():
     mock = Mock()
     mock.get_datastore = Mock(side_effect=lambda datastore_id: DATASTORE)
-    mock.get_datastores = Mock(side_effect=lambda: ["no.dev.test"])
+    mock.get_datastores = Mock(side_effect=lambda: [DATASTORE])
     return mock
 
 
@@ -72,7 +72,7 @@ def test_get_datastore(client, mock_auth_deps):
 def test_get_datastores(client):
     response = client.get("/datastores", headers={"X-Request-ID": "abc123"})
     assert response.status_code == 200
-    assert response.json() == ["no.dev.test"]
+    assert response.json() == [DATASTORE.model_dump()]
 
 
 def test_create_new_datastore(client, mock_auth_deps, monkeypatch):
@@ -83,6 +83,14 @@ def test_create_new_datastore(client, mock_auth_deps, monkeypatch):
     response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
     mock_auth_deps["datastore_provisioner"].assert_called_once()
     assert response.status_code == 200
+
+
+def test_get_datastores_rdns(client):
+    response = client.get(
+        "/datastores/rdns", headers={"X-Request-ID": "abc123"}
+    )
+    assert response.status_code == 200
+    assert response.json() == ["no.dev.test"]
 
 
 def test_get_datastore_directory(client):

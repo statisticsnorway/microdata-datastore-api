@@ -494,7 +494,7 @@ def test_update_targets_bump():
 
 def test_get_datastores():
     datastores = sqlite_client.get_datastores()
-    assert "no.dev.test" in datastores
+    assert any(datastore.rdn == "no.dev.test" for datastore in datastores)
 
 
 def test_get_datastore():
@@ -522,7 +522,9 @@ def test_insert_new_datastore():
         bump_enabled=False,
     )
     datastores = sqlite_client.get_datastores()
-    assert "no.new.testdatastore" in datastores
+    assert any(
+        datastore.rdn == "no.new.testdatastore" for datastore in datastores
+    )
     id = sqlite_client.get_datastore_id_from_rdn("no.new.testdatastore")
     datastore = sqlite_client.get_datastore(id)
     assert datastore.rdn == rdn
@@ -547,15 +549,21 @@ def existing_datastore():
 
 def test_hard_delete_datastore(existing_datastore):
     rdn = existing_datastore
-    assert rdn in sqlite_client.get_datastores()
+    assert any(
+        datastore.rdn == rdn for datastore in sqlite_client.get_datastores()
+    )
     sqlite_client.hard_delete_datastore(rdn)
-    assert rdn not in sqlite_client.get_datastores()
+    assert not any(
+        datastore.rdn == rdn for datastore in sqlite_client.get_datastores()
+    )
 
 
 def test_delete_datastore(existing_datastore):
     rdn = existing_datastore
     id = sqlite_client.get_datastore_id_from_rdn(rdn)
     sqlite_client.delete_datastore(id)
-    assert rdn not in sqlite_client.get_datastores()
+    assert not any(
+        datastore.rdn == rdn for datastore in sqlite_client.get_datastores()
+    )
     with pytest.raises(DatastoreNotFoundException):
         sqlite_client.get_datastore_id_from_rdn(rdn)

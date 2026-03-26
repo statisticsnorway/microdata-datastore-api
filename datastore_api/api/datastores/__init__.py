@@ -28,10 +28,10 @@ from datastore_api.domain.datastores import (
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(authorize_datastore_provisioner)])
 async def get_datastores(
     db_client: db.DatabaseClient = Depends(db.get_database_client),
-) -> list[str]:
+) -> list[Datastore]:
     return db_client.get_datastores()
 
 
@@ -43,6 +43,14 @@ async def new_datastore(
 ) -> NewJobResponse:
     new_datastore = validated_body.generate_new_datastore_from_request()
     return create_new_datastore(new_datastore, db_client, user_info)
+
+
+@router.get("/rdns")
+async def get_datastores_rdns(
+    db_client: db.DatabaseClient = Depends(db.get_database_client),
+) -> list[str]:
+    datastores = db_client.get_datastores()
+    return [datastore.rdn for datastore in datastores]
 
 
 @router.get(
