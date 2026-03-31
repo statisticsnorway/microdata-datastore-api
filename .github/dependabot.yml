@@ -27,12 +27,3 @@ updates:
       semver-patch-days: 3
     labels:
       - "dependencies"
-
-  
-security-updates:
-  groups:
-    security-patches:
-      patterns:
-        - "*"
-  labels:
-      - "security"
