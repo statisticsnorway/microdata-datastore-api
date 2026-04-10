@@ -53,9 +53,12 @@ def process_fixed_request(
     version: Version,
     population: list | None,
     include_attributes: bool,
+    values: list[str] | list[int] | None,
     datastore_root_dir: Path,
 ) -> Table:
-    table_filter = filters.generate_population_filter(population)
+    table_filter = filters.generate_fixed_filter(
+        population_filter=population, value_filter=values
+    )
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
     return _read_parquet(
         dataset_name, version, table_filter, columns, datastore_root_dir

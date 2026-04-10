@@ -1,4 +1,4 @@
-from pyarrow import dataset
+from pyarrow import compute, dataset
 
 
 def generate_time_period_filter(
@@ -40,6 +40,21 @@ def generate_time_filter(
     return find_by_time_filter
 
 
+def generate_fixed_filter(
+    *,
+    population_filter: list | None = None,
+    value_filter: list[str] | list[int] | None = None,
+) -> dataset.Expression | None:
+    pop_expr = generate_population_filter(population_filter)
+    val_expr = generate_value_filter(value_filter)
+
+    if pop_expr is not None and val_expr is not None:
+        return pop_expr & val_expr
+    if pop_expr is not None:
+        return pop_expr
+    return val_expr
+
+
 def generate_population_filter(
     population_filter: list | None = None,
 ) -> dataset.Expression | None:
@@ -48,3 +63,36 @@ def generate_population_filter(
         if population_filter
         else None
     )
+
+
+def generate_value_filter(
+    value_filter: list[str] | list[int] | None = None,
+) -> dataset.Expression | None:
+    if not value_filter:
+        return None
+    exact_values = []
+    expression: dataset.Expression | None = None
+
+    for value in value_filter:
+        if isinstance(value, str) and value.endswith("*"):
+            prefix = value[:-1]
+            if not prefix:
+                raise ValueError(
+                    "Wildcard '*' must be preceded by at least one character"
+                )
+            wildcard_expr = compute.starts_with(dataset.field("value"), prefix)  # type: ignore[attr-defined]
+            expression = (
+                wildcard_expr
+                if expression is None
+                else expression | wildcard_expr
+            )
+        if isinstance(value, str) and "*" in value and not value.endswith("*"):
+            raise ValueError("Wildcards are only supported as trailing suffix.")
+        else:
+            exact_values.append(value)
+    if exact_values:
+        exact_expr = dataset.field("value").isin(exact_values)
+        expression = (
+            exact_expr if expression is None else expression | exact_expr
+        )
+    return expression

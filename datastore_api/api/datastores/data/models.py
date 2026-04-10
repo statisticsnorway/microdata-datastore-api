@@ -59,7 +59,12 @@ class InputTimeQuery(InputQuery):
 
 
 class InputFixedQuery(InputQuery):
-    pass
+    values: list[str] | list[int] | None = None
+
+    def __str__(self) -> str:
+        return (
+            super().__str__() + f"value='<length: {len(self.values or [])}>' "
+        )
 
 
 class ErrorMessage(BaseModel):

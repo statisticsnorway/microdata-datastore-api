@@ -132,6 +132,7 @@ def test_valid_fixed_request():
         payload.version,
         payload.population,
         payload.includeAttributes,
+        payload.values,
         DATASTORE_ROOT_DIR,
     )
     assert parquet_table_to_csv_string(file_name) == (
@@ -147,6 +148,7 @@ def test_invalid_fixed_request():
             payload.version,
             payload.population,
             payload.includeAttributes,
+            payload.values,
             DATASTORE_ROOT_DIR,
         )
     assert str(e.value) == (
