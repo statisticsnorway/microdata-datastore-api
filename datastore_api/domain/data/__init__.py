@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from pyarrow import Table, dataset
+from pyarrow import ArrowTypeError, Table, dataset
 
 from datastore_api.adapter.local_storage import (
     datastore_directory,
@@ -85,25 +85,30 @@ def _read_parquet(
     * columns: list[str] - names of the columns to include in the
                            returned table
     """
-    parquet_path: str | None = None
-    if version.is_draft():
-        parquet_path = datastore_directory.get_draft_data_file_path(
-            dataset_name, datastore_root_dir
-        )
-    else:
-        parquet_path = datastore_directory.get_data_path_from_data_versions(
-            dataset_name, version, datastore_root_dir
-        )
+    try:
+        parquet_path: str | None = None
+        if version.is_draft():
+            parquet_path = datastore_directory.get_draft_data_file_path(
+                dataset_name, datastore_root_dir
+            )
+        else:
+            parquet_path = datastore_directory.get_data_path_from_data_versions(
+                dataset_name, version, datastore_root_dir
+            )
 
-    if parquet_path is None:
-        latest_version = datastore_directory.get_latest_version(
-            datastore_root_dir
+        if parquet_path is None:
+            latest_version = datastore_directory.get_latest_version(
+                datastore_root_dir
+            )
+            parquet_path = datastore_directory.get_data_path_from_data_versions(
+                dataset_name, latest_version, datastore_root_dir
+            )
+        table = dataset.dataset(parquet_path).to_table(
+            filter=table_filter, columns=columns
         )
-        parquet_path = datastore_directory.get_data_path_from_data_versions(
-            dataset_name, latest_version, datastore_root_dir
-        )
-    table = dataset.dataset(parquet_path).to_table(
-        filter=table_filter, columns=columns
-    )
-    logger.info(f"Number of rows in result set: {table.num_rows}")
-    return table
+        logger.info(f"Number of rows in result set: {table.num_rows}")
+        return table
+    except ArrowTypeError as e:
+        raise ValueError(
+            f"Filter value type does not match dataset column type: {e}"
+        ) from e
