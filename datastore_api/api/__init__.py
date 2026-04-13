@@ -123,6 +123,13 @@ def _include_exception_handlers(app: FastAPI) -> None:
         logger.warning(e, exc_info=True)
         return JSONResponse(status_code=400, content={"message": str(e)})
 
+    @app.exception_handler(ValueError)
+    def handle_invalid_filter_value_error(
+        _req: Request, e: ValueError
+    ) -> JSONResponse:
+        logger.warning(e, exc_info=True)
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
     @app.exception_handler(JobExistsException)
     def handle_job_exists(_req: Request, e: JobExistsException) -> JSONResponse:
         logger.warning(e, exc_info=True)

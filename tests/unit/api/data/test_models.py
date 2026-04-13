@@ -111,6 +111,7 @@ def test_create_and_validate_full_input_fixed_query():
         "dataStructureName": "DATASET_NAME",
         "version": "1.0.0.0",
         "population": [1, 2, 3],
+        "values": ["AB", "C*"],
         "includeAttributes": True,
     }
     InputFixedQuery.model_validate(data)
@@ -120,6 +121,39 @@ def test_create_and_validate_input_fixed_query_with_error():
     data = {"dataStructureName": "DATASET_NAME", "version": "1.0.0.X"}
     with pytest.raises(ValueError):
         InputFixedQuery.model_validate(data)
+
+
+def test_create_and_validate_input_fixed_query_with_mixed_types_values_error():
+    data = {
+        "dataStructureName": "DATASET_NAME",
+        "version": "1.0.0.0",
+        "values": ["AB", 1],
+        "includeAttributes": True,
+    }
+    with pytest.raises(ValueError):
+        InputFixedQuery.model_validate(data)
+
+
+def test_values_integers_not_coerced_to_strings():
+    data = {
+        "dataStructureName": "DATASET_NAME",
+        "version": "1.0.0.0",
+        "values": [1, 2],
+        "includeAttributes": True,
+    }
+    actual = InputFixedQuery.model_validate(data)
+    assert actual.values and all(isinstance(v, int) for v in actual.values)
+
+
+def test_values_strings_not_coerced_to_integers():
+    data = {
+        "dataStructureName": "DATASET_NAME",
+        "version": "1.0.0.0",
+        "values": ["1", "2"],
+        "includeAttributes": True,
+    }
+    actual = InputFixedQuery.model_validate(data)
+    assert actual.values and all(isinstance(v, str) for v in actual.values)
 
 
 def test_population_to_string():
