@@ -61,6 +61,21 @@ class InputTimeQuery(InputQuery):
 class InputFixedQuery(InputQuery):
     values: list[str] | list[int] | None = None
 
+    @field_validator("values")
+    @classmethod
+    def validate_values(
+        cls, v: list[str] | list[int] | None
+    ) -> list[str] | list[int] | None:
+        if v is None:
+            return v
+        types = {type(value) for value in v}
+        if len(types) > 1:
+            raise ValueError(
+                "Values can only contain a list of strings or integers, "
+                "not both"
+            )
+        return v
+
     def __str__(self) -> str:
         return (
             super().__str__() + f"value='<length: {len(self.values or [])}>' "

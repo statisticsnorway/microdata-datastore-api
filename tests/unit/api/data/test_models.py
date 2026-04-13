@@ -111,6 +111,7 @@ def test_create_and_validate_full_input_fixed_query():
         "dataStructureName": "DATASET_NAME",
         "version": "1.0.0.0",
         "population": [1, 2, 3],
+        "values": ["AB", "C*"],
         "includeAttributes": True,
     }
     InputFixedQuery.model_validate(data)
@@ -118,6 +119,17 @@ def test_create_and_validate_full_input_fixed_query():
 
 def test_create_and_validate_input_fixed_query_with_error():
     data = {"dataStructureName": "DATASET_NAME", "version": "1.0.0.X"}
+    with pytest.raises(ValueError):
+        InputFixedQuery.model_validate(data)
+
+
+def test_create_and_validate_input_fixed_query_with_mixed_types_values_error():
+    data = {
+        "dataStructureName": "DATASET_NAME",
+        "version": "1.0.0.0",
+        "values": ["AB", 1],
+        "includeAttributes": True,
+    }
     with pytest.raises(ValueError):
         InputFixedQuery.model_validate(data)
 
