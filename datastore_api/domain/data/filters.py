@@ -65,34 +65,55 @@ def generate_population_filter(
     )
 
 
+def _build_wildcard_expression(value: str) -> dataset.Expression:
+    if value.count("*") != 1 or len(value) < 2:
+        raise ValueError("Only one '*' is allowed in value")
+    if not value.endswith("*"):
+        raise ValueError("Wildcard '*' must be at the end")
+    prefix = value[:-1]
+    if not prefix:
+        raise ValueError(
+            "Wildcard '*' must be preceded by at least one character"
+        )
+    return compute.starts_with(  # type: ignore[attr-defined]
+        dataset.field("value"), prefix
+    )
+
+
+def generate_value_int_filter(
+    value_filter: list[int],
+) -> dataset.Expression | None:
+    return dataset.field("value").isin(value_filter)
+
+
+def generate_value_string_filter(
+    value_filter: list[str],
+) -> dataset.Expression | None:
+    expression: dataset.Expression | None = None
+    valid_values: list[str] = []
+    for value in value_filter:
+        if "*" in value:
+            new_wildcard = _build_wildcard_expression(value)
+            expression = (
+                new_wildcard
+                if expression is None
+                else expression | new_wildcard
+            )
+        else:
+            valid_values.append(value)
+    if valid_values:
+        isin_filter = dataset.field("value").isin(valid_values)
+        expression = (
+            isin_filter if expression is None else expression | isin_filter
+        )
+    return expression
+
+
 def generate_value_filter(
     value_filter: list[str] | list[int] | None = None,
 ) -> dataset.Expression | None:
     if not value_filter:
         return None
-    exact_values = []
-    expression: dataset.Expression | None = None
-
-    for value in value_filter:
-        if isinstance(value, str) and value.endswith("*"):
-            prefix = value[:-1]
-            if not prefix:
-                raise ValueError(
-                    "Wildcard '*' must be preceded by at least one character"
-                )
-            wildcard_expr = compute.starts_with(dataset.field("value"), prefix)  # type: ignore[attr-defined]
-            expression = (
-                wildcard_expr
-                if expression is None
-                else expression | wildcard_expr
-            )
-        if isinstance(value, str) and "*" in value and not value.endswith("*"):
-            raise ValueError("Wildcards are only supported as trailing suffix.")
-        else:
-            exact_values.append(value)
-    if exact_values:
-        exact_expr = dataset.field("value").isin(exact_values)
-        expression = (
-            exact_expr if expression is None else expression | exact_expr
-        )
-    return expression
+    if isinstance(value_filter[0], str):
+        return generate_value_string_filter(value_filter)
+    return generate_value_int_filter(value_filter)
