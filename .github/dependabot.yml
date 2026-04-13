@@ -6,17 +6,22 @@
 version: 2
 updates:
   - package-ecosystem: "uv"
-    directory: "/" # Location of package manifests
+    directory: "/" 
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "06:00" 
+      time: "06:00"
       timezone: "Europe/Oslo"
-    groups: # When there are multiple updates dependabot will try to create one PR for each group
-      pyarrow: # Seperate PRs for pyarrow updates
+    groups:
+      pyarrow:
         patterns:
           - "pyarrow"
       dev-deps:
         dependency-type: "development"
       prod-deps:
         dependency-type: "production"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 14
+      semver-patch-days: 3
