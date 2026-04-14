@@ -8,7 +8,7 @@ dependencies = [
     "cryptography>=46.0.7",
     "fastapi>=0.115.13",
     "gunicorn>=23.0.0",
-    "pyarrow==21.0.0",
+    "pyarrow==23.0.1",
     "pydantic>=2.11.7",
     "pyjwt>=2.12.0",
     "uvicorn>=0.34.3",
