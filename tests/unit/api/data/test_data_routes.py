@@ -42,7 +42,7 @@ def setup(monkeypatch: MonkeyPatch):
         data, "process_event_request", lambda a, b, c, d, e, f, g: MOCK_RESULT
     )
     monkeypatch.setattr(
-        data, "process_fixed_request", lambda a, b, c, d, e: MOCK_RESULT
+        data, "process_fixed_request", lambda a, b, c, d, e, f: MOCK_RESULT
     )
 
 

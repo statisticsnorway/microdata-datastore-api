@@ -95,6 +95,7 @@ def stream_result_fixed(
         input_query.version,
         input_query.population,
         input_query.includeAttributes,
+        input_query.values,
         datastore_root_dir,
     )
     buffer_stream = pa.BufferOutputStream()
