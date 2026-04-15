@@ -2,9 +2,12 @@ import json
 import logging
 from pathlib import Path
 
-from datastore_api.common.exceptions import DatastorePathExistsException
-
-"""Creates the directory structure of a datastore"""
+from datastore_api.common.exceptions import (
+    DatastorePathExistsException,
+    StartUpException,
+)
+from datastore_api.common.models import CamelModel
+from datastore_api.config import environment
 
 logger = logging.getLogger()
 
@@ -99,3 +102,32 @@ def setup_datastore(
         ),
     )
     logger.info("Datastore setup complete")
+
+
+class DatastoreBaseline(CamelModel):
+    rdn: str
+    description: str
+    directory: str
+    name: str
+    bump_enabled: bool = False
+
+
+class BaselineFile(CamelModel):
+    datastores: list[DatastoreBaseline]
+
+
+def read_baseline_file() -> BaselineFile | None:
+    if environment.baseline_file is None:
+        return None
+    baseline_path = Path(environment.baseline_file)
+    if not baseline_path.exists():
+        raise StartUpException(
+            f"Could not find baseline file at: {baseline_path}"
+        )
+    try:
+        with baseline_path.open(encoding="utf-8") as f:
+            return BaselineFile.model_validate(json.load(f))
+    except Exception as e:
+        raise StartUpException(
+            f"Failed to read baseline file at: {baseline_path}"
+        ) from e

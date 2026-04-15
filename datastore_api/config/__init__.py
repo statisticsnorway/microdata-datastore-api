@@ -15,6 +15,7 @@ class Environment:
     secrets_file: str
     datastores_root_dir: str
     migrations_dir: str
+    baseline_file: str | None
 
 
 def _initialize_environment() -> Environment:
@@ -31,6 +32,7 @@ def _initialize_environment() -> Environment:
         secrets_file=os.environ["SECRETS_FILE"],
         datastores_root_dir=os.environ["DATASTORES_ROOT_DIR"],
         migrations_dir=os.environ.get("MIGRATIONS_DIR", "migrations"),
+        baseline_file=os.environ.get("BASELINE_FILE", None)
     )
 
 
