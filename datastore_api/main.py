@@ -28,10 +28,12 @@ def insert_baseline(db_path: Path) -> None:
     Insert baseline datastores into the sqlite database if a baseline file
     is provided via the BASELINE_FILE environment variable (optional).
     """
-    baseline_file = local_storage.read_baseline_file()
-    if baseline_file is None:
+    if environment.baseline_file is None:
         return None
-
+    logger.info("Inserting baseline file")
+    baseline_file = local_storage.read_baseline_file(
+        Path(environment.baseline_file)
+    )
     client = SqliteDbClient(str(db_path))
     for datastore_baseline in baseline_file.datastores:
         client.insert_new_datastore(

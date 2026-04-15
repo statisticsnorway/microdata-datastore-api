@@ -7,7 +7,6 @@ from datastore_api.common.exceptions import (
     StartUpException,
 )
 from datastore_api.common.models import CamelModel
-from datastore_api.config import environment
 
 logger = logging.getLogger()
 
@@ -116,10 +115,7 @@ class BaselineFile(CamelModel):
     datastores: list[DatastoreBaseline]
 
 
-def read_baseline_file() -> BaselineFile | None:
-    if environment.baseline_file is None:
-        return None
-    baseline_path = Path(environment.baseline_file)
+def read_baseline_file(baseline_path: Path) -> BaselineFile:
     if not baseline_path.exists():
         raise StartUpException(
             f"Could not find baseline file at: {baseline_path}"
