@@ -1,0 +1,9 @@
+{
+  "datastores": [
+    {
+      "name": "test datastore",
+      "description": "this is a test datastore",
+      "directory": "/resources/datastores/TEST_DATASTORE"
+    }
+  ]
+}
