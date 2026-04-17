@@ -39,6 +39,7 @@ def stream_result_event(
         input_query.dataStructureName,
         input_query.version,
         input_query.population,
+        input_query.values,
         input_query.includeAttributes,
         input_query.startDate,
         input_query.stopDate,
@@ -67,6 +68,7 @@ def stream_result_status(
         input_query.dataStructureName,
         input_query.version,
         input_query.population,
+        input_query.values,
         input_query.includeAttributes,
         input_query.date,
         datastore_root_dir,
@@ -94,8 +96,8 @@ def stream_result_fixed(
         input_query.dataStructureName,
         input_query.version,
         input_query.population,
-        input_query.includeAttributes,
         input_query.values,
+        input_query.includeAttributes,
         datastore_root_dir,
     )
     buffer_stream = pa.BufferOutputStream()

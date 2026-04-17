@@ -36,10 +36,12 @@ def client(mock_db_client: Mock):
 @pytest.fixture(autouse=True)
 def setup(monkeypatch: MonkeyPatch):
     monkeypatch.setattr(
-        data, "process_status_request", lambda a, b, c, d, e, f: MOCK_RESULT
+        data, "process_status_request", lambda a, b, c, d, e, f, g: MOCK_RESULT
     )
     monkeypatch.setattr(
-        data, "process_event_request", lambda a, b, c, d, e, f, g: MOCK_RESULT
+        data,
+        "process_event_request",
+        lambda a, b, c, d, e, f, g, h: MOCK_RESULT,
     )
     monkeypatch.setattr(
         data, "process_fixed_request", lambda a, b, c, d, e, f: MOCK_RESULT

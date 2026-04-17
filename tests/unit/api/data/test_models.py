@@ -26,6 +26,7 @@ def test_create_and_validate_full_input_time_period_query():
         "startDate": 1964,
         "stopDate": 2056,
         "population": [1, 2, 3],
+        "values": ["AA", "AB", "B*"],
         "includeAttributes": True,
     }
     actual = InputTimePeriodQuery.model_validate(data)
@@ -35,6 +36,8 @@ def test_create_and_validate_full_input_time_period_query():
     assert actual.stopDate == 2056
     assert isinstance(actual.population, list)
     assert actual.population == [1, 2, 3]
+    assert isinstance(actual.values, list)
+    assert actual.values == ["AA", "AB", "B*"]
     assert actual.includeAttributes is True
 
 
@@ -86,6 +89,7 @@ def test_create_and_validate_full_input_time_query():
         "version": "1.0.0.0",
         "date": 1964,
         "population": [1, 2, 3],
+        "values": [1, 2, 3],
         "includeAttributes": True,
     }
     InputTimeQuery.model_validate(data)
@@ -117,13 +121,13 @@ def test_create_and_validate_full_input_fixed_query():
     InputFixedQuery.model_validate(data)
 
 
-def test_create_and_validate_input_fixed_query_with_error():
+def test_create_and_validate_input_query_with_error():
     data = {"dataStructureName": "DATASET_NAME", "version": "1.0.0.X"}
     with pytest.raises(ValueError):
-        InputFixedQuery.model_validate(data)
+        InputQuery.model_validate(data)
 
 
-def test_create_and_validate_input_fixed_query_with_mixed_types_values_error():
+def test_create_and_validate_input_query_with_mixed_types_values_error():
     data = {
         "dataStructureName": "DATASET_NAME",
         "version": "1.0.0.0",
@@ -131,7 +135,7 @@ def test_create_and_validate_input_fixed_query_with_mixed_types_values_error():
         "includeAttributes": True,
     }
     with pytest.raises(ValueError):
-        InputFixedQuery.model_validate(data)
+        InputQuery.model_validate(data)
 
 
 def test_values_integers_not_coerced_to_strings():
@@ -141,7 +145,7 @@ def test_values_integers_not_coerced_to_strings():
         "values": [1, 2],
         "includeAttributes": True,
     }
-    actual = InputFixedQuery.model_validate(data)
+    actual = InputQuery.model_validate(data)
     assert actual.values and all(isinstance(v, int) for v in actual.values)
 
 
@@ -152,7 +156,7 @@ def test_values_strings_not_coerced_to_integers():
         "values": ["1", "2"],
         "includeAttributes": True,
     }
-    actual = InputFixedQuery.model_validate(data)
+    actual = InputQuery.model_validate(data)
     assert actual.values and all(isinstance(v, str) for v in actual.values)
 
 
@@ -167,6 +171,7 @@ def test_population_to_string():
         str(actual) == "dataStructureName='DATASET_NAME' "
         "version='1.0.0.0' "
         "population='<length: 3>' "
+        "values='<length: 0>' "
         "includeAttributes=False"
     )
     assert actual.population == data["population"]
@@ -184,6 +189,7 @@ def test_population_to_string_input_time_query():
         str(actual) == "dataStructureName='DATASET_NAME' "
         "version='1.0.0.0' "
         "population='<length: 3>' "
+        "values='<length: 0>' "
         "includeAttributes=False "
         "date=1900"
     )

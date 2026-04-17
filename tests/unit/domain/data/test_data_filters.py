@@ -93,13 +93,18 @@ def test_generate_time_filter():
         "(start_epoch_days <= 18000)",
         "(stop_epoch_days >= 18000)",
     )
-    actual = generate_time_filter(18000, None)
+    actual = generate_time_filter(
+        date=18000, population_filter=None, value_filter=None
+    )
     for str_filter in str_time_filters:
         assert str_filter in str(actual)
-    actual = generate_time_filter(18000, POPULATION)
+    actual = generate_time_filter(
+        date=18000, population_filter=POPULATION, value_filter=STR_VALUES
+    )
     for str_filter in str_time_filters:
         assert str_filter in str(actual)
     assert STR_POP_FILTER in str(actual)
+    assert STR_VALUE_FILTER in str(actual)
 
 
 def test_generate_period_filter():
@@ -113,11 +118,19 @@ def test_generate_period_filter():
         "(start_epoch_days > 18000)",
         "(stop_epoch_days <= 18250)",
     )
-    actual = generate_time_period_filter(18000, 18250, None)
+    actual = generate_time_period_filter(
+        start=18000, stop=18250, population_filter=None, value_filter=None
+    )
     for str_filter in str_time_period_filter:
         assert str_filter in str(actual)
     assert STR_POP_FILTER not in str(actual)
-    actual = generate_time_period_filter(18000, 18250, POPULATION)
+    actual = generate_time_period_filter(
+        start=18000,
+        stop=18250,
+        population_filter=POPULATION,
+        value_filter=INT_VALUES,
+    )
     for str_filter in str_time_period_filter:
         assert str_filter in str(actual)
     assert STR_POP_FILTER in str(actual)
+    assert INT_VALUE_FILTER in str(actual)
