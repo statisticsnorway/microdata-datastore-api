@@ -19,13 +19,17 @@ def process_event_request(
     dataset_name: str,
     version: Version,
     population: list | None,
+    values: list[str] | list[int] | None,
     include_attributes: bool,
     start_date: int,
     stop_date: int,
     datastore_root_dir: Path,
 ) -> Table:
     table_filter = filters.generate_time_period_filter(
-        start_date, stop_date, population
+        start=start_date,
+        stop=stop_date,
+        population_filter=population,
+        value_filter=values,
     )
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
     return _read_parquet(
@@ -37,11 +41,14 @@ def process_status_request(
     dataset_name: str,
     version: Version,
     population: list | None,
+    values: list[str] | list[int] | None,
     include_attributes: bool,
     date: int,
     datastore_root_dir: Path,
 ) -> Table:
-    table_filter = filters.generate_time_filter(date, population)
+    table_filter = filters.generate_time_filter(
+        date=date, population_filter=population, value_filter=values
+    )
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
     return _read_parquet(
         dataset_name, version, table_filter, columns, datastore_root_dir
@@ -52,8 +59,8 @@ def process_fixed_request(
     dataset_name: str,
     version: Version,
     population: list | None,
-    include_attributes: bool,
     values: list[str] | list[int] | None,
+    include_attributes: bool,
     datastore_root_dir: Path,
 ) -> Table:
     table_filter = filters.generate_fixed_filter(

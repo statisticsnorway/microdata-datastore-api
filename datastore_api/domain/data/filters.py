@@ -2,7 +2,11 @@ from pyarrow import compute, dataset
 
 
 def generate_time_period_filter(
-    start: int, stop: int, population_filter: list | None = None
+    *,
+    start: int,
+    stop: int,
+    population_filter: list | None = None,
+    value_filter: list[str] | list[int] | None = None,
 ) -> dataset.Expression:
     stop_missing = ~dataset.field("stop_epoch_days").is_valid()
     start_epoch_le_start = dataset.field("start_epoch_days") <= start
@@ -21,11 +25,17 @@ def generate_time_period_filter(
     if population_filter:
         population = generate_population_filter(population_filter)
         find_by_time_period_filter = population & find_by_time_period_filter
+    if value_filter:
+        values = generate_value_filter(value_filter)
+        find_by_time_period_filter = values & find_by_time_period_filter
     return find_by_time_period_filter
 
 
 def generate_time_filter(
-    date: int, population_filter: list | None = None
+    *,
+    date: int,
+    population_filter: list | None = None,
+    value_filter: list[str] | list[int] | None = None,
 ) -> dataset.Expression:
     stop_missing = ~dataset.field("stop_epoch_days").is_valid()
     start_epoch_le_date = dataset.field("start_epoch_days") <= date
@@ -37,6 +47,9 @@ def generate_time_filter(
     if population_filter:
         population = generate_population_filter(population_filter)
         find_by_time_filter = population & find_by_time_filter
+    if value_filter:
+        values = generate_value_filter(value_filter)
+        find_by_time_filter = values & find_by_time_filter
     return find_by_time_filter
 
 
