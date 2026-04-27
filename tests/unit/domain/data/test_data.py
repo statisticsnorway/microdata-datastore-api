@@ -1,14 +1,18 @@
 # pylint: disable=protected-access
 
+import os
+import shutil
 from pathlib import Path
 
+import pyarrow
 import pytest
-from pyarrow import Table, dataset
+from pyarrow import Table, dataset, parquet
 
 from datastore_api.adapter.db.models import Datastore
 from datastore_api.common.exceptions import NotFoundException
 from datastore_api.common.models import Version
 from datastore_api.domain import data
+from datastore_api.domain.data import process_fixed_request
 from tests.resources import test_resources
 
 ALL_COLUMNS = ["unit_id", "value", "start_epoch_days", "stop_epoch_days"]
@@ -46,12 +50,35 @@ DATASTORE = Datastore(
 DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore")
 
 
+@pytest.fixture
+def fixed_dataset_parquet(scope="module"):
+    table = pyarrow.table(
+        {
+            "unit_id": [1, 2, 3, 4, 5, 6, 7],
+            "value": ["0012", "0013", "0015", "0020", "0025", "0100", "2100"],
+            "start_epoch_days": [None] * 7,
+            "stop_epoch_days": [20553] * 7,
+        }
+    )
+    dataset_path = os.path.join(
+        DATASTORE_ROOT_DIR, "data", "TEST_FIXED_DATASET"
+    )
+    os.makedirs(dataset_path, exist_ok=True)
+
+    parquet.write_table(
+        table, os.path.join(dataset_path, "TEST_FIXED_DATASET__1_0.parquet")
+    )
+    yield
+    shutil.rmtree(dataset_path)
+
+
 def test_valid_event_request():
     payload = test_resources.VALID_EVENT_QUERY_PERSON_INCOME_ALL
     file_name = data.process_event_request(
         payload.dataStructureName,
         payload.version,
         payload.population,
+        payload.values,
         payload.includeAttributes,
         payload.startDate,
         payload.stopDate,
@@ -68,6 +95,7 @@ def test_valid_event_request_partitioned():
         payload.dataStructureName,
         payload.version,
         payload.population,
+        payload.values,
         payload.includeAttributes,
         payload.startDate,
         payload.stopDate,
@@ -84,6 +112,7 @@ def test_event_request_causing_empty_result():
         payload.dataStructureName,
         payload.version,
         payload.population,
+        payload.values,
         payload.includeAttributes,
         payload.startDate,
         payload.stopDate,
@@ -100,6 +129,7 @@ def test_valid_status_request():
         payload.dataStructureName,
         payload.version,
         payload.population,
+        payload.values,
         payload.includeAttributes,
         payload.date,
         DATASTORE_ROOT_DIR,
@@ -116,6 +146,7 @@ def test_invalid_status_request():
             payload.dataStructureName,
             payload.version,
             payload.population,
+            payload.values,
             payload.includeAttributes,
             payload.date,
             DATASTORE_ROOT_DIR,
@@ -131,6 +162,7 @@ def test_valid_fixed_request():
         payload.dataStructureName,
         payload.version,
         payload.population,
+        payload.values,
         payload.includeAttributes,
         DATASTORE_ROOT_DIR,
     )
@@ -146,6 +178,7 @@ def test_invalid_fixed_request():
             payload.dataStructureName,
             payload.version,
             payload.population,
+            payload.values,
             payload.includeAttributes,
             DATASTORE_ROOT_DIR,
         )
@@ -325,3 +358,44 @@ def test_read_parquet_time_with_pop_filter():
         assert epoch_day <= 17167
     for epoch_day in result_dict["stop_epoch_days"]:
         assert epoch_day >= 17167
+
+
+def test_read_parquet_with_exact_string_value_filter(fixed_dataset_parquet):
+    expected_values = ["0012", "0100"]
+    result_dict = process_fixed_request(
+        dataset_name="TEST_FIXED_DATASET",
+        version=Version.from_str("1.0.0.0"),
+        population=None,
+        include_attributes=True,
+        values=["0012", "0100"],
+        datastore_root_dir=DATASTORE_ROOT_DIR,
+    ).to_pydict()
+    assert result_dict["value"] == expected_values
+
+
+def test_read_parquet_with_wildcard_value_filter(fixed_dataset_parquet):
+    expected_values = ["0020", "0025", "2100"]
+    result_dict = process_fixed_request(
+        dataset_name="TEST_FIXED_DATASET",
+        version=Version.from_str("1.0.0.0"),
+        population=None,
+        include_attributes=True,
+        values=["002*", "2*"],
+        datastore_root_dir=DATASTORE_ROOT_DIR,
+    ).to_pydict()
+    assert sorted(result_dict["value"]) == expected_values
+
+
+def test_read_parquet_with_combined_population_and_value_filter(
+    fixed_dataset_parquet,
+):
+    expected_values = ["0012", "0015"]
+    result_dict = process_fixed_request(
+        dataset_name="TEST_FIXED_DATASET",
+        version=Version.from_str("1.0.0.0"),
+        population=[1, 3],
+        include_attributes=True,
+        values=["001*"],
+        datastore_root_dir=DATASTORE_ROOT_DIR,
+    ).to_pydict()
+    assert result_dict["value"] == expected_values

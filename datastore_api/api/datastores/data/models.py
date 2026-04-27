@@ -9,6 +9,7 @@ class InputQuery(BaseModel):
     dataStructureName: str
     version: Version
     population: list | None = None
+    values: list[str] | list[int] | None = None
     includeAttributes: bool = False
 
     @field_validator("dataStructureName")
@@ -31,11 +32,27 @@ class InputQuery(BaseModel):
             return version
         raise ValueError(f"'{version}' is not a valid semantic version.")
 
+    @field_validator("values")
+    @classmethod
+    def validate_values(
+        cls, v: list[str] | list[int] | None
+    ) -> list[str] | list[int] | None:
+        if v is None:
+            return v
+        types = {type(value) for value in v}
+        if len(types) > 1:
+            raise ValueError(
+                "Values can only contain a list of strings or integers, "
+                "not both"
+            )
+        return v
+
     def __str__(self) -> str:
         return (
             f"dataStructureName='{self.dataStructureName}' "
             + f"version='{str(self.version)}' "
             + f"population='<length: {len(self.population or [])}>' "
+            + f"values='<length: {len(self.values or [])}>' "
             + f"includeAttributes={self.includeAttributes}"
         )
 
