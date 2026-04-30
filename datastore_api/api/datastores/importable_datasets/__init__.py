@@ -7,38 +7,24 @@ from datastore_api.adapter import db
 from datastore_api.adapter.auth.dependencies import authorize_data_administrator
 from datastore_api.adapter.db import DatabaseClient
 from datastore_api.adapter.local_storage import input_directory
-from datastore_api.adapter.local_storage.input_directory import (
-    ImportableDataset,
-)
 from datastore_api.api.common.dependencies import (
     get_datastore_id,
+    get_datastore_root_dir,
 )
+from datastore_api.domain import importable_datasets
+from datastore_api.domain.importable_datasets import ImportableModel
 
 logger = logging.getLogger()
 
 router = APIRouter()
-
-"""
-TODO:
-This function should be improved further together with changes in the
-frontend adapter code. We should move the "createImportable" function
-to the backend to reduce redundant backend calls, and instead return
-a frontend ready object like:
-{
-    dataset_name: str
-    operation: "-" | "ADD" | "CHANGE" | "PATCH_METADATA"
-    is_archived: bool
-}
-Choosing to only implement the in_progress_targets filtering here
-as it is non-breaking.
-"""
 
 
 @router.get("", dependencies=[Depends(authorize_data_administrator)])
 def get_importable_datasets(
     db_client: DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
-) -> list[ImportableDataset]:
+    datastore_root_dir: Path = Depends(get_datastore_root_dir),
+) -> list[ImportableModel]:
     in_progress_targets = [
         job.parameters.target
         for job in db_client.get_jobs(
@@ -48,11 +34,11 @@ def get_importable_datasets(
             ignore_completed=True,
         )
     ]
-    datastore_input_dir = Path(
-        db_client.get_datastore(datastore_id).directory + "_input"
-    )
-    return input_directory.get_importable_datasets(
-        datastore_input_dir, filter_out=in_progress_targets
+    datastore_input_dir = Path(str(datastore_root_dir) + "_input")
+    return importable_datasets.find_importables(
+        datastore_input_dir=datastore_input_dir,
+        datastore_root_dir=datastore_root_dir,
+        filter_out=in_progress_targets,
     )
 
 
