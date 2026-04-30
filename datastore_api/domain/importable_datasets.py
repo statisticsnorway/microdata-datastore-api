@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from datastore_api.adapter.local_storage import input_directory
 from datastore_api.adapter.local_storage.input_directory import (
@@ -16,43 +15,30 @@ class ImportableModel(CamelModel):
     is_archived: bool
 
 
-def _create_importable(
-    release_status: Optional[str],
-    importable: ImportableDataset,
-) -> Optional[ImportableModel]:
-    if importable.has_data and release_status is None:
-        return ImportableModel(
-            dataset_name=importable.dataset_name,
-            operation="ADD",
-            is_archived=importable.is_archived,
-        )
+def _operation(release_status: str | None, has_data: bool) -> str | None:
     if release_status is None:
-        return None
+        return "ADD" if has_data else None
     if release_status in ("DRAFT", "PENDING_RELEASE", "PENDING_DELETE"):
-        return ImportableModel(
-            dataset_name=importable.dataset_name,
-            operation="-",
-            is_archived=importable.is_archived,
-        )
-    if importable.has_data and release_status == "DELETED":
-        return ImportableModel(
-            dataset_name=importable.dataset_name,
-            operation="ADD",
-            is_archived=importable.is_archived,
-        )
-    if importable.has_data and release_status == "RELEASED":
-        return ImportableModel(
-            dataset_name=importable.dataset_name,
-            operation="CHANGE",
-            is_archived=importable.is_archived,
-        )
-    if not importable.has_data and release_status == "RELEASED":
-        return ImportableModel(
-            dataset_name=importable.dataset_name,
-            operation="PATCH_METADATA",
-            is_archived=importable.is_archived,
-        )
+        return "-"
+    if release_status == "DELETED":
+        return "ADD" if has_data else None
+    if release_status == "RELEASED":
+        return "CHANGE" if has_data else "PATCH_METADATA"
     return None
+
+
+def _create_importable(
+    release_status: str | None,
+    importable: ImportableDataset,
+) -> ImportableModel | None:
+    operation = _operation(release_status, importable.has_data)
+    if operation is None:
+        return None
+    return ImportableModel(
+        dataset_name=importable.dataset_name,
+        operation=operation,
+        is_archived=importable.is_archived,
+    )
 
 
 def find_importables(
