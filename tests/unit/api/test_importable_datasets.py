@@ -26,7 +26,6 @@ def mock_db_client():
     mock = Mock()
     mock.get_datastore_id_from_rdn.return_value = 1
     mock.get_datastore.return_value = DATASTORE
-
     mock.get_jobs.return_value = []
     return mock
 
@@ -59,30 +58,24 @@ def test_get_files(client, mock_db_client, mock_auth_deps):
     mock_auth_deps["data_administrator"].assert_called_once()
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
-    assert len(response.json()) == 4
+    assert len(response.json()) == 3
     expected_datasets = [
         {
             "datasetName": "MY_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
-            "isArchived": False,
-        },
-        {
-            "datasetName": "YOUR_DATASET",
-            "hasData": False,
-            "hasMetadata": True,
+            "operation": "ADD",
+            "selected": False,
             "isArchived": False,
         },
         {
             "datasetName": "OTHER_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "ADD",
+            "selected": False,
             "isArchived": False,
         },
         {
             "datasetName": "YET_ANOTHER_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "ADD",
+            "selected": False,
             "isArchived": True,
         },
     ]
@@ -103,30 +96,24 @@ def test_get_invalid_name_files(client, mock_db_client):
     mock_db_client.get_jobs.assert_called_once()
 
     assert response.status_code == 200
-    assert len(response.json()) == 4
+    assert len(response.json()) == 3
     expected_datasets = [
         {
             "datasetName": "MY_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
-            "isArchived": False,
-        },
-        {
-            "datasetName": "YOUR_DATASET",
-            "hasData": False,
-            "hasMetadata": True,
+            "operation": "ADD",
+            "selected": False,
             "isArchived": False,
         },
         {
             "datasetName": "OTHER_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "ADD",
+            "selected": False,
             "isArchived": False,
         },
         {
             "datasetName": "YET_ANOTHER_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "ADD",
+            "selected": False,
             "isArchived": True,
         },
     ]
