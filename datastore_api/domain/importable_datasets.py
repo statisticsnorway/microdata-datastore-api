@@ -2,17 +2,10 @@ from pathlib import Path
 
 from datastore_api.adapter.local_storage import input_directory
 from datastore_api.adapter.local_storage.input_directory import (
-    ImportableDataset,
+    InputDirectoryTarFile,
 )
 from datastore_api.common.models import CamelModel
 from datastore_api.domain import metadata
-
-
-class ImportableModel(CamelModel):
-    dataset_name: str
-    operation: str
-    selected: bool = False
-    is_archived: bool
 
 
 def _operation(release_status: str | None, has_data: bool) -> str | None:
@@ -27,39 +20,44 @@ def _operation(release_status: str | None, has_data: bool) -> str | None:
     return None
 
 
-def _create_importable(
-    release_status: str | None,
-    importable: ImportableDataset,
-) -> ImportableModel | None:
-    operation = _operation(release_status, importable.has_data)
-    if operation is None:
-        return None
-    return ImportableModel(
-        dataset_name=importable.dataset_name,
-        operation=operation,
-        is_archived=importable.is_archived,
-    )
+class ImportableDataset(CamelModel, extra="forbid"):
+    dataset_name: str
+    operation: str
+    is_archived: bool
+
+    @staticmethod
+    def from_tar_file(
+        tar_file: InputDirectoryTarFile,
+        release_status: str | None,
+    ) -> "ImportableDataset | None":
+        operation = _operation(release_status, tar_file.has_data)
+        if operation is None:
+            return None
+        return ImportableDataset(
+            dataset_name=tar_file.dataset_name,
+            operation=operation,
+            is_archived=tar_file.is_archived,
+        )
 
 
 def find_importables(
     datastore_input_dir: Path,
     datastore_root_dir: Path,
     filter_out: list[str],
-) -> list[ImportableModel]:
-    importable_datasets = input_directory.get_importable_datasets(
+) -> list[ImportableDataset]:
+    tar_files = input_directory.get_importable_tar_files(
         datastore_input_dir, filter_out=filter_out
     )
-    if not importable_datasets:
+    if not tar_files:
         return []
-    dataset_names = [d.dataset_name for d in importable_datasets]
     statuses = metadata.find_current_data_structure_status(
-        dataset_names, datastore_root_dir
+        [t.dataset_name for t in tar_files], datastore_root_dir
     )
-    result: list[ImportableModel] = []
-    for importable in importable_datasets:
-        status_entry = statuses.get(importable.dataset_name)
-        release_status = status_entry["releaseStatus"] if status_entry else None
-        importable_model = _create_importable(release_status, importable)
-        if importable_model is not None:
-            result.append(importable_model)
-    return result
+    importables = [
+        ImportableDataset.from_tar_file(
+            tar_file,
+            (statuses.get(tar_file.dataset_name) or {}).get("releaseStatus"),
+        )
+        for tar_file in tar_files
+    ]
+    return [importable for importable in importables if importable is not None]
