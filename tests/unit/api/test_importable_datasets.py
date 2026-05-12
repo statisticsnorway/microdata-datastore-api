@@ -58,24 +58,26 @@ def test_get_files(client, mock_db_client, mock_auth_deps):
     mock_auth_deps["data_administrator"].assert_called_once()
     mock_db_client.get_datastore.assert_called_once()
     assert response.status_code == 200
-    assert len(response.json()) == 3
+    assert len(response.json()) == 4
     expected_datasets = [
         {
             "datasetName": "MY_DATASET",
             "operation": "ADD",
-            "selected": False,
+            "isArchived": False,
+        },
+        {
+            "datasetName": "YOUR_DATASET",
+            "operation": "PATCH_METADATA",
             "isArchived": False,
         },
         {
             "datasetName": "OTHER_DATASET",
-            "operation": "ADD",
-            "selected": False,
+            "operation": "CHANGE",
             "isArchived": False,
         },
         {
             "datasetName": "YET_ANOTHER_DATASET",
             "operation": "ADD",
-            "selected": False,
             "isArchived": True,
         },
     ]
@@ -96,24 +98,26 @@ def test_get_invalid_name_files(client, mock_db_client):
     mock_db_client.get_jobs.assert_called_once()
 
     assert response.status_code == 200
-    assert len(response.json()) == 3
+    assert len(response.json()) == 4
     expected_datasets = [
         {
             "datasetName": "MY_DATASET",
             "operation": "ADD",
-            "selected": False,
+            "isArchived": False,
+        },
+        {
+            "datasetName": "YOUR_DATASET",
+            "operation": "PATCH_METADATA",
             "isArchived": False,
         },
         {
             "datasetName": "OTHER_DATASET",
-            "operation": "ADD",
-            "selected": False,
+            "operation": "CHANGE",
             "isArchived": False,
         },
         {
             "datasetName": "YET_ANOTHER_DATASET",
             "operation": "ADD",
-            "selected": False,
             "isArchived": True,
         },
     ]
