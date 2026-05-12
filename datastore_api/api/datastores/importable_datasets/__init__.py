@@ -12,7 +12,7 @@ from datastore_api.api.common.dependencies import (
     get_datastore_root_dir,
 )
 from datastore_api.domain import importable_datasets
-from datastore_api.domain.importable_datasets import ImportableModel
+from datastore_api.domain.importable_datasets import ImportableDataset
 
 logger = logging.getLogger()
 
@@ -24,7 +24,7 @@ def get_importable_datasets(
     db_client: DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
-) -> list[ImportableModel]:
+) -> list[ImportableDataset]:
     in_progress_targets = [
         job.parameters.target
         for job in db_client.get_jobs(
