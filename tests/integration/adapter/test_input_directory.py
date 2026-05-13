@@ -6,7 +6,7 @@ import pytest
 
 from datastore_api.adapter.local_storage import input_directory
 from datastore_api.adapter.local_storage.input_directory import (
-    ImportableDataset,
+    InputDirectoryTarFile,
 )
 from datastore_api.common.exceptions import (
     NameValidationError,
@@ -17,16 +17,16 @@ INPUT_DIR = Path("tests/resources/test_datastore_input")
 
 
 expected_datasets = [
-    ImportableDataset(
+    InputDirectoryTarFile(
         dataset_name="MY_DATASET", has_data=True, has_metadata=True
     ),
-    ImportableDataset(
+    InputDirectoryTarFile(
         dataset_name="YOUR_DATASET", has_data=False, has_metadata=True
     ),
-    ImportableDataset(
+    InputDirectoryTarFile(
         dataset_name="OTHER_DATASET", has_data=True, has_metadata=True
     ),
-    ImportableDataset(
+    InputDirectoryTarFile(
         dataset_name="YET_ANOTHER_DATASET",
         has_data=True,
         has_metadata=True,
@@ -35,15 +35,15 @@ expected_datasets = [
 ]
 
 
-def test_get_importable_datasets():
-    actual_datasets = input_directory.get_importable_datasets(INPUT_DIR)
+def test_get_importable_tar_files():
+    actual_datasets = input_directory.get_importable_tar_files(INPUT_DIR)
     assert len(actual_datasets) == 4
     for dataset in expected_datasets:
         assert dataset in actual_datasets
 
 
-def test_get_importable_datasets_filter():
-    actual_datasets = input_directory.get_importable_datasets(
+def test_get_importable_tar_files_filter():
+    actual_datasets = input_directory.get_importable_tar_files(
         INPUT_DIR, ["YET_ANOTHER_DATASET"]
     )
     assert len(actual_datasets) == 3
