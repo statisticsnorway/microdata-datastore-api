@@ -72,9 +72,7 @@ def get_datasets_in_directory(
             invalid_tar_files += 1
             continue
     if invalid_tar_files > 1:
-        logger.warning(
-            "Found invalid tar files in input directory"
-        )
+        logger.warning("Found invalid tar files in input directory")
     return datasets
 
 
