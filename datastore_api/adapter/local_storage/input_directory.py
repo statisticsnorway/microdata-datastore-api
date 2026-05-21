@@ -48,6 +48,7 @@ def get_datasets_in_directory(
     is_archived: bool = False,
 ) -> list[InputDirectoryTarFile]:
     datasets = []
+    invalid_tar_files = 0
 
     for item in os.listdir(dir_path):
         if item.strip(".tar") in filter_out:
@@ -65,11 +66,13 @@ def get_datasets_in_directory(
                 )
                 if tar_file.has_metadata:
                     datasets.append(tar_file)
-        except ReadError as e:
-            logger.warning(
-                f"Couldn't read tarfile for {dataset_name}: {str(e)}"
-            )
+        except ReadError:
+            invalid_tar_files += 1
             continue
+    if invalid_tar_files > 1:
+        logger.warning(
+            "Found invalid tar files in input directory"
+        )
     return [
         dataset
         for dataset in datasets
