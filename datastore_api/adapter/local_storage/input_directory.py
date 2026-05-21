@@ -51,10 +51,12 @@ def get_datasets_in_directory(
     invalid_tar_files = 0
 
     for item in os.listdir(dir_path):
-        if item.strip(".tar") in filter_out:
+        dataset_name, ext = os.path.splitext(item)
+        if dataset_name in filter_out:
+            continue
+        if _validate_dataset_name(dataset_name):
             continue
         item_path = dir_path / item
-        dataset_name, ext = os.path.splitext(item)
         try:
             if ext == ".tar" and tarfile.is_tarfile(item_path):
                 tar = tarfile.open(item_path)
@@ -73,11 +75,7 @@ def get_datasets_in_directory(
         logger.warning(
             "Found invalid tar files in input directory"
         )
-    return [
-        dataset
-        for dataset in datasets
-        if _validate_dataset_name(dataset.dataset_name)
-    ]
+    return datasets
 
 
 def get_importable_tar_files(
