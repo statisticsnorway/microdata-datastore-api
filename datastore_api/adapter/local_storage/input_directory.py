@@ -54,7 +54,7 @@ def get_datasets_in_directory(
         dataset_name, ext = os.path.splitext(item)
         if dataset_name in filter_out:
             continue
-        if _validate_dataset_name(dataset_name):
+        if not _validate_dataset_name(dataset_name):
             continue
         item_path = dir_path / item
         try:
