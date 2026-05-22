@@ -26,7 +26,6 @@ def mock_db_client():
     mock = Mock()
     mock.get_datastore_id_from_rdn.return_value = 1
     mock.get_datastore.return_value = DATASTORE
-
     mock.get_jobs.return_value = []
     return mock
 
@@ -63,26 +62,22 @@ def test_get_files(client, mock_db_client, mock_auth_deps):
     expected_datasets = [
         {
             "datasetName": "MY_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "ADD",
             "isArchived": False,
         },
         {
             "datasetName": "YOUR_DATASET",
-            "hasData": False,
-            "hasMetadata": True,
+            "operation": "PATCH_METADATA",
             "isArchived": False,
         },
         {
             "datasetName": "OTHER_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "CHANGE",
             "isArchived": False,
         },
         {
             "datasetName": "YET_ANOTHER_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "ADD",
             "isArchived": True,
         },
     ]
@@ -107,26 +102,22 @@ def test_get_invalid_name_files(client, mock_db_client):
     expected_datasets = [
         {
             "datasetName": "MY_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "ADD",
             "isArchived": False,
         },
         {
             "datasetName": "YOUR_DATASET",
-            "hasData": False,
-            "hasMetadata": True,
+            "operation": "PATCH_METADATA",
             "isArchived": False,
         },
         {
             "datasetName": "OTHER_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "CHANGE",
             "isArchived": False,
         },
         {
             "datasetName": "YET_ANOTHER_DATASET",
-            "hasData": True,
-            "hasMetadata": True,
+            "operation": "ADD",
             "isArchived": True,
         },
     ]

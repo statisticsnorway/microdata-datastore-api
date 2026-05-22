@@ -14,7 +14,7 @@ from datastore_api.common.models import CamelModel
 logger = logging.getLogger()
 
 
-class ImportableDataset(CamelModel, extra="forbid"):
+class InputDirectoryTarFile(CamelModel, extra="forbid"):
     dataset_name: str
     has_metadata: bool
     has_data: bool
@@ -46,43 +46,42 @@ def get_datasets_in_directory(
     dir_path: Path,
     filter_out: list[str],
     is_archived: bool = False,
-) -> list[ImportableDataset]:
+) -> list[InputDirectoryTarFile]:
     datasets = []
+    invalid_tar_files = 0
 
     for item in os.listdir(dir_path):
-        if item.strip(".tar") in filter_out:
+        dataset_name, ext = os.path.splitext(item)
+        if dataset_name in filter_out:
+            continue
+        if not _validate_dataset_name(dataset_name):
             continue
         item_path = dir_path / item
-        dataset_name, ext = os.path.splitext(item)
         try:
             if ext == ".tar" and tarfile.is_tarfile(item_path):
                 tar = tarfile.open(item_path)
-                importable_dataset = ImportableDataset(
+                tar_file = InputDirectoryTarFile(
                     dataset_name=dataset_name,
                     has_data=_has_data(tar),
                     has_metadata=_has_metadata(tar, dataset_name),
                     is_archived=is_archived,
                 )
-                if importable_dataset.has_metadata:
-                    datasets.append(importable_dataset)
-        except ReadError as e:
-            logger.warning(
-                f"Couldn't read tarfile for {dataset_name}: {str(e)}"
-            )
+                if tar_file.has_metadata:
+                    datasets.append(tar_file)
+        except ReadError:
+            invalid_tar_files += 1
             continue
-    return [
-        dataset
-        for dataset in datasets
-        if _validate_dataset_name(dataset.dataset_name)
-    ]
+    if invalid_tar_files > 1:
+        logger.warning("Found invalid tar files in input directory")
+    return datasets
 
 
-def get_importable_datasets(
+def get_importable_tar_files(
     input_dir: Path,
     filter_out: list[str] = [],
-) -> list[ImportableDataset]:
+) -> list[InputDirectoryTarFile]:
     """
-    Returns names of all valid datasets in input directory.
+    Returns all valid tar files in the input directory.
     """
     archive_dir = input_dir / "archive"
     datasets = get_datasets_in_directory(input_dir, filter_out)
