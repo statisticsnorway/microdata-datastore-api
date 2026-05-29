@@ -67,7 +67,7 @@ def create_new_datastore(
             name=new_datastore.name,
         )
         job_params = JobParameters(
-            target="DATASTORE", operation=Operation.GENERATE_RSA_KEYS
+            target="DATASTORE", operation=Operation.GENERATE_KEYS
         )
         job = db_client.insert_new_job(
             Job(

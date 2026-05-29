@@ -1,9 +1,8 @@
 import logging
 from pathlib import Path
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
 from fastapi import APIRouter, Body, Depends, Response
+from microdata_tools import PublicKey
 
 from datastore_api.adapter.auth.dependencies import (
     authorize_api_key,
@@ -16,8 +15,6 @@ from datastore_api.common.exceptions import (
     PublicKeyNotFoundException,
 )
 
-PUBLIC_KEY_FILE_NAME = "microdata_public_key.pem"
-
 logger = logging.getLogger()
 router = APIRouter()
 
@@ -26,27 +23,19 @@ router = APIRouter()
 def get_public_key(
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> Response:
-    public_key_location = datastore_root_dir / "vault" / PUBLIC_KEY_FILE_NAME
-    if not public_key_location.exists():
+    public_key_path = datastore_root_dir / "vault" / PublicKey.FILENAME
+    if not public_key_path.exists():
         raise PublicKeyNotFoundException(
-            f"Public key not found at {public_key_location}"
+            f"Public key not found at {public_key_path}"
         )
 
     try:
-        with open(public_key_location, "rb") as key_file:
-            public_key = serialization.load_pem_public_key(
-                key_file.read(), backend=default_backend()
-            )
-
-        pem_bytes = public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-
+        public_key = PublicKey.load_from_file(public_key_path)
+        pem_bytes = public_key.serialize()
         return Response(content=pem_bytes, media_type="application/x-pem-file")
     except Exception as e:
         raise PublicKeyInvalidException(
-            f"Public key is invalid at {public_key_location}"
+            f"Public key is invalid at {public_key_path}"
         ) from e
 
 
@@ -55,20 +44,16 @@ def save_public_key(
     public_key_bytes: bytes = Body(..., media_type="application/x-pem-file"),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> None:
-    public_key_location = datastore_root_dir / "vault" / PUBLIC_KEY_FILE_NAME
-
-    if public_key_location.exists():
+    public_key_dir = datastore_root_dir / "vault"
+    public_key_path = public_key_dir / PublicKey.FILENAME
+    if public_key_path.exists():
         raise PublicKeyAlreadyExistsException(
-            f"Public key already exists at {public_key_location}"
+            f"Public key already exists at {public_key_path}"
         )
-
     try:
-        # just validate
-        serialization.load_pem_public_key(
-            public_key_bytes, backend=default_backend()
-        )
+        public_key = PublicKey.from_pem(public_key_bytes)
     except Exception as e:
         raise PublicKeyInvalidException("Public key is invalid") from e
 
-    public_key_location.write_bytes(public_key_bytes)
-    logger.info(f"Saved public key at {public_key_location}")
+    public_key.write_to_file(public_key_dir)
+    logger.info(f"Saved public key at {public_key_dir}")

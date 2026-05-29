@@ -1608,7 +1608,7 @@ components:
       - REMOVE
       - ROLLBACK_REMOVE
       - DELETE_ARCHIVE
-      - GENERATE_RSA_KEYS
+      - GENERATE_KEYS
       title: Operation
     ReleaseStatus:
       type: string
