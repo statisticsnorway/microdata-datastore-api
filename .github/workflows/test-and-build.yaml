@@ -17,10 +17,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: "3.13"
 
@@ -41,11 +41,11 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: "projects/${{ secrets.GAR_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/gh-actions/providers/gh-actions"
           service_account: "gh-actions-microdata@${{ secrets.GAR_PROJECT_ID }}.iam.gserviceaccount.com"
@@ -93,7 +93,7 @@ jobs:
 
     steps:
       - name: Call workflow
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INTEGRATION_TEST_REPO: ${{ secrets.INTEGRATION_TEST_REPO }}
           INTEGRATION_TEST_WORKFLOW: "${{ secrets.INTEGRATION_TEST_WORKFLOW }}.yaml"
@@ -113,7 +113,7 @@ jobs:
     permissions:
       actions: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Mark older approvals as unnecessary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -137,7 +137,7 @@ jobs:
 
     steps:
       - name: Call workflow
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           DEPLOY_REPO: ${{ secrets.DEPLOY_REPO }}
           DEPLOY_WORKFLOW: "${{ secrets.DEPLOY_WORKFLOW }}.yaml"
