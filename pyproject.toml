@@ -5,13 +5,13 @@ description = ""
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "cryptography>=46.0.7",
-    "fastapi>=0.136.0",
+    "cryptography>=47.0.0",
+    "fastapi>=0.136.3",
     "gunicorn>=23.0.0",
     "pyarrow==23.0.1",
-    "pydantic>=2.13.1",
+    "pydantic>=2.13.4",
     "pyjwt>=2.12.0",
-    "uvicorn>=0.44.0",
+    "uvicorn>=0.47.0",
 ]
 
 [dependency-groups]
@@ -20,10 +20,10 @@ dev = [
     "pytest-cov>=6.2.1",
     "pytest>=9.0.3",
     "pytest-asyncio>=1.0.0",
-    "ruff>=0.15.12",
+    "ruff>=0.15.15",
     "pytest-mock>=3.14.1",
-    "pandas>=2.3.1",
-    "pre-commit>=4.3.0",
+    "pandas>=3.0.3",
+    "pre-commit>=4.6.0",
     "pyyaml>=6.0.3",
 ]
 
