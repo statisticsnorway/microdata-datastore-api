@@ -31,10 +31,10 @@ def _make_tar_file(
     [
         (None, True, "ADD"),
         (None, False, None),  # filtered out
-        ("DRAFT", True, "-"),
-        ("DRAFT", False, "-"),
-        ("PENDING_RELEASE", True, "-"),
-        ("PENDING_DELETE", False, "-"),
+        ("DRAFT", True, None),  # filtered out (pending operation)
+        ("DRAFT", False, None),  # filtered out (pending operation)
+        ("PENDING_RELEASE", True, None),  # filtered out (pending operation)
+        ("PENDING_DELETE", False, None),  # filtered out (pending operation)
         ("DELETED", True, "ADD"),
         ("DELETED", False, None),  # filtered out
         ("RELEASED", True, "CHANGE"),
@@ -105,6 +105,46 @@ def test_find_importables_passes_filter_out(tmp_path):
         )
 
     mock_get.assert_called_once_with(tmp_path, filter_out=["IN_PROGRESS"])
+
+
+def test_find_importables_filters_out_pending_operations(tmp_path):
+    tar_files = [
+        _make_tar_file(has_data=True, dataset_name="DRAFT_DS"),
+        _make_tar_file(has_data=True, dataset_name="PENDING_RELEASE_DS"),
+        _make_tar_file(has_data=False, dataset_name="PENDING_DELETE_DS"),
+        _make_tar_file(has_data=True, dataset_name="RELEASED_DS"),
+    ]
+    statuses = {
+        "DRAFT_DS": {"releaseStatus": "DRAFT"},
+        "PENDING_RELEASE_DS": {"releaseStatus": "PENDING_RELEASE"},
+        "PENDING_DELETE_DS": {"releaseStatus": "PENDING_DELETE"},
+        "RELEASED_DS": {"releaseStatus": "RELEASED"},
+    }
+    with (
+        patch.object(
+            importable_datasets.input_directory,
+            "get_importable_tar_files",
+            return_value=tar_files,
+        ),
+        patch.object(
+            importable_datasets.metadata,
+            "find_current_data_structure_status",
+            return_value=statuses,
+        ),
+    ):
+        result = find_importables(
+            datastore_input_dir=tmp_path,
+            datastore_root_dir=tmp_path,
+            filter_out=[],
+        )
+
+    assert result == [
+        ImportableDataset(
+            dataset_name="RELEASED_DS",
+            operation="CHANGE",
+            is_archived=False,
+        )
+    ]
 
 
 def test_find_importables_archived_datasets_with_data(tmp_path):
