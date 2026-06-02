@@ -31,7 +31,7 @@ class ImportableDataset(CamelModel, extra="forbid"):
         release_status: str | None,
     ) -> "ImportableDataset | None":
         operation = _operation(release_status, tar_file.has_data)
-        if operation is None:
+        if operation is None or operation == "-":
             return None
         return ImportableDataset(
             dataset_name=tar_file.dataset_name,
