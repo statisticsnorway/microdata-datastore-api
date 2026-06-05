@@ -12,7 +12,10 @@ from datastore_api.adapter.db.models import Datastore
 from datastore_api.common.exceptions import NotFoundException
 from datastore_api.common.models import Version
 from datastore_api.domain import data
-from datastore_api.domain.data import process_fixed_request
+from datastore_api.domain.data import (
+    UnencryptedParquetReader,
+    process_fixed_request,
+)
 from tests.resources import test_resources
 
 ALL_COLUMNS = ["unit_id", "value", "start_epoch_days", "stop_epoch_days"]
@@ -218,7 +221,7 @@ def test_read_parquet_no_filter():
         "7394257",
         "6926636",
     ]
-    result = data._read_parquet(
+    result = UnencryptedParquetReader().read_parquet(
         "TEST_PERSON_INCOME",
         Version.from_str("1.0.0.0"),
         None,
@@ -234,7 +237,7 @@ def test_read_parquet_no_filter():
         == len(result_dict["start_epoch_days"])
         == len(result_dict["stop_epoch_days"])
     )
-    result = data._read_parquet(
+    result = UnencryptedParquetReader().read_parquet(
         "TEST_PERSON_INCOME",
         Version.from_str("1.0.0.0"),
         None,
@@ -251,7 +254,7 @@ def test_read_parquet_fixed():
     expected_unit_ids = [11111111864482, 11111112296273, 11111113785911]
     expected_values = ["21529182", "12687840", "16354872"]
     table_filter = dataset.field("unit_id").isin(expected_unit_ids)
-    result = data._read_parquet(
+    result = UnencryptedParquetReader().read_parquet(
         "TEST_PERSON_INCOME",
         Version.from_str("1.0.0.0"),
         table_filter,
@@ -263,7 +266,7 @@ def test_read_parquet_fixed():
     assert result_dict["value"] == expected_values
     assert len(result_dict.keys()) == 4
 
-    result = data._read_parquet(
+    result = UnencryptedParquetReader().read_parquet(
         "TEST_PERSON_INCOME",
         Version.from_str("1.0.0.0"),
         table_filter,
@@ -279,7 +282,7 @@ def test_read_parquet_fixed():
 def test_read_parquet_time_period():
     expected_unit_ids = [11111113735577, 11111111190644]
     expected_values = ["12982099", "11331198"]
-    result = data._read_parquet(
+    result = UnencryptedParquetReader().read_parquet(
         "TEST_PERSON_INCOME",
         Version.from_str("1.0.0.0"),
         FIND_BY_TIME_PERIOD_FILTER,
@@ -302,7 +305,7 @@ def test_read_parquet_time_period_with_pop_filter():
     table_filter = FIND_BY_TIME_PERIOD_FILTER & dataset.field("unit_id").isin(
         expected_unit_ids
     )
-    result = data._read_parquet(
+    result = UnencryptedParquetReader().read_parquet(
         "TEST_PERSON_INCOME",
         Version.from_str("1.0.0.0"),
         table_filter,
@@ -322,7 +325,7 @@ def test_read_parquet_time_period_with_pop_filter():
 def test_read_parquet_time():
     expected_unit_ids = [11111111864482, 11111112296273]
     expected_values = ["21529182", "12687840"]
-    result = data._read_parquet(
+    result = UnencryptedParquetReader().read_parquet(
         "TEST_PERSON_INCOME",
         Version.from_str("1.0.0.0"),
         FIND_BY_TIME_FILTER,
@@ -344,7 +347,7 @@ def test_read_parquet_time_with_pop_filter():
     table_filter = FIND_BY_TIME_FILTER & dataset.field("unit_id").isin(
         expected_unit_ids
     )
-    result = data._read_parquet(
+    result = UnencryptedParquetReader().read_parquet(
         "TEST_PERSON_INCOME",
         Version.from_str("1.0.0.0"),
         table_filter,

@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Protocol
 
 from pyarrow import ArrowTypeError, Table, dataset
 
@@ -13,6 +14,76 @@ logger = logging.getLogger()
 
 EMPTY_RESULT_TEXT = "empty_result"
 ALL_COLUMNS = ["unit_id", "value", "start_epoch_days", "stop_epoch_days"]
+
+
+class ParquetReader(Protocol):
+    def read_parquet(
+        self,
+        dataset_name: str,
+        version: Version,
+        table_filter: dataset.Expression,
+        columns: list[str],
+        datastore_root_dir: Path,
+    ) -> Table: ...
+
+
+class UnencryptedParquetReader:
+    def read_parquet(
+        self,
+        dataset_name: str,
+        version: Version,
+        table_filter: dataset.Expression,
+        columns: list[str],
+        datastore_root_dir: Path,
+    ) -> Table:
+        """
+        Reads and filters a parquet file or partition and returns a
+        pyarrow.Table with the requested columns.
+        If a draft version is requested, but no draft updated data exists
+        for the given dataset, it will fall back to the latest released
+        version of that dataset.
+
+        * dataset_name: str - name of dataset
+        * version: Version - formatted semantic version
+        * table_filter: dataset.Expression - filters applied to the table
+        * columns: list[str] - names of the columns to include in the
+                            returned table
+        """
+        try:
+            parquet_path: str | None = None
+            if version.is_draft():
+                parquet_path = datastore_directory.get_draft_data_file_path(
+                    dataset_name, datastore_root_dir
+                )
+            else:
+                parquet_path = (
+                    datastore_directory.get_data_path_from_data_versions(
+                        dataset_name, version, datastore_root_dir
+                    )
+                )
+
+            if parquet_path is None:
+                latest_version = datastore_directory.get_latest_version(
+                    datastore_root_dir
+                )
+                parquet_path = (
+                    datastore_directory.get_data_path_from_data_versions(
+                        dataset_name, latest_version, datastore_root_dir
+                    )
+                )
+            table = dataset.dataset(parquet_path).to_table(
+                filter=table_filter, columns=columns
+            )
+            logger.info(f"Number of rows in result set: {table.num_rows}")
+            return table
+        except ArrowTypeError as e:
+            raise ValueError(
+                f"Filter value type does not match dataset column type: {e}"
+            ) from e
+
+
+def _get_parquet_reader() -> ParquetReader:
+    return UnencryptedParquetReader()
 
 
 def process_event_request(
@@ -32,7 +103,8 @@ def process_event_request(
         value_filter=values,
     )
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
-    return _read_parquet(
+    reader = _get_parquet_reader()
+    return reader.read_parquet(
         dataset_name, version, table_filter, columns, datastore_root_dir
     )
 
@@ -50,7 +122,8 @@ def process_status_request(
         date=date, population_filter=population, value_filter=values
     )
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
-    return _read_parquet(
+    reader = _get_parquet_reader()
+    return reader.read_parquet(
         dataset_name, version, table_filter, columns, datastore_root_dir
     )
 
@@ -67,55 +140,7 @@ def process_fixed_request(
         population_filter=population, value_filter=values
     )
     columns = ALL_COLUMNS if include_attributes else ALL_COLUMNS[:2]
-    return _read_parquet(
+    reader = _get_parquet_reader()
+    return reader.read_parquet(
         dataset_name, version, table_filter, columns, datastore_root_dir
     )
-
-
-def _read_parquet(
-    dataset_name: str,
-    version: Version,
-    table_filter: dataset.Expression,
-    columns: list[str],
-    datastore_root_dir: Path,
-) -> Table:
-    """
-    Reads and filters a parquet file or partition and returns a
-    pyarrow.Table with the requested columns.
-    If a draft version is requested, but no draft updated data exists
-    for the given dataset, it will fall back to the latest released
-    version of that dataset.
-
-    * dataset_name: str - name of dataset
-    * version: Version - formatted semantic version
-    * table_filter: dataset.Expression - filters applied to the table
-    * columns: list[str] - names of the columns to include in the
-                           returned table
-    """
-    try:
-        parquet_path: str | None = None
-        if version.is_draft():
-            parquet_path = datastore_directory.get_draft_data_file_path(
-                dataset_name, datastore_root_dir
-            )
-        else:
-            parquet_path = datastore_directory.get_data_path_from_data_versions(
-                dataset_name, version, datastore_root_dir
-            )
-
-        if parquet_path is None:
-            latest_version = datastore_directory.get_latest_version(
-                datastore_root_dir
-            )
-            parquet_path = datastore_directory.get_data_path_from_data_versions(
-                dataset_name, latest_version, datastore_root_dir
-            )
-        table = dataset.dataset(parquet_path).to_table(
-            filter=table_filter, columns=columns
-        )
-        logger.info(f"Number of rows in result set: {table.num_rows}")
-        return table
-    except ArrowTypeError as e:
-        raise ValueError(
-            f"Filter value type does not match dataset column type: {e}"
-        ) from e
