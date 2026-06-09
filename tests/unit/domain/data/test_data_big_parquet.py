@@ -8,7 +8,11 @@ import pytest
 from pyarrow import parquet
 
 from datastore_api.common.models import Version
-from datastore_api.domain.data import process_fixed_request
+from datastore_api.domain.data import (
+    InputFixedQuery,
+    UnencryptedDataReader,
+    generate_data_filter,
+)
 
 DATASTORE_DIR = Path("tests/resources/test_datastore")
 DATASET_NAME = "TEST_BIG"
@@ -78,13 +82,22 @@ def _create_big_parquet():
 def test_read_big_parquet_with_big_pop_and_value_filter(
     big_parquet_dataset, population_filter, value_filter, expected_count
 ):
-    result = process_fixed_request(
-        dataset_name=DATASET_NAME,
-        version=Version.from_str("1.0.0.0"),
-        population=population_filter,
-        include_attributes=True,
-        values=value_filter,
+    payload = InputFixedQuery(
+        dataStructureName=DATASET_NAME,
+        version=Version.from_str("1.0.0.0"),  # NOSONAR
+        population=[1, 3],
+        includeAttributes=True,
+        values=["001*"],
+    )
+    data_filter = generate_data_filter(payload)
+    columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
+    result = UnencryptedDataReader(
+        dataset_name=payload.dataStructureName,
+        dataset_version=payload.version,
+        columns=columns,
         datastore_root_dir=DATASTORE_DIR,
+    ).read_data(
+        data_filter,
     )
     result_dict = result.to_pydict()
     assert len(result_dict["unit_id"]) == expected_count

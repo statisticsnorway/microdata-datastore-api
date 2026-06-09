@@ -1,18 +1,18 @@
 import pytest
 
-from datastore_api.api.datastores.data.models import (
+from datastore_api.common.models import Version
+from datastore_api.domain.data.models import (
     InputFixedQuery,
     InputQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
 )
-from datastore_api.common.models import Version
 
 
 def test_create_and_validate_minimal_input_time_period_query():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "startDate": 1964,
         "stopDate": 2056,
     }
@@ -22,7 +22,7 @@ def test_create_and_validate_minimal_input_time_period_query():
 def test_create_and_validate_full_input_time_period_query():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "startDate": 1964,
         "stopDate": 2056,
         "population": [1, 2, 3],
@@ -31,7 +31,7 @@ def test_create_and_validate_full_input_time_period_query():
     }
     actual = InputTimePeriodQuery.model_validate(data)
     assert actual.dataStructureName == "DATASET_NAME"
-    assert actual.version == Version.from_str("1.0.0.0")
+    assert actual.version == Version.from_str("1.0.0.0")  # NOSONAR
     assert actual.startDate == 1964
     assert actual.stopDate == 2056
     assert isinstance(actual.population, list)
@@ -44,7 +44,7 @@ def test_create_and_validate_full_input_time_period_query():
 def test_no_population_type_coercion():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "startDate": 1964,
         "stopDate": 2056,
         "population": [1, 2, 3],
@@ -54,7 +54,7 @@ def test_no_population_type_coercion():
     assert actual.population == data["population"]
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "startDate": 1964,
         "stopDate": 2056,
         "population": ["1", "2", "3"],
@@ -67,7 +67,7 @@ def test_no_population_type_coercion():
 def test_create_and_validate_input_time_period_query_with_error():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "startDate": 1964,
     }
     with pytest.raises(ValueError):
@@ -77,7 +77,7 @@ def test_create_and_validate_input_time_period_query_with_error():
 def test_create_and_validate_minimal_input_time_query():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "date": 1964,
     }
     InputTimeQuery.model_validate(data)
@@ -86,7 +86,7 @@ def test_create_and_validate_minimal_input_time_query():
 def test_create_and_validate_full_input_time_query():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "date": 1964,
         "population": [1, 2, 3],
         "values": [1, 2, 3],
@@ -106,14 +106,17 @@ def test_create_and_validate_input_time_query_with_error():
 
 
 def test_create_and_validate_minimal_input_fixed_query():
-    data = {"dataStructureName": "DATASET_NAME", "version": "1.0.0.0"}
+    data = {
+        "dataStructureName": "DATASET_NAME",
+        "version": "1.0.0.0",
+    }  # NOSONAR
     InputFixedQuery.model_validate(data)
 
 
 def test_create_and_validate_full_input_fixed_query():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "population": [1, 2, 3],
         "values": ["AB", "C*"],
         "includeAttributes": True,
@@ -130,7 +133,7 @@ def test_create_and_validate_input_query_with_error():
 def test_create_and_validate_input_query_with_mixed_types_values_error():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "values": ["AB", 1],
         "includeAttributes": True,
     }
@@ -141,7 +144,7 @@ def test_create_and_validate_input_query_with_mixed_types_values_error():
 def test_values_integers_not_coerced_to_strings():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "values": [1, 2],
         "includeAttributes": True,
     }
@@ -152,7 +155,7 @@ def test_values_integers_not_coerced_to_strings():
 def test_values_strings_not_coerced_to_integers():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "values": ["1", "2"],
         "includeAttributes": True,
     }
@@ -163,7 +166,7 @@ def test_values_strings_not_coerced_to_integers():
 def test_population_to_string():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "population": [1, 2, 3],
     }
     actual: InputQuery = InputQuery.model_validate(data)
@@ -180,7 +183,7 @@ def test_population_to_string():
 def test_population_to_string_input_time_query():
     data = {
         "dataStructureName": "DATASET_NAME",
-        "version": "1.0.0.0",
+        "version": "1.0.0.0",  # NOSONAR
         "population": [1, 2, 3],
         "date": 1900,
     }
