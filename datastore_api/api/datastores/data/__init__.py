@@ -1,21 +1,27 @@
 # pylint: disable=unused-argument
 import logging
-from pathlib import Path
+from typing import Annotated
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
+from pyarrow import dataset
 
 from datastore_api.adapter.auth.dependencies import authorize_user
-from datastore_api.api.common.dependencies import get_datastore_root_dir
-from datastore_api.api.datastores.data.models import (
+from datastore_api.api.common.dependencies import (
+    get_data_reader,
+)
+from datastore_api.domain.data import (
+    DataReader,
+    generate_data_filter,
+)
+from datastore_api.domain.data.models import (
     ErrorMessage,
     InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
 )
-from datastore_api.domain import data
 
 router = APIRouter()
 logger = logging.getLogger()
@@ -28,23 +34,15 @@ logger = logging.getLogger()
 )
 def stream_result_event(
     input_query: InputTimePeriodQuery,
-    datastore_root_dir: Path = Depends(get_datastore_root_dir),
+    data_reader: Annotated[DataReader, Depends(get_data_reader)],
+    data_filter: Annotated[dataset.Expression, Depends(generate_data_filter)],
 ) -> PlainTextResponse:
     """
     Create Result set of data with temporality type event,
     and stream result as response.
     """
     logger.info(f"Entering /data/event/stream with input query: {input_query}")
-    result_data = data.process_event_request(
-        input_query.dataStructureName,
-        input_query.version,
-        input_query.population,
-        input_query.values,
-        input_query.includeAttributes,
-        input_query.startDate,
-        input_query.stopDate,
-        datastore_root_dir,
-    )
+    result_data = data_reader.read_data(data_filter)
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
@@ -57,22 +55,15 @@ def stream_result_event(
 )
 def stream_result_status(
     input_query: InputTimeQuery,
-    datastore_root_dir: Path = Depends(get_datastore_root_dir),
+    data_reader: Annotated[DataReader, Depends(get_data_reader)],
+    data_filter: Annotated[dataset.Expression, Depends(generate_data_filter)],
 ) -> PlainTextResponse:
     """
     Create result set of data with temporality type status,
     and stream result as response.
     """
     logger.info(f"Entering /data/status/stream with input query: {input_query}")
-    result_data = data.process_status_request(
-        input_query.dataStructureName,
-        input_query.version,
-        input_query.population,
-        input_query.values,
-        input_query.includeAttributes,
-        input_query.date,
-        datastore_root_dir,
-    )
+    result_data = data_reader.read_data(data_filter)
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
@@ -85,21 +76,15 @@ def stream_result_status(
 )
 def stream_result_fixed(
     input_query: InputFixedQuery,
-    datastore_root_dir: Path = Depends(get_datastore_root_dir),
+    data_reader: Annotated[DataReader, Depends(get_data_reader)],
+    data_filter: Annotated[dataset.Expression, Depends(generate_data_filter)],
 ) -> PlainTextResponse:
     """
     Create result set of data with temporality type fixed,
     and stream result as response.
     """
     logger.info(f"Entering /data/fixed/stream with input query: {input_query}")
-    result_data = data.process_fixed_request(
-        input_query.dataStructureName,
-        input_query.version,
-        input_query.population,
-        input_query.values,
-        input_query.includeAttributes,
-        datastore_root_dir,
-    )
+    result_data = data_reader.read_data(data_filter)
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())

@@ -4,6 +4,12 @@ from pathlib import Path
 from fastapi import Depends
 
 from datastore_api.adapter import db
+from datastore_api.domain.data import DataReader, select_data_reader
+from datastore_api.domain.data.models import (
+    InputFixedQuery,
+    InputTimePeriodQuery,
+    InputTimeQuery,
+)
 
 logger = logging.getLogger()
 
@@ -22,3 +28,10 @@ def get_datastore_root_dir(
 ) -> Path:
     """Returns the path to the datastore directory"""
     return Path(database_client.get_datastore(datastore_id).directory)
+
+
+def get_data_reader(
+    input_query: InputTimePeriodQuery | InputTimeQuery | InputFixedQuery,
+    datastore_root_dir: Path = Depends(get_datastore_root_dir),
+) -> DataReader:
+    return select_data_reader(input_query, datastore_root_dir)
