@@ -39,7 +39,7 @@ def client(mock_db_client: Mock):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
     app.dependency_overrides[authorize_user] = lambda: None
     app.dependency_overrides[generate_data_filter] = lambda: None
-    app.dependency_overrides[get_data_reader] = lambda: FakeDataReader()
+    app.dependency_overrides[get_data_reader] = FakeDataReader
     yield TestClient(app)
     app.dependency_overrides.clear()
 
