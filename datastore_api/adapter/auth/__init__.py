@@ -7,6 +7,7 @@ from jwt import MissingRequiredClaimError, PyJWK, PyJWKClient
 from jwt.exceptions import (
     DecodeError,
     ExpiredSignatureError,
+    ImmatureSignatureError,
     InvalidAudienceError,
     InvalidSignatureError,
 )
@@ -87,6 +88,7 @@ def _decode_jwt(
         InvalidAudienceError,
         MissingRequiredClaimError,
         DecodeError,
+        ImmatureSignatureError,
     ) as e:
         raise AuthError(f"Invalid token: {e}") from e
     except Exception as e:
