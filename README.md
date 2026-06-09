@@ -73,3 +73,5 @@ Read more about [pre-commit](https://pre-commit.com/#intro)
 - [Gunicorn](https://gunicorn.org/)
 - [uv](https://docs.astral.sh/uv/)
 
+## Additional Notes
+AGENTS.md is based on [Andrej Karpathy's CLAUDE.md](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md)
