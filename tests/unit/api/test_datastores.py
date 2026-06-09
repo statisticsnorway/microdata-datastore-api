@@ -57,7 +57,7 @@ def client(mock_db_client, mock_auth_deps):
     app.dependency_overrides[authorize_datastore_provisioner] = lambda: (
         mock_auth_deps["datastore_provisioner"]()
     )
-    yield TestClient(app)
+    yield TestClient(app, raise_server_exceptions=False)
     app.dependency_overrides.clear()
 
 
@@ -83,6 +83,21 @@ def test_create_new_datastore(client, mock_auth_deps, monkeypatch):
     response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
     mock_auth_deps["datastore_provisioner"].assert_called_once()
     assert response.status_code == 200
+
+
+def test_unhandled_exception_returns_500(client, monkeypatch):
+    def raise_unhandled_exception(*_args, **_kwargs):
+        raise RuntimeError("Unexpected failure")
+
+    monkeypatch.setattr(
+        "datastore_api.api.datastores.create_new_datastore",
+        raise_unhandled_exception,
+    )
+
+    response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
+
+    assert response.status_code == 500
+    assert response.json() == {"message": "Internal Server Error"}
 
 
 def test_get_datastores_rdns(client):
