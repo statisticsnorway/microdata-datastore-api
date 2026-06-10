@@ -60,7 +60,10 @@ def get_job(
 ) -> Job:
     job = database_client.get_job(job_id)
     if job.datastore_rdn != datastore_rdn:
-        raise NotFoundException
+        raise NotFoundException(
+            f"Could not find job with id: {job_id}"
+            f" for datastore: {datastore_rdn}"
+        )
     return job
 
 
