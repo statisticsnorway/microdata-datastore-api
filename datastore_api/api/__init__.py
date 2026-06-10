@@ -36,8 +36,8 @@ logger = logging.getLogger()
 
 
 def setup_api(app: FastAPI) -> None:
-    _include_exception_handlers(app)
     _include_middleware(app)
+    _include_exception_handlers(app)
     _include_routers(app)
 
 
@@ -52,6 +52,61 @@ def _include_routers(app: FastAPI) -> None:
 
 def _include_middleware(app: FastAPI) -> None:
     @app.middleware("http")
+    async def handle_exceptions(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        """
+        Handle all exceptions coming from the application and make sure they
+        return an appropriate response. If any exceptions are not caught here
+        they will raise to the application exception handlers definted below.
+        """
+        try:
+            return await call_next(request)
+        except InvalidDraftVersionException as exc:
+            logger.warning(exc, exc_info=True)
+            return JSONResponse(content={"message": str(exc)}, status_code=404)
+        except RequestValidationException as exc:
+            logger.warning(exc, exc_info=True)
+            return JSONResponse(content={"message": str(exc)}, status_code=400)
+        except InvalidStorageFormatException as exc:
+            logger.exception(exc)
+            return JSONResponse(
+                content={"message": "Invalid storage format"}, status_code=500
+            )
+        except (
+            ValidationError,
+            ValueError,
+            JobExistsException,
+            NameValidationError,
+            PublicKeyInvalidException,
+        ) as exc:
+            logger.warning(exc, exc_info=True)
+            return JSONResponse(status_code=400, content={"message": str(exc)})
+        except (
+            DatastoreNotFoundException,
+            DatastoreRdnMissingException,
+            PublicKeyNotFoundException,
+            NotFoundException,
+        ) as exc:
+            logger.warning(exc, exc_info=True)
+            return JSONResponse(status_code=404, content={"message": str(exc)})
+        except AuthError as exc:
+            logger.warning(exc, exc_info=True)
+            return JSONResponse(
+                status_code=401, content={"message": "Unauthorized"}
+            )
+        except (
+            DatastoreExistsException,
+            DatastorePathExistsException,
+            PublicKeyAlreadyExistsException,
+        ) as exc:
+            logger.warning(exc, exc_info=True)
+            return JSONResponse(status_code=409, content={"message": str(exc)})
+        except DatastoreSetupException as exc:
+            logger.error(exc, exc_info=True)
+            return JSONResponse(status_code=500, content={"message": str(exc)})
+
+    @app.middleware("http")
     async def add_language_header(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
@@ -62,8 +117,27 @@ def _include_middleware(app: FastAPI) -> None:
 
 
 def _include_exception_handlers(app: FastAPI) -> None:
+    """
+    Exception handlers to handle any exceptions that have raised to the top of
+    the application.
+    FastAPI initial pydantic validations are also done before hitting any
+    middleware so they are dealt with here.
+    """
+
+    @app.exception_handler(RequestValidationError)
+    def handle_pydantic_query_error(
+        _req: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        logger.exception(exc)
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=jsonable_encoder(
+                {"message": "Bad Request", "details": exc.errors()}
+            ),
+        )
+
     @app.exception_handler(HTTPException)
-    async def custom_http_exception_handler(
+    def handle_http_exception(
         _req: Request, exc: HTTPException
     ) -> JSONResponse:
         if exc.status_code == 404:
@@ -73,141 +147,14 @@ def _include_exception_handlers(app: FastAPI) -> None:
             )
         logger.exception(exc)
         return JSONResponse(
-            status_code=500, content={"message": "Internal Server Error"}
+            status_code=500,
+            content={"message": "Internal Server Error"},
         )
-
-    @app.exception_handler(NotFoundException)
-    def handle_data_not_found(
-        _req: Request, exc: NotFoundException
-    ) -> JSONResponse:
-        logger.warning(exc, exc_info=True)
-        return JSONResponse(content={"message": "Not found"}, status_code=404)
-
-    @app.exception_handler(InvalidDraftVersionException)
-    def handle_invalid_draft(
-        _req: Request, exc: InvalidDraftVersionException
-    ) -> JSONResponse:
-        logger.warning(exc, exc_info=True)
-        return JSONResponse(content={"message": str(exc)}, status_code=404)
-
-    @app.exception_handler(RequestValidationException)
-    def handle_invalid_request(
-        _req: Request, exc: RequestValidationException
-    ) -> JSONResponse:
-        logger.warning(exc, exc_info=True)
-        return JSONResponse(content={"message": str(exc)}, status_code=400)
-
-    @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(
-        _req: Request, e: RequestValidationError
-    ) -> JSONResponse:
-        logger.warning("Validation error: %s", e, exc_info=True)
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=jsonable_encoder(
-                {"message": "Bad Request", "details": e.errors()}
-            ),
-        )
-
-    @app.exception_handler(InvalidStorageFormatException)
-    def handle_invalid_format(
-        _req: Request, exc: InvalidStorageFormatException
-    ) -> JSONResponse:
-        logger.exception(exc)
-        return JSONResponse(
-            content={"message": "Invalid storage format"}, status_code=500
-        )
-
-    @app.exception_handler(ValidationError)
-    def handle_bad_request(_req: Request, e: ValidationError) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=400, content={"message": str(e)})
-
-    @app.exception_handler(ValueError)
-    def handle_invalid_filter_value_error(
-        _req: Request, e: ValueError
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=400, content={"message": str(e)})
-
-    @app.exception_handler(JobExistsException)
-    def handle_job_exists(_req: Request, e: JobExistsException) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=400, content={"message": str(e)})
-
-    @app.exception_handler(NameValidationError)
-    def handle_invalid_name(
-        _req: Request, e: NameValidationError
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=400, content={"message": str(e)})
-
-    @app.exception_handler(DatastoreNotFoundException)
-    def handle_datastore_not_found(
-        _req: Request, e: NameValidationError
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=404, content={"message": str(e)})
-
-    @app.exception_handler(DatastoreRdnMissingException)
-    def handle_datastore_rdn_not_found(
-        _req: Request, e: NameValidationError
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=404, content={"message": str(e)})
-
-    @app.exception_handler(AuthError)
-    async def handle_auth_error(_req: Request, e: AuthError) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(
-            status_code=401, content={"message": "Unauthorized"}
-        )
-
-    @app.exception_handler(DatastoreExistsException)
-    async def handle_datastore_exists_error(
-        _req: Request, e: DatastoreExistsException
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=409, content={"message": str(e)})
-
-    @app.exception_handler(DatastorePathExistsException)
-    async def handle_datastore_path_exists_error(
-        _req: Request, e: DatastorePathExistsException
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=409, content={"message": str(e)})
-
-    @app.exception_handler(DatastoreSetupException)
-    async def handle_datastore_setup_error(
-        _req: Request, e: DatastoreSetupException
-    ) -> JSONResponse:
-        logger.error(e, exc_info=True)
-        return JSONResponse(status_code=500, content={"message": str(e)})
-
-    @app.exception_handler(PublicKeyAlreadyExistsException)
-    def handle_public_key_exists(
-        _req: Request, e: PublicKeyAlreadyExistsException
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=409, content={"message": str(e)})
-
-    @app.exception_handler(PublicKeyInvalidException)
-    def handle_public_key_invalid(
-        _req: Request, e: PublicKeyInvalidException
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=400, content={"message": str(e)})
-
-    @app.exception_handler(PublicKeyNotFoundException)
-    def handle_public_key_not_found(
-        _req: Request, e: PublicKeyNotFoundException
-    ) -> JSONResponse:
-        logger.warning(e, exc_info=True)
-        return JSONResponse(status_code=404, content={"message": str(e)})
 
     @app.exception_handler(Exception)
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:
         logger.exception(exc)
         return JSONResponse(
-            status_code=500, content={"message": "Internal Server Error"}
+            status_code=500,
+            content=jsonable_encoder({"message": "Internal Server Error"}),
         )
