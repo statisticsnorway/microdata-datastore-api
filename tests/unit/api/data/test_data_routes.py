@@ -5,15 +5,24 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 from fastapi.testclient import TestClient
-from pytest import MonkeyPatch
 
 from datastore_api.adapter import db
 from datastore_api.adapter.auth.dependencies import authorize_user
-from datastore_api.domain import data
+from datastore_api.api.common.dependencies import (
+    get_data_reader,
+)
+from datastore_api.domain.data import (
+    generate_data_filter,
+)
 from datastore_api.main import app
 
 FAKE_RESULT_FILE_NAME = "fake_result_file_name"
 MOCK_RESULT = pq.read_table("tests/resources/results/mocked_result.parquet")
+
+
+class FakeDataReader:
+    def read_data(self, data_filter):
+        return MOCK_RESULT
 
 
 @pytest.fixture
@@ -29,23 +38,10 @@ def mock_db_client():
 def client(mock_db_client: Mock):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
     app.dependency_overrides[authorize_user] = lambda: None
+    app.dependency_overrides[generate_data_filter] = lambda: None
+    app.dependency_overrides[get_data_reader] = FakeDataReader
     yield TestClient(app)
     app.dependency_overrides.clear()
-
-
-@pytest.fixture(autouse=True)
-def setup(monkeypatch: MonkeyPatch):
-    monkeypatch.setattr(
-        data, "process_status_request", lambda a, b, c, d, e, f, g: MOCK_RESULT
-    )
-    monkeypatch.setattr(
-        data,
-        "process_event_request",
-        lambda a, b, c, d, e, f, g, h: MOCK_RESULT,
-    )
-    monkeypatch.setattr(
-        data, "process_fixed_request", lambda a, b, c, d, e, f: MOCK_RESULT
-    )
 
 
 def test_data_event_stream_result(client: TestClient):
