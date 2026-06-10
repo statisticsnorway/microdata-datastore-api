@@ -153,7 +153,7 @@ def _include_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:
-        logger.exception(exc)
+        logger.exception(exc, exc_info=True)
         return JSONResponse(
             status_code=500,
             content=jsonable_encoder({"message": "Internal Server Error"}),
