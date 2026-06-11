@@ -29,7 +29,7 @@ dev = [
 
 [tool.uv]
 package = true
-exclude-newer = "3 days"
+exclude-newer = "7 days"
 
 [tool.ruff]
 line-length = 80
