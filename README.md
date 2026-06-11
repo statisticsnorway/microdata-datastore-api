@@ -9,6 +9,8 @@ After cloning the repo, install and activate an environment with:
 uv venv && uv sync && source .venv/bin/activate 
 ```
 
+Install GitHub Actions security scanner [zizmore](https://docs.zizmor.sh/) that runs with pre-commit.
+
 ### Running the test suite
 To run the unit and integration tests:
 ```sh
