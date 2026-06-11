@@ -1,5 +1,6 @@
 # pylint: disable=protected-access
 
+import json
 import os
 import shutil
 from pathlib import Path
@@ -12,8 +13,10 @@ from datastore_api.adapter.db.models import Datastore
 from datastore_api.common.exceptions import NotFoundException
 from datastore_api.common.models import Version
 from datastore_api.domain.data import (
+    EncryptedDataReader,
     UnencryptedDataReader,
     generate_data_filter,
+    select_data_reader,
 )
 from datastore_api.domain.data.models import (
     InputFixedQuery,
@@ -453,3 +456,44 @@ def test_read_parquet_with_combined_population_and_value_filter(
         .to_pydict()
     )
     assert result_dict["value"] == expected_values
+
+
+def test_select_data_reader_returns_encrypted_reader(tmp_path):
+    datastore_dir = tmp_path / "datastore"
+    datastore_dir.mkdir()
+    (datastore_dir / "encrypted_versions.json").write_text(
+        json.dumps({"versions": ["1.0"]})
+    )
+    query = InputFixedQuery(
+        dataStructureName="TEST_FIXED_DATASET",
+        version=Version.from_str("1.0.0.0"),  # NOSONAR
+    )
+    reader = select_data_reader(query, tmp_path)
+    assert isinstance(reader, EncryptedDataReader)
+
+
+def test_select_data_reader_returns_unencrypted_reader(
+    tmp_path,
+):
+    datastore_dir = tmp_path / "datastore"
+    datastore_dir.mkdir()
+    (datastore_dir / "encrypted_versions.json").write_text(
+        json.dumps({"versions": ["2_0"]})
+    )
+    query = InputFixedQuery(
+        dataStructureName="TEST_FIXED_DATASET",
+        version=Version.from_str("1.0.0.0"),  # NOSONAR
+    )
+    reader = select_data_reader(query, tmp_path)
+    assert isinstance(reader, UnencryptedDataReader)
+
+
+def test_select_data_reader_returns_unencr_reader_when_no_encr_versions_file(
+    tmp_path,
+):
+    query = InputFixedQuery(
+        dataStructureName="TEST_FIXED_DATASET",
+        version=Version.from_str("1.0.0.0"),  # NOSONAR
+    )
+    reader = select_data_reader(query, tmp_path)
+    assert isinstance(reader, UnencryptedDataReader)
