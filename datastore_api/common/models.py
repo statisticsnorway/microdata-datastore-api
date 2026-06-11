@@ -35,6 +35,9 @@ class Version:
     def to_4_dotted(self) -> str:
         return ".".join([self.major, self.minor, self.patch, self.draft])
 
+    def to_2_dotted(self) -> str:
+        return ".".join([self.major, self.minor])
+
     def is_draft(self) -> bool:
         return self.major == "0" and self.minor == "0" and self.patch == "0"
 

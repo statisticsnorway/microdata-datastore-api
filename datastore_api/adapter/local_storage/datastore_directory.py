@@ -106,3 +106,15 @@ def get_latest_version(datastore_root_dir: Path) -> Version:
     )
     version_list = datastore_versions.get("versions", [])
     return Version.from_str((version_list[0] or {}).get("version", ""))
+
+
+def get_encrypted_versions(datastore_root_dir: Path) -> list[str]:
+    try:
+        encrypted_versions = json.load(
+            open(f"{datastore_root_dir}/datastore/encrypted_versions.json")
+        )
+    except FileNotFoundError:
+        return []
+
+    encr_version_list = encrypted_versions["versions"]
+    return encr_version_list
