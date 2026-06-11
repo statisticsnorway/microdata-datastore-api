@@ -47,8 +47,8 @@ def insert_baseline(db_path: Path) -> None:
 
 setup_db(Path(environment.sqlite_url), Path(environment.migrations_dir))
 app = FastAPI(title="Datastore API", version="1.0.0")
-setup_logging(app)
 setup_api(app)
+setup_logging(app)
 
 # update OpenAPI docs
 if environment.stack == "dev":
