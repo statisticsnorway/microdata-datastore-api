@@ -43,6 +43,8 @@ environment = _initialize_environment()
 class Secrets:
     datastore_provisioners: list[str]
     datastore_api_service_key: str
+    parquet_footer_master_key: str
+    parquet_column_master_key: str
 
 
 def _initialize_secrets() -> Secrets:
@@ -51,6 +53,8 @@ def _initialize_secrets() -> Secrets:
     return Secrets(
         datastore_provisioners=secrets_file["DATASTORE_PROVISIONERS"],
         datastore_api_service_key=secrets_file["DATASTORE_API_SERVICE_KEY"],
+        parquet_footer_master_key=secrets_file["PARQUET_FOOTER_MASTER_KEY"],
+        parquet_column_master_key=secrets_file["PARQUET_COLUMN_MASTER_KEY"],
     )
 
 
