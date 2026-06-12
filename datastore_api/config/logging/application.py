@@ -96,7 +96,14 @@ def setup_logging(app: FastAPI, log_level: int = logging.INFO) -> None:
         response_status.set(response.status_code)
         response.headers["X-Request-ID"] = correlation_id.get()
 
-        dont_log = ["/jobs", "/maintenance-statuses/latest", "/health"]
-        if not any(s in request.url.path for s in dont_log):
+        path = request.url.path
+        dont_log_if_path_is = ["/jobs", "/maintenance-statuses/latest"]
+        dont_log_if_path_endswith = ["/health/alive", "/health/ready"]
+
+        should_skip_logging = path in dont_log_if_path_is or any(
+            path.endswith(suffix) for suffix in dont_log_if_path_endswith
+        )
+
+        if not should_skip_logging:
             logger.info("responded")
         return response
