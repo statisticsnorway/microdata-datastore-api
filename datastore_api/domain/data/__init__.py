@@ -184,7 +184,10 @@ def select_data_reader(
 ) -> DataReader:
     columns = ALL_COLUMNS if input_query.includeAttributes else ALL_COLUMNS[:2]
     encrypted_versions = get_encrypted_versions(datastore_root_dir)
-    if input_query.version.to_2_dotted() in encrypted_versions:
+    if (
+        input_query.version.to_2_dotted() in encrypted_versions
+        or input_query.version.is_draft()
+    ):
         return EncryptedDataReader(
             dataset_name=input_query.dataStructureName,
             dataset_version=input_query.version,
