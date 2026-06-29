@@ -35,16 +35,23 @@ def mock_db_client():
 
 
 @pytest.fixture
-def client(mock_db_client: Mock):
+def mock_auth_deps():
+    return {
+        "user": Mock(return_value=None),
+    }
+
+
+@pytest.fixture
+def client(mock_db_client: Mock, mock_auth_deps: dict):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
-    app.dependency_overrides[authorize_user] = lambda: None
+    app.dependency_overrides[authorize_user] = lambda: mock_auth_deps["user"]()
     app.dependency_overrides[generate_data_filter] = lambda: None
     app.dependency_overrides[get_data_reader] = FakeDataReader
     yield TestClient(app)
     app.dependency_overrides.clear()
 
 
-def test_data_event_stream_result(client: TestClient):
+def test_data_event_stream_result(client: TestClient, mock_auth_deps: dict):
     response = client.post(
         "/datastores/no.ssb.test/data/event/stream",
         json={
@@ -55,13 +62,13 @@ def test_data_event_stream_result(client: TestClient):
         },
         headers={"Authorization": "Bearer valid-token"},
     )
-
+    mock_auth_deps["user"].assert_called_once()
     reader = pa.BufferReader(response.content)
     assert response.status_code == 200
     assert pq.read_table(reader) == MOCK_RESULT
 
 
-def test_data_status_stream_result(client: TestClient):
+def test_data_status_stream_result(client: TestClient, mock_auth_deps: dict):
     response = client.post(
         "/datastores/no.ssb.test/data/status/stream",
         json={
@@ -71,19 +78,19 @@ def test_data_status_stream_result(client: TestClient):
         },
         headers={"Authorization": "Bearer valid-token"},
     )
-
+    mock_auth_deps["user"].assert_called_once()
     reader = pa.BufferReader(response.content)
     assert response.status_code == 200
     assert pq.read_table(reader) == MOCK_RESULT
 
 
-def test_data_fixed_stream_result(client: TestClient):
+def test_data_fixed_stream_result(client: TestClient, mock_auth_deps: dict):
     response = client.post(
         "/datastores/no.ssb.test/data/fixed/stream",
         json={"version": "1.0.0.0", "dataStructureName": "FAKE_NAME"},
         headers={"Authorization": "Bearer valid-token"},
     )
-
+    mock_auth_deps["user"].assert_called_once()
     reader = pa.BufferReader(response.content)
     assert response.status_code == 200
     assert pq.read_table(reader) == MOCK_RESULT
