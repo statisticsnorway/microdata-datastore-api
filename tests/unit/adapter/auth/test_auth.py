@@ -1,26 +1,200 @@
+from datetime import datetime, timedelta
+
 import pytest
+from fastapi.testclient import TestClient
 
 from datastore_api.adapter.auth import (
-    TokenPolicy,
+    AuthClient,
+    MicrodataAuthClient,
     _decode_jwt,
+    get_auth_client,
+)
+from datastore_api.adapter.auth.dependencies import (
+    ACCREDITATION_TOKEN_POLICY,
+    DATA_ADMINISTRATOR_ROLE,
+    valid_aud_jobs,
 )
 from datastore_api.common.exceptions import AuthError
+from datastore_api.main import app
 from tests.resources import test_resources
 from tests.utils.util import encode_jwt_payload, generate_rsa_key_pairs
 
 JWT_PRIVATE_KEY, JWT_PUBLIC_KEY = generate_rsa_key_pairs()
 
 
-ACCREDITATION_TOKEN_POLICY = TokenPolicy(
-    user_id_claim="user/uuid",
-    required_claims=[
-        "aud",
-        "sub",
-        "accreditation/role",
-        "user/uuid",
-    ],
-)
+@pytest.fixture
+def auth_client() -> AuthClient:
+    auth_client = MicrodataAuthClient()
+    auth_client._get_signing_key = lambda jwt_token: JWT_PUBLIC_KEY.decode(
+        "utf-8"
+    )  # type: ignore
+    return auth_client
+
+
+@pytest.fixture
+def client(auth_client):
+    app.dependency_overrides[get_auth_client] = lambda: auth_client
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
 decode_policy = (ACCREDITATION_TOKEN_POLICY,)
+
+
+def test_auth_valid_token(auth_client):
+    token = encode_jwt_payload(
+        test_resources.valid_jwt_payload, JWT_PRIVATE_KEY
+    )
+    auth_client.authorize_jwt(
+        required_aud=valid_aud_jobs,
+        decode_policy=ACCREDITATION_TOKEN_POLICY,
+        required_role=DATA_ADMINISTRATOR_ROLE,
+        authorization_token=token,
+        rdn="no.ssb.fdb",
+    )
+
+
+def test_auth_valid_token_root_aud(auth_client):
+    payload = {
+        **test_resources.valid_jwt_payload,
+        "aud": ["no", "datastore-api-jobs"],
+    }
+    token = encode_jwt_payload(payload, JWT_PRIVATE_KEY)
+    auth_client.authorize_jwt(
+        required_aud=valid_aud_jobs,
+        decode_policy=ACCREDITATION_TOKEN_POLICY,
+        required_role=DATA_ADMINISTRATOR_ROLE,
+        authorization_token=token,
+        rdn="no.testdatastore",
+    )
+
+
+def test_auth_no_datastore_in_aud(auth_client):
+    payload = {
+        **test_resources.valid_jwt_payload,
+        "aud": ["datastore-api-jobs"],
+    }
+    token = encode_jwt_payload(payload, JWT_PRIVATE_KEY)
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.ssb.fdb",
+        )
+    assert "Not authorized to access datastore: no.ssb.fdb" in str(e)
+
+
+def test_auth_datastore_not_in_audience(auth_client):
+    payload = {
+        **test_resources.valid_jwt_payload,
+        "aud": ["no.ssb.fdb", "datastore-api-jobs"],
+    }
+    token = encode_jwt_payload(payload, JWT_PRIVATE_KEY)
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.provider1.test",
+        )
+    assert "Not authorized to access datastore: no.provider1.test" in str(e)
+
+
+def test_auth_no_audience(auth_client):
+    payload = {
+        **test_resources.valid_jwt_payload,
+        "aud": [],
+    }
+    token = encode_jwt_payload(payload, JWT_PRIVATE_KEY)
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.ssb.fdb",
+        )
+    assert "Invalid token" in str(e)
+
+
+def test_auth_no_accreditation_role(auth_client):
+    token = encode_jwt_payload(
+        test_resources.jwt_payload_no_accreditation_role, JWT_PRIVATE_KEY
+    )
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.ssb.fdb",
+        )
+    assert "Invalid token" in str(e)
+
+
+def test_auth_wrong_role(auth_client):
+    payload = {
+        **test_resources.valid_jwt_payload,
+        "accreditation/role": "role/invalidrole",
+    }
+    token = encode_jwt_payload(payload, JWT_PRIVATE_KEY)
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.ssb.fdb",
+        )
+    assert "Unauthorized with role: role/invalidrole" in str(e)
+
+
+def test_auth_wrong_audience(auth_client):
+    payload = {
+        **test_resources.valid_jwt_payload,
+        "aud": ["wrong-audience"],
+    }
+    token = encode_jwt_payload(payload, JWT_PRIVATE_KEY)
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.ssb.fdb",
+        )
+    assert "Invalid token: Audience doesn't match" in str(e)
+
+
+def test_auth_expired_token(auth_client):
+    payload = {
+        **test_resources.valid_jwt_payload,
+        "exp": (datetime.now() - timedelta(hours=1)).timestamp(),
+    }
+    token = encode_jwt_payload(payload, JWT_PRIVATE_KEY)
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.ssb.fdb",
+        )
+    assert "Invalid token" in str(e)
+
+
+def test_auth_missing_token(auth_client):
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=None,
+        )
+    assert "Unauthorized. No token was provided" in str(e)
 
 
 def test_decoding_signing_key():
