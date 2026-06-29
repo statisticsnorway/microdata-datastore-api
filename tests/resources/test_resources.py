@@ -23,7 +23,6 @@ jwt_payload_no_accreditation_role = {
     "sub": "testuser",
 }
 
-# TODO: Add more payloads for testing
 
 PERSON_INCOME_ALL = (
     ";unit_id;value\n"
