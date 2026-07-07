@@ -5,13 +5,13 @@ description = ""
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "cryptography>=48.0.1",
-    "fastapi>=0.137.2",
+    "fastapi>=0.136.3",
     "gunicorn>=26.0.0",
     "pyarrow==23.0.1",
     "pydantic>=2.13.4",
     "pyjwt>=2.13.0",
     "uvicorn>=0.48.0",
+    "microdata-tools>=2.0.0",
 ]
 
 [dependency-groups]
@@ -30,6 +30,7 @@ dev = [
 [tool.uv]
 package = true
 exclude-newer = "7 days"
+exclude-newer-package = { "microdata-tools" = "0 hours" }
 
 [tool.ruff]
 line-length = 80
