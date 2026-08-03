@@ -38,7 +38,7 @@ jobs:
         cache-suffix: build
     
     - name: Sync dependencies
-      run: uv sync
+      run: uv sync --no-build
 
     - name: Run tests
       run: uv run pytest
