@@ -29,6 +29,7 @@ dev = [
 
 [tool.uv]
 package = true
+no-binary-package = ["datastore-api"]
 exclude-newer = "7 days"
 exclude-newer-package = { "microdata-tools" = "0 hours" }
 
