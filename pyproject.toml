@@ -5,31 +5,33 @@ description = ""
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "cryptography>=48.0.1",
-    "fastapi>=0.136.3",
+    "fastapi>=0.139.2",
     "gunicorn>=26.0.0",
     "pyarrow==23.0.1",
     "pydantic>=2.13.4",
     "pyjwt>=2.13.0",
-    "uvicorn>=0.48.0",
+    "uvicorn>=0.51.0",
+    "microdata-tools>=2.0.0",
 ]
 
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
     "pytest-cov>=6.2.1",
-    "pytest>=9.0.3",
+    "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
-    "ruff>=0.15.16",
+    "ruff>=0.15.22",
     "pytest-mock>=3.14.1",
-    "pandas>=3.0.3",
-    "pre-commit>=4.6.0",
+    "pandas>=3.0.5",
+    "pre-commit>=4.6.1",
     "pyyaml>=6.0.3",
 ]
 
 [tool.uv]
 package = true
+no-binary-package = ["datastore-api"]
 exclude-newer = "7 days"
+exclude-newer-package = { "microdata-tools" = "0 hours" }
 
 [tool.ruff]
 line-length = 80

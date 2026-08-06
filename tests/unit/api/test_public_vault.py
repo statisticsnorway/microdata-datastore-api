@@ -4,38 +4,29 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 from httpx import Response
+from microdata_tools import PrivateKey, PublicKey
 
 from datastore_api.adapter import db
 from datastore_api.adapter.auth.dependencies import (
     authorize_api_key,
     authorize_data_administrator,
 )
-from datastore_api.api.datastores.public_key import PUBLIC_KEY_FILE_NAME
 from datastore_api.main import app
 
 
 def generate_public_key():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537, key_size=2048, backend=default_backend()
-    )
-
+    private_key = PrivateKey.generate()
     public_key = private_key.public_key()
 
-    microdata_public_key_pem_bytes = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
+    microdata_public_key_pem_bytes = public_key.serialize()
     return microdata_public_key_pem_bytes
 
 
 PUBLIC_KEY_BYTES = generate_public_key()
 PUBLIC_KEY_PATH = Path(
-    f"tests/resources/test_datastore/vault/{PUBLIC_KEY_FILE_NAME}"
+    f"tests/resources/test_datastore/vault/{PublicKey.FILENAME}"
 )
 
 
