@@ -56,6 +56,23 @@ def test_auth_valid_token_root_aud(auth_client):
     )
 
 
+def test_auth_root_aud_does_not_match_unrelated_rdn(auth_client):
+    payload = {
+        **test_resources.valid_jwt_payload,
+        "aud": ["no", "datastore-api-jobs"],
+    }
+    token = encode_jwt_payload(payload, JWT_PRIVATE_KEY)
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="nope.evil.datastore",
+        )
+    assert "Not authorized to access datastore: nope.evil.datastore" in str(e)
+
+
 def test_auth_no_datastore_in_aud(auth_client):
     payload = {
         **test_resources.valid_jwt_payload,

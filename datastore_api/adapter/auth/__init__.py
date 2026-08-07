@@ -113,7 +113,7 @@ def _validate_rdn_in_aud(rdn: str, decoded_jwt: dict[str, Any]) -> None:
     if not aud:
         raise AuthError("Missing audience")
     aud_list = [aud] if isinstance(aud, str) else aud
-    if not any(rdn.startswith(a) for a in aud_list):
+    if not any(rdn == a or rdn.startswith(f"{a}.") for a in aud_list):
         raise AuthError(f"Not authorized to access datastore: {rdn}")
 
 
