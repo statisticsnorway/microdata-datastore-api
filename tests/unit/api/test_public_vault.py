@@ -69,6 +69,7 @@ def test_save_public_key(client: TestClient, mock_auth_deps: dict):
         content=PUBLIC_KEY_BYTES,
         headers={"Content-Type": "application/x-pem-file", "X-API-Key": "abc"},
     )
+    assert response.status_code == 200
     mock_auth_deps["api_key"].assert_called_once()
     assert PUBLIC_KEY_PATH.is_file()
 
