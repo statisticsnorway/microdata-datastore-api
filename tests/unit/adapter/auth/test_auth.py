@@ -193,6 +193,22 @@ def test_auth_expired_token(auth_client):
     assert "Invalid token: Signature has expired" in str(e)
 
 
+def test_auth_invalid_signature(auth_client):
+    second_private_key, _ = generate_rsa_key_pairs()
+    token = encode_jwt_payload(
+        test_resources.valid_jwt_payload, second_private_key
+    )
+    with pytest.raises(AuthError) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.ssb.fdb",
+        )
+    assert "Invalid token: Signature verification failed" in str(e)
+
+
 def test_auth_missing_token(auth_client):
     with pytest.raises(AuthError) as e:
         auth_client.authorize_jwt(
