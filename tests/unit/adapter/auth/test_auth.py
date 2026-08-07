@@ -1,13 +1,11 @@
 from datetime import datetime, timedelta
 
 import pytest
-from fastapi.testclient import TestClient
 
 from datastore_api.adapter.auth import (
     AuthClient,
     MicrodataAuthClient,
     _decode_jwt,
-    get_auth_client,
 )
 from datastore_api.adapter.auth.dependencies import (
     ACCREDITATION_TOKEN_POLICY,
@@ -15,7 +13,6 @@ from datastore_api.adapter.auth.dependencies import (
     valid_aud_jobs,
 )
 from datastore_api.common.exceptions import AuthError
-from datastore_api.main import app
 from tests.resources import test_resources
 from tests.utils.util import encode_jwt_payload, generate_rsa_key_pairs
 
@@ -29,16 +26,6 @@ def auth_client() -> AuthClient:
         "utf-8"
     )  # type: ignore
     return auth_client
-
-
-@pytest.fixture
-def client(auth_client):
-    app.dependency_overrides[get_auth_client] = lambda: auth_client
-    yield TestClient(app)
-    app.dependency_overrides.clear()
-
-
-decode_policy = (ACCREDITATION_TOKEN_POLICY,)
 
 
 def test_auth_valid_token(auth_client):

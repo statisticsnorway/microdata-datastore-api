@@ -21,6 +21,7 @@ jwt_payload_no_accreditation_role = {
     "aud": ["no.ssb.fdb", "datastore-api-jobs"],
     "exp": (datetime.now() + timedelta(hours=1)).timestamp(),
     "sub": "testuser",
+    "user/uuid": "12345",
 }
 
 
