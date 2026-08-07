@@ -117,7 +117,7 @@ def test_auth_no_audience(auth_client):
             authorization_token=token,
             rdn="no.ssb.fdb",
         )
-    assert "Invalid token" in str(e)
+    assert 'Invalid token: Token is missing the "aud" claim' in str(e)
 
 
 def test_auth_no_accreditation_role(auth_client):
@@ -132,7 +132,10 @@ def test_auth_no_accreditation_role(auth_client):
             authorization_token=token,
             rdn="no.ssb.fdb",
         )
-    assert "Invalid token" in str(e)
+    assert (
+        'Invalid token: Token is missing the "accreditation/role" claim'
+        in str(e)
+    )
 
 
 def test_auth_wrong_role(auth_client):
@@ -183,7 +186,7 @@ def test_auth_expired_token(auth_client):
             authorization_token=token,
             rdn="no.ssb.fdb",
         )
-    assert "Invalid token" in str(e)
+    assert "Invalid token: Signature has expired" in str(e)
 
 
 def test_auth_missing_token(auth_client):
