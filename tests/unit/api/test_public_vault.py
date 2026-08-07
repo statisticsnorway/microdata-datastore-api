@@ -64,7 +64,7 @@ def client(mock_auth_deps: dict, mock_db_client: Mock):
 
 
 def test_save_public_key(client: TestClient, mock_auth_deps: dict):
-    client.post(
+    response = client.post(
         "/datastores/no.ssb.test/public-key",
         content=PUBLIC_KEY_BYTES,
         headers={"Content-Type": "application/x-pem-file", "X-API-Key": "abc"},
