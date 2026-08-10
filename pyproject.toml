@@ -11,7 +11,7 @@ dependencies = [
     "pydantic>=2.13.4",
     "pyjwt>=2.13.0",
     "uvicorn>=0.51.0",
-    "microdata-tools>=2.0.0",
+    "microdata-tools>=2.0.1",
 ]
 
 [dependency-groups]
