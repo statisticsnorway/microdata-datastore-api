@@ -8,7 +8,11 @@ from fastapi.testclient import TestClient
 from httpx import Response
 from microdata_tools import PrivateKey, PublicKey
 
-from datastore_api.adapter import auth, db
+from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
+    authorize_data_administrator,
+)
 from datastore_api.main import app
 
 
@@ -27,10 +31,11 @@ PUBLIC_KEY_PATH = Path(
 
 
 @pytest.fixture
-def mock_auth_client():
-    mock = Mock()
-    mock.check_api_key.return_value = None
-    return mock
+def mock_auth_deps():
+    return {
+        "api_key": Mock(return_value=None),
+        "data_administrator": Mock(return_value=None),
+    }
 
 
 @pytest.fixture
@@ -44,8 +49,13 @@ def mock_db_client():
 
 
 @pytest.fixture
-def client(mock_auth_client: Mock, mock_db_client: Mock):
-    app.dependency_overrides[auth.get_auth_client] = lambda: mock_auth_client
+def client(mock_auth_deps: dict, mock_db_client: Mock):
+    app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
+        "api_key"
+    ]()
+    app.dependency_overrides[authorize_data_administrator] = lambda: (
+        mock_auth_deps["data_administrator"]()
+    )
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -53,12 +63,14 @@ def client(mock_auth_client: Mock, mock_db_client: Mock):
         os.remove(PUBLIC_KEY_PATH)
 
 
-def test_save_public_key(client: TestClient):
-    client.post(
+def test_save_public_key(client: TestClient, mock_auth_deps: dict):
+    response = client.post(
         "/datastores/no.ssb.test/public-key",
         content=PUBLIC_KEY_BYTES,
         headers={"Content-Type": "application/x-pem-file", "X-API-Key": "abc"},
     )
+    assert response.status_code == 200
+    mock_auth_deps["api_key"].assert_called_once()
     assert PUBLIC_KEY_PATH.is_file()
 
 
@@ -82,13 +94,14 @@ def test_create_key_empty_bytes(client: TestClient):
     assert response.status_code == 400
 
 
-def test_get_public_key(client: TestClient):
+def test_get_public_key(client: TestClient, mock_auth_deps: dict):
     PUBLIC_KEY_PATH.write_bytes(PUBLIC_KEY_BYTES)
 
     response: Response = client.get(
         "/datastores/no.ssb.test/public-key",
         headers={"Content-Type": "application/x-pem-file"},
     )
+    mock_auth_deps["data_administrator"].assert_called_once()
     assert response.status_code == 200
     assert response.content == PUBLIC_KEY_BYTES
 

@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from datastore_api.adapter import db
+from datastore_api.adapter.auth.dependencies import authorize_api_key
 from datastore_api.main import app
 
 MAINTENANCE_STATUS_REQUEST_VALID = {"msg": "we upgrade chill", "paused": True}
@@ -48,17 +49,28 @@ def mock_db_client():
 
 
 @pytest.fixture
-def client(mock_db_client):
+def mock_auth_deps():
+    return {
+        "api_key": Mock(return_value=None),
+    }
+
+
+@pytest.fixture
+def client(mock_db_client, mock_auth_deps):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
+    app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
+        "api_key"
+    ]()
     yield TestClient(app)
     app.dependency_overrides.clear()
 
 
-def test_set_maintenance_status(client, mock_db_client):
+def test_set_maintenance_status(client, mock_db_client, mock_auth_deps):
     response = client.post(
         "/maintenance-statuses",
         json=MAINTENANCE_STATUS_REQUEST_VALID,
     )
+    mock_auth_deps["api_key"].assert_called_once()
     mock_db_client.set_maintenance_status.assert_called_once()
     assert response.status_code == 200
     assert response.json() == NEW_STATUS

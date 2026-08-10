@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from datastore_api.adapter import db
 from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
     authorize_datastore_provisioner,
 )
 from datastore_api.adapter.db.models import Datastore, UserInfo
@@ -47,6 +48,7 @@ def mock_db_client():
 def mock_auth_deps():
     return {
         "datastore_provisioner": Mock(return_value=USER_INFO),
+        "api_key": Mock(return_value=None),
     }
 
 
@@ -57,6 +59,9 @@ def client(mock_db_client, mock_auth_deps):
     app.dependency_overrides[authorize_datastore_provisioner] = lambda: (
         mock_auth_deps["datastore_provisioner"]()
     )
+    app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
+        "api_key"
+    ]()
     yield TestClient(app, raise_server_exceptions=False)
     app.dependency_overrides.clear()
 
@@ -65,12 +70,14 @@ def test_get_datastore(client, mock_auth_deps):
     response = client.get(
         "/datastores/no.dev.test", headers={"X-Request-ID": "abc123"}
     )
+    mock_auth_deps["datastore_provisioner"].assert_called_once()
     assert response.status_code == 200
     assert response.json() == DATASTORE.model_dump()
 
 
-def test_get_datastores(client):
+def test_get_datastores(client, mock_auth_deps):
     response = client.get("/datastores", headers={"X-Request-ID": "abc123"})
+    mock_auth_deps["datastore_provisioner"].assert_called_once()
     assert response.status_code == 200
     assert response.json() == [DATASTORE.model_dump()]
 
@@ -108,11 +115,12 @@ def test_get_datastores_rdns(client):
     assert response.json() == ["no.dev.test"]
 
 
-def test_get_datastore_directory(client):
+def test_get_datastore_directory(client, mock_auth_deps):
     response = client.get(
         "/datastores/no.dev.test/directory",
         headers={"X-Request-ID": "abc123"},
     )
+    mock_auth_deps["api_key"].assert_called_once()
     assert response.status_code == 200
     assert response.json() == DATASTORE.directory
 

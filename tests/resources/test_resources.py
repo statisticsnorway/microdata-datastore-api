@@ -17,7 +17,13 @@ valid_jwt_payload = {
     "user/uuid": "12345",
 }
 
-# TODO: Add more payloads for testing
+jwt_payload_no_accreditation_role = {
+    "aud": ["no.ssb.fdb", "datastore-api-jobs"],
+    "exp": (datetime.now() + timedelta(hours=1)).timestamp(),
+    "sub": "testuser",
+    "user/uuid": "12345",
+}
+
 
 PERSON_INCOME_ALL = (
     ";unit_id;value\n"
