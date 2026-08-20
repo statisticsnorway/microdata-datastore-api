@@ -19,6 +19,7 @@ from datastore_api.adapter.kms_client import (
 from datastore_api.common.models import Version
 from datastore_api.domain.data import (
     EncryptedDataReader,
+    _get_parquet_path,
 )
 
 ALL_COLUMNS = ["unit_id", "value", "start_epoch_days", "stop_epoch_days"]
@@ -53,10 +54,8 @@ def _write_encrypted_parquet(table: pyarrow.Table, output_dir: Path) -> None:
 
 def _encrypted_reader(root_dir: Path) -> EncryptedDataReader:
     return EncryptedDataReader(
-        dataset_name=DATASET_NAME,
-        dataset_version=VERSION,
+        parquet_path=_get_parquet_path(VERSION, DATASET_NAME, root_dir),
         columns=ALL_COLUMNS,
-        datastore_root_dir=root_dir,
     )
 
 
