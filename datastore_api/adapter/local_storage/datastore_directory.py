@@ -101,14 +101,6 @@ def get_data_path_from_data_versions(
 
 
 def get_version_from_data_path(dataset_name: str, data_path: str) -> str:
-    """
-    Derives the actual data version a file was published in from a data
-    path resolved by get_data_path_from_data_versions. A dataset's data
-    may not have changed since an earlier version, in which case the
-    file backing a requested version is the same file that was published
-    in that earlier version. This should be used instead of the
-    requested version when e.g. determining encryption status.
-    """
     file_name = os.path.basename(data_path)
     stem = file_name.removesuffix(".parquet")
     version_part = stem.removeprefix(f"{dataset_name}__")
