@@ -83,3 +83,25 @@ def test_get_data_path_from_data_versions_bad_ver_raises_file_not_found_error():
         datastore_directory.get_data_path_from_data_versions(
             "TEST_STUDIEPOENG", Version.from_str("0.0.0.0"), DATASTORE_ROOT_DIR
         )
+
+
+def test_get_version_from_data_path():
+    assert (
+        datastore_directory.get_version_from_data_path(
+            "TEST_PERSON_INCOME", TEST_PERSON_INCOME_PATH_1_0
+        )
+        == "1.0"
+    )
+
+
+def test_get_version_from_data_path_partitioned_parquet():
+    """
+    Partitioned parquet data is stored as a directory without a
+    .parquet suffix, so the data path passed in won't have one either.
+    """
+    assert (
+        datastore_directory.get_version_from_data_path(
+            "TEST_STUDIEPOENG", TEST_STUDIEPOENG_PATH_1_0
+        )
+        == "1.0"
+    )

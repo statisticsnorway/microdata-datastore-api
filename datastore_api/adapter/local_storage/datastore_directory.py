@@ -100,7 +100,7 @@ def get_data_path_from_data_versions(
     return full_path
 
 
-def get_version_from_data_path(dataset_name: str, data_path: str) -> Version:
+def get_version_from_data_path(dataset_name: str, data_path: str) -> str:
     """
     Derives the actual data version a file was published in from a data
     path resolved by get_data_path_from_data_versions. A dataset's data
@@ -113,7 +113,7 @@ def get_version_from_data_path(dataset_name: str, data_path: str) -> Version:
     stem = file_name.removesuffix(".parquet")
     version_part = stem.removeprefix(f"{dataset_name}__")
     major, minor = version_part.split("_")
-    return Version(major=major, minor=minor, patch="0", draft="0")
+    return f"{major}.{minor}"
 
 
 def get_latest_version(datastore_root_dir: Path) -> Version:
