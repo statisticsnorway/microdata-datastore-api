@@ -464,6 +464,12 @@ def test_select_data_reader_returns_encrypted_reader(tmp_path):
     (datastore_dir / "encrypted_versions.json").write_text(
         json.dumps({"versions": ["1.0"]})
     )
+    (datastore_dir / "data_versions__1_0.json").write_text(
+        json.dumps({"TEST_FIXED_DATASET": "TEST_FIXED_DATASET__1_0.parquet"})
+    )
+    dataset_dir = tmp_path / "data" / "TEST_FIXED_DATASET"
+    dataset_dir.mkdir(parents=True)
+    (dataset_dir / "TEST_FIXED_DATASET__1_0.parquet").touch()
     query = InputFixedQuery(
         dataStructureName="TEST_FIXED_DATASET",
         version=Version.from_str("1.0.0.0"),  # NOSONAR
@@ -480,6 +486,12 @@ def test_select_data_reader_returns_unencrypted_reader(
     (datastore_dir / "encrypted_versions.json").write_text(
         json.dumps({"versions": ["2_0"]})
     )
+    (datastore_dir / "data_versions__1_0.json").write_text(
+        json.dumps({"TEST_FIXED_DATASET": "TEST_FIXED_DATASET__1_0.parquet"})
+    )
+    dataset_dir = tmp_path / "data" / "TEST_FIXED_DATASET"
+    dataset_dir.mkdir(parents=True)
+    (dataset_dir / "TEST_FIXED_DATASET__1_0.parquet").touch()
     query = InputFixedQuery(
         dataStructureName="TEST_FIXED_DATASET",
         version=Version.from_str("1.0.0.0"),  # NOSONAR
@@ -491,9 +503,72 @@ def test_select_data_reader_returns_unencrypted_reader(
 def test_select_data_reader_returns_unencr_reader_when_no_encr_versions_file(
     tmp_path,
 ):
+    datastore_dir = tmp_path / "datastore"
+    datastore_dir.mkdir()
+    (datastore_dir / "data_versions__1_0.json").write_text(
+        json.dumps({"TEST_FIXED_DATASET": "TEST_FIXED_DATASET__1_0.parquet"})
+    )
+    dataset_dir = tmp_path / "data" / "TEST_FIXED_DATASET"
+    dataset_dir.mkdir(parents=True)
+    (dataset_dir / "TEST_FIXED_DATASET__1_0.parquet").touch()
     query = InputFixedQuery(
         dataStructureName="TEST_FIXED_DATASET",
         version=Version.from_str("1.0.0.0"),  # NOSONAR
+    )
+    reader = select_data_reader(query, tmp_path)
+    assert isinstance(reader, UnencryptedDataReader)
+
+
+def test_select_data_reader_uses_actual_data_version_not_requested_version(
+    tmp_path,
+):
+    """
+    A dataset requested at version 50.0 may not have changed since
+    version 49.0. In that case the encryption status of version 49.0
+    (the version the data was actually published in) should be used,
+    not the encryption status of the requested version 50.0.
+    """
+    datastore_dir = tmp_path / "datastore"
+    datastore_dir.mkdir()
+    (datastore_dir / "encrypted_versions.json").write_text(
+        json.dumps({"versions": ["49.0"]})
+    )
+    (datastore_dir / "data_versions__50_0.json").write_text(
+        json.dumps({"TEST_FIXED_DATASET": "TEST_FIXED_DATASET__49_0.parquet"})
+    )
+    dataset_dir = tmp_path / "data" / "TEST_FIXED_DATASET"
+    dataset_dir.mkdir(parents=True)
+    (dataset_dir / "TEST_FIXED_DATASET__49_0.parquet").touch()
+    query = InputFixedQuery(
+        dataStructureName="TEST_FIXED_DATASET",
+        version=Version.from_str("50.0.0.0"),  # NOSONAR
+    )
+    reader = select_data_reader(query, tmp_path)
+    assert isinstance(reader, EncryptedDataReader)
+
+
+def test_select_data_reader_uses_actual_data_version_when_unencrypted(
+    tmp_path,
+):
+    """
+    Conversely, requesting version 50.0 where the data was actually last
+    published unencrypted in version 49.0 should return an unencrypted
+    reader, even if version 50.0 itself is encrypted.
+    """
+    datastore_dir = tmp_path / "datastore"
+    datastore_dir.mkdir()
+    (datastore_dir / "encrypted_versions.json").write_text(
+        json.dumps({"versions": ["50.0"]})
+    )
+    (datastore_dir / "data_versions__50_0.json").write_text(
+        json.dumps({"TEST_FIXED_DATASET": "TEST_FIXED_DATASET__49_0.parquet"})
+    )
+    dataset_dir = tmp_path / "data" / "TEST_FIXED_DATASET"
+    dataset_dir.mkdir(parents=True)
+    (dataset_dir / "TEST_FIXED_DATASET__49_0.parquet").touch()
+    query = InputFixedQuery(
+        dataStructureName="TEST_FIXED_DATASET",
+        version=Version.from_str("50.0.0.0"),  # NOSONAR
     )
     reader = select_data_reader(query, tmp_path)
     assert isinstance(reader, UnencryptedDataReader)
