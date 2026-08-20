@@ -95,10 +95,6 @@ def test_get_version_from_data_path():
 
 
 def test_get_version_from_data_path_partitioned_parquet():
-    """
-    Partitioned parquet data is stored as a directory without a
-    .parquet suffix, so the data path passed in won't have one either.
-    """
     assert (
         datastore_directory.get_version_from_data_path(
             "TEST_STUDIEPOENG", TEST_STUDIEPOENG_PATH_1_0
