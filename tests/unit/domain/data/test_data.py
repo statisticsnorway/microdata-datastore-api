@@ -15,6 +15,7 @@ from datastore_api.common.models import Version
 from datastore_api.domain.data import (
     EncryptedDataReader,
     UnencryptedDataReader,
+    _get_parquet_path,
     generate_data_filter,
     select_data_reader,
 )
@@ -85,10 +86,10 @@ def test_valid_event_request():
     data_filter = generate_data_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     file_name = UnencryptedDataReader(
-        dataset_name=payload.dataStructureName,
-        dataset_version=payload.version,
+        parquet_path=_get_parquet_path(
+            payload.version, payload.dataStructureName, DATASTORE_ROOT_DIR
+        ),
         columns=columns,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         data_filter,
     )
@@ -102,10 +103,10 @@ def test_valid_event_request_partitioned():
     data_filter = generate_data_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     file_name = UnencryptedDataReader(
-        dataset_name=payload.dataStructureName,
-        dataset_version=payload.version,
+        parquet_path=_get_parquet_path(
+            payload.version, payload.dataStructureName, DATASTORE_ROOT_DIR
+        ),
         columns=columns,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         data_filter,
     )
@@ -119,10 +120,10 @@ def test_event_request_causing_empty_result():
     data_filter = generate_data_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     result = UnencryptedDataReader(
-        dataset_name=payload.dataStructureName,
-        dataset_version=payload.version,
+        parquet_path=_get_parquet_path(
+            payload.version, payload.dataStructureName, DATASTORE_ROOT_DIR
+        ),
         columns=columns,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         data_filter,
     )
@@ -136,10 +137,10 @@ def test_valid_status_request():
     data_filter = generate_data_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     file_name = UnencryptedDataReader(
-        dataset_name=payload.dataStructureName,
-        dataset_version=payload.version,
+        parquet_path=_get_parquet_path(
+            payload.version, payload.dataStructureName, DATASTORE_ROOT_DIR
+        ),
         columns=columns,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         data_filter,
     )
@@ -154,10 +155,10 @@ def test_invalid_status_request():
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     with pytest.raises(NotFoundException) as e:
         UnencryptedDataReader(
-            dataset_name=payload.dataStructureName,
-            dataset_version=payload.version,
+            parquet_path=_get_parquet_path(
+                payload.version, payload.dataStructureName, DATASTORE_ROOT_DIR
+            ),
             columns=columns,
-            datastore_root_dir=DATASTORE_ROOT_DIR,
         ).read_data(
             data_filter,
         )
@@ -171,10 +172,10 @@ def test_valid_fixed_request():
     data_filter = generate_data_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     file_name = UnencryptedDataReader(
-        dataset_name=payload.dataStructureName,
-        dataset_version=payload.version,
+        parquet_path=_get_parquet_path(
+            payload.version, payload.dataStructureName, DATASTORE_ROOT_DIR
+        ),
         columns=columns,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         data_filter,
     )
@@ -189,10 +190,10 @@ def test_invalid_fixed_request():
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     with pytest.raises(NotFoundException) as e:
         UnencryptedDataReader(
-            dataset_name=payload.dataStructureName,
-            dataset_version=payload.version,
+            parquet_path=_get_parquet_path(
+                payload.version, payload.dataStructureName, DATASTORE_ROOT_DIR
+            ),
             columns=columns,
-            datastore_root_dir=DATASTORE_ROOT_DIR,
         ).read_data(
             data_filter,
         )
@@ -233,10 +234,12 @@ def test_read_parquet_no_filter():
         "6926636",
     ]
     result = UnencryptedDataReader(
-        dataset_name="TEST_PERSON_INCOME",
-        dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+        parquet_path=_get_parquet_path(
+            Version.from_str("1.0.0.0"),
+            "TEST_PERSON_INCOME",
+            DATASTORE_ROOT_DIR,
+        ),
         columns=ALL_COLUMNS,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         None,
     )
@@ -250,10 +253,12 @@ def test_read_parquet_no_filter():
         == len(result_dict["stop_epoch_days"])
     )
     result = UnencryptedDataReader(
-        dataset_name="TEST_PERSON_INCOME",
-        dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+        parquet_path=_get_parquet_path(
+            Version.from_str("1.0.0.0"),
+            "TEST_PERSON_INCOME",
+            DATASTORE_ROOT_DIR,
+        ),
         columns=ALL_COLUMNS[:2],
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         None,
     )
@@ -268,10 +273,12 @@ def test_read_parquet_fixed():
     expected_values = ["21529182", "12687840", "16354872"]
     table_filter = dataset.field("unit_id").isin(expected_unit_ids)
     result = UnencryptedDataReader(
-        dataset_name="TEST_PERSON_INCOME",
-        dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+        parquet_path=_get_parquet_path(
+            Version.from_str("1.0.0.0"),
+            "TEST_PERSON_INCOME",
+            DATASTORE_ROOT_DIR,
+        ),
         columns=ALL_COLUMNS,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         table_filter,
     )
@@ -281,10 +288,12 @@ def test_read_parquet_fixed():
     assert len(result_dict.keys()) == 4
 
     result = UnencryptedDataReader(
-        dataset_name="TEST_PERSON_INCOME",
-        dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+        parquet_path=_get_parquet_path(
+            Version.from_str("1.0.0.0"),
+            "TEST_PERSON_INCOME",
+            DATASTORE_ROOT_DIR,
+        ),
         columns=ALL_COLUMNS[:2],
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         table_filter,
     )
@@ -298,10 +307,12 @@ def test_read_parquet_time_period():
     expected_unit_ids = [11111113735577, 11111111190644]
     expected_values = ["12982099", "11331198"]
     result = UnencryptedDataReader(
-        dataset_name="TEST_PERSON_INCOME",
-        dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+        parquet_path=_get_parquet_path(
+            Version.from_str("1.0.0.0"),
+            "TEST_PERSON_INCOME",
+            DATASTORE_ROOT_DIR,
+        ),
         columns=ALL_COLUMNS,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         FIND_BY_TIME_PERIOD_FILTER,
     )
@@ -322,10 +333,12 @@ def test_read_parquet_time_period_with_pop_filter():
         expected_unit_ids
     )
     result = UnencryptedDataReader(
-        dataset_name="TEST_PERSON_INCOME",
-        dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+        parquet_path=_get_parquet_path(
+            Version.from_str("1.0.0.0"),
+            "TEST_PERSON_INCOME",
+            DATASTORE_ROOT_DIR,
+        ),
         columns=ALL_COLUMNS,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         table_filter,
     )
@@ -343,10 +356,12 @@ def test_read_parquet_time():
     expected_unit_ids = [11111111864482, 11111112296273]
     expected_values = ["21529182", "12687840"]
     result = UnencryptedDataReader(
-        dataset_name="TEST_PERSON_INCOME",
-        dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+        parquet_path=_get_parquet_path(
+            Version.from_str("1.0.0.0"),
+            "TEST_PERSON_INCOME",
+            DATASTORE_ROOT_DIR,
+        ),
         columns=ALL_COLUMNS,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         FIND_BY_TIME_FILTER,
     )
@@ -366,10 +381,12 @@ def test_read_parquet_time_with_pop_filter():
         expected_unit_ids
     )
     result = UnencryptedDataReader(
-        dataset_name="TEST_PERSON_INCOME",
-        dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+        parquet_path=_get_parquet_path(
+            Version.from_str("1.0.0.0"),
+            "TEST_PERSON_INCOME",
+            DATASTORE_ROOT_DIR,
+        ),
         columns=ALL_COLUMNS,
-        datastore_root_dir=DATASTORE_ROOT_DIR,
     ).read_data(
         table_filter,
     )
@@ -393,10 +410,12 @@ def test_read_parquet_with_exact_string_value_filter(fixed_dataset_parquet):
     )
     result_dict = (
         UnencryptedDataReader(
-            dataset_name="TEST_FIXED_DATASET",
-            dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+            parquet_path=_get_parquet_path(
+                Version.from_str("1.0.0.0"),
+                "TEST_FIXED_DATASET",
+                DATASTORE_ROOT_DIR,
+            ),
             columns=ALL_COLUMNS,
-            datastore_root_dir=DATASTORE_ROOT_DIR,
         )
         .read_data(
             data_filter,
@@ -417,10 +436,12 @@ def test_read_parquet_with_wildcard_value_filter(fixed_dataset_parquet):
     )
     result_dict = (
         UnencryptedDataReader(
-            dataset_name="TEST_FIXED_DATASET",
-            dataset_version=Version.from_str("1.0.0.0"),  # NOSONAR
+            parquet_path=_get_parquet_path(
+                Version.from_str("1.0.0.0"),
+                "TEST_FIXED_DATASET",
+                DATASTORE_ROOT_DIR,
+            ),
             columns=ALL_COLUMNS,
-            datastore_root_dir=DATASTORE_ROOT_DIR,
         )
         .read_data(
             data_filter,
@@ -445,10 +466,10 @@ def test_read_parquet_with_combined_population_and_value_filter(
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     result_dict = (
         UnencryptedDataReader(
-            dataset_name=payload.dataStructureName,
-            dataset_version=payload.version,
+            parquet_path=_get_parquet_path(
+                payload.version, payload.dataStructureName, DATASTORE_ROOT_DIR
+            ),
             columns=columns,
-            datastore_root_dir=DATASTORE_ROOT_DIR,
         )
         .read_data(
             data_filter,

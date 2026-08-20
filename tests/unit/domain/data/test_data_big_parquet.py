@@ -11,6 +11,7 @@ from datastore_api.common.models import Version
 from datastore_api.domain.data import (
     InputFixedQuery,
     UnencryptedDataReader,
+    _get_parquet_path,
     generate_data_filter,
 )
 
@@ -92,10 +93,10 @@ def test_read_big_parquet_with_big_pop_and_value_filter(
     data_filter = generate_data_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     result = UnencryptedDataReader(
-        dataset_name=payload.dataStructureName,
-        dataset_version=payload.version,
+        parquet_path=_get_parquet_path(
+            payload.version, payload.dataStructureName, DATASTORE_DIR
+        ),
         columns=columns,
-        datastore_root_dir=DATASTORE_DIR,
     ).read_data(
         data_filter,
     )
