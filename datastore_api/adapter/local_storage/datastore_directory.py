@@ -100,6 +100,22 @@ def get_data_path_from_data_versions(
     return full_path
 
 
+def get_version_from_data_path(dataset_name: str, data_path: str) -> Version:
+    """
+    Derives the actual data version a file was published in from a data
+    path resolved by get_data_path_from_data_versions. A dataset's data
+    may not have changed since an earlier version, in which case the
+    file backing a requested version is the same file that was published
+    in that earlier version. This should be used instead of the
+    requested version when e.g. determining encryption status.
+    """
+    file_name = os.path.basename(data_path)
+    stem = file_name.removesuffix(".parquet")
+    version_part = stem.removeprefix(f"{dataset_name}__")
+    major, minor = version_part.split("_")
+    return Version(major=major, minor=minor, patch="0", draft="0")
+
+
 def get_latest_version(datastore_root_dir: Path) -> Version:
     datastore_versions = json.load(
         open(f"{datastore_root_dir}/datastore/datastore_versions.json")

@@ -183,11 +183,20 @@ def select_data_reader(
     datastore_root_dir: Path,
 ) -> DataReader:
     columns = ALL_COLUMNS if input_query.includeAttributes else ALL_COLUMNS[:2]
-    encrypted_versions = get_encrypted_versions(datastore_root_dir)
-    if (
-        input_query.version.to_2_dotted() in encrypted_versions
-        or input_query.version.is_draft()
-    ):
+    if input_query.version.is_draft():
+        is_encrypted = True
+    else:
+        parquet_path = _get_parquet_path(
+            input_query.version,
+            input_query.dataStructureName,
+            datastore_root_dir,
+        )
+        actual_version = datastore_directory.get_version_from_data_path(
+            input_query.dataStructureName, parquet_path
+        )
+        encrypted_versions = get_encrypted_versions(datastore_root_dir)
+        is_encrypted = actual_version.to_2_dotted() in encrypted_versions
+    if is_encrypted:
         return EncryptedDataReader(
             dataset_name=input_query.dataStructureName,
             dataset_version=input_query.version,
