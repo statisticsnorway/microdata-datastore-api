@@ -80,9 +80,11 @@ class UnencryptedDataReader:
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
-                    "Rows exceed maximum cap of {row_cap}"
+                    f"Rows exceed maximum cap of {row_cap}"
                 )
             return table
+        except TooManyRowsException:
+            raise
         except ArrowTypeError as e:
             raise ValueError(
                 f"Filter value type does not match dataset column type: {e}"
@@ -134,9 +136,11 @@ class EncryptedDataReader:
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
-                    "Rows exceed maximum cap of {row_cap}"
+                    f"Rows exceed maximum cap of {row_cap}"
                 )
             return table
+        except TooManyRowsException:
+            raise
         except ArrowTypeError as e:
             raise ValueError(
                 f"Filter value type does not match dataset column type: {e}"

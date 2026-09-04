@@ -12,6 +12,7 @@ class Environment:
     jwks_url: str
     stack: str
     jwt_auth: Literal["FULL"] | Literal["SKIP_SIGNATURE"] | Literal["OFF"]
+    data_row_cap: int
     secrets_file: str
     datastores_root_dir: str
     migrations_dir: str
@@ -29,6 +30,7 @@ def _initialize_environment() -> Environment:
         jwks_url=os.environ["JWKS_URL"],
         stack=os.environ["STACK"],
         jwt_auth=jwt_auth,
+        data_row_cap=int(os.environ.get("DATA_ROW_CAP", 100_000_000)),
         secrets_file=os.environ["SECRETS_FILE"],
         datastores_root_dir=os.environ["DATASTORES_ROOT_DIR"],
         migrations_dir=os.environ.get("MIGRATIONS_DIR", "migrations"),
