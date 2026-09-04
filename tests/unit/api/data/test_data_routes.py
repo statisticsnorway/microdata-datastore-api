@@ -21,7 +21,7 @@ MOCK_RESULT = pq.read_table("tests/resources/results/mocked_result.parquet")
 
 
 class FakeDataReader:
-    def read_data(self, data_filter):
+    def read_data(self, data_filter, *, row_cap = None):
         return MOCK_RESULT
 
 
