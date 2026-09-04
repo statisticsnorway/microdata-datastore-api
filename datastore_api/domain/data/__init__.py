@@ -83,8 +83,6 @@ class UnencryptedDataReader:
                     f"Rows exceed maximum cap of {row_cap}"
                 )
             return table
-        except TooManyRowsException:
-            raise
         except ArrowTypeError as e:
             raise ValueError(
                 f"Filter value type does not match dataset column type: {e}"
@@ -139,8 +137,6 @@ class EncryptedDataReader:
                     f"Rows exceed maximum cap of {row_cap}"
                 )
             return table
-        except TooManyRowsException:
-            raise
         except ArrowTypeError as e:
             raise ValueError(
                 f"Filter value type does not match dataset column type: {e}"
