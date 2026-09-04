@@ -18,6 +18,7 @@ from datastore_api.adapter.local_storage import (
 from datastore_api.adapter.local_storage.datastore_directory import (
     get_encrypted_versions,
 )
+from datastore_api.common.exceptions import TooManyRowsException
 from datastore_api.common.models import Version
 from datastore_api.domain.data import filters
 from datastore_api.domain.data.models import (
@@ -39,6 +40,8 @@ class DataReader(Protocol):
     def read_data(
         self,
         table_filter: dataset.Expression | None,
+        *,
+        row_cap: int | None = None,
     ) -> Table: ...
 
 
@@ -54,7 +57,12 @@ class UnencryptedDataReader:
         self.parquet_path = parquet_path
         self.columns = columns
 
-    def read_data(self, table_filter: dataset.Expression | None) -> Table:
+    def read_data(
+        self,
+        table_filter: dataset.Expression | None,
+        *,
+        row_cap: int | None = None,
+    ) -> Table:
         """
         Reads and filters an unencrypted parquet file or partition and returns a
         pyarrow.Table with the requested columns.
@@ -62,12 +70,18 @@ class UnencryptedDataReader:
         * table_filter: dataset.Expression - filters applied to the table
         * columns: list[str] - names of the columns to include in the
         returned table
+        * row_cap: int | None - throws an error if the filtered in rows
+        exceed this number
         """
         try:
             table = dataset.dataset(self.parquet_path).to_table(
                 filter=table_filter, columns=self.columns
             )
             logger.info(f"Number of rows in result set: {table.num_rows}")
+            if row_cap and table.num_rows > row_cap:
+                raise TooManyRowsException(
+                    "Rows exceed maximum cap of {row_cap}"
+                )
             return table
         except ArrowTypeError as e:
             raise ValueError(
@@ -87,7 +101,12 @@ class EncryptedDataReader:
         self.parquet_path = parquet_path
         self.columns = columns
 
-    def read_data(self, table_filter: dataset.Expression | None) -> Table:
+    def read_data(
+        self,
+        table_filter: dataset.Expression | None,
+        *,
+        row_cap: int | None = None,
+    ) -> Table:
         """
         Reads and filters an encrypted parquet file or partition and returns a
         pyarrow.Table with the requested columns.
@@ -113,6 +132,10 @@ class EncryptedDataReader:
                 self.parquet_path, format=parquet_format
             ).to_table(filter=table_filter, columns=self.columns)
             logger.info(f"Number of rows in result set: {table.num_rows}")
+            if row_cap and table.num_rows > row_cap:
+                raise TooManyRowsException(
+                    "Rows exceed maximum cap of {row_cap}"
+                )
             return table
         except ArrowTypeError as e:
             raise ValueError(

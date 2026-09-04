@@ -63,7 +63,7 @@ def stream_result_status(
     and stream result as response.
     """
     logger.info(f"Entering /data/status/stream with input query: {input_query}")
-    result_data = data_reader.read_data(data_filter)
+    result_data = data_reader.read_data(data_filter, row_cap=1_000_000)
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
