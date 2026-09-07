@@ -30,6 +30,7 @@ from datastore_api.common.exceptions import (
     PublicKeyInvalidException,
     PublicKeyNotFoundException,
     RequestValidationException,
+    TooManyRowsException,
 )
 
 logger = logging.getLogger()
@@ -79,6 +80,7 @@ def _include_middleware(app: FastAPI) -> None:
             JobExistsException,
             NameValidationError,
             PublicKeyInvalidException,
+            TooManyRowsException,
         ) as exc:
             logger.warning(exc, exc_info=True)
             return JSONResponse(status_code=400, content={"message": str(exc)})

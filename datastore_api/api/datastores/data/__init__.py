@@ -12,6 +12,7 @@ from datastore_api.adapter.auth.dependencies import authorize_user
 from datastore_api.api.common.dependencies import (
     get_data_reader,
 )
+from datastore_api.config import environment
 from datastore_api.domain.data import (
     DataReader,
     generate_data_filter,
@@ -63,7 +64,9 @@ def stream_result_status(
     and stream result as response.
     """
     logger.info(f"Entering /data/status/stream with input query: {input_query}")
-    result_data = data_reader.read_data(data_filter)
+    result_data = data_reader.read_data(
+        data_filter, row_cap=environment.data_row_cap
+    )
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())

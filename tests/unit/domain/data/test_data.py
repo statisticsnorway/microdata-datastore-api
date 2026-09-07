@@ -10,7 +10,10 @@ import pytest
 from pyarrow import Table, dataset, parquet
 
 from datastore_api.adapter.db.models import Datastore
-from datastore_api.common.exceptions import NotFoundException
+from datastore_api.common.exceptions import (
+    NotFoundException,
+    TooManyRowsException,
+)
 from datastore_api.common.models import Version
 from datastore_api.domain.data import (
     EncryptedDataReader,
@@ -208,6 +211,22 @@ def parquet_table_to_csv_string(table):
         sep=";", encoding="utf-8", lineterminator="\n"
     )
     return csv_string
+
+
+def test_read_parquet_exceeding_row_cap_raises_exception():
+    with pytest.raises(TooManyRowsException) as e:
+        UnencryptedDataReader(
+            parquet_path=_get_parquet_path(
+                Version.from_str("1.0.0.0"),
+                "TEST_PERSON_INCOME",
+                DATASTORE_ROOT_DIR,
+            ),
+            columns=ALL_COLUMNS,
+        ).read_data(
+            None,
+            row_cap=5,
+        )
+    assert str(e.value) == "Rows exceed maximum cap of 5"
 
 
 def test_read_parquet_no_filter():
