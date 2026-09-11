@@ -859,3 +859,43 @@ class SqliteDbClient:
             raise e
         finally:
             conn.close()
+
+    def update_bump_enabled(
+        self, datastore_id: int, bump_enabled: bool
+    ) -> None:
+        conn = self._conn()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            cursor = conn.cursor()
+
+            datastore = cursor.execute(
+                """
+                SELECT 1
+                FROM datastore
+                WHERE datastore_id = ?
+                AND deleted_at IS NULL
+                """,
+                (datastore_id,),
+            ).fetchone()
+
+            if datastore is None:
+                raise DatastoreNotFoundException(
+                    "No active datastore found for "
+                    f"datastore_id: {datastore_id}"
+                )
+
+            cursor.execute(
+                """
+                UPDATE datastore
+                SET bump_enabled = ?
+                WHERE datastore_id = ?
+                AND deleted_at IS NULL
+                """,
+                (bump_enabled, datastore_id),
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
