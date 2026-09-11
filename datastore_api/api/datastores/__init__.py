@@ -19,6 +19,7 @@ from datastore_api.api.datastores import (
 )
 from datastore_api.api.datastores.models import (
     NewDatastoreRequest,
+    UpdateBumpEnabledRequest,
 )
 from datastore_api.api.jobs.models import NewJobResponse
 from datastore_api.domain.datastores import (
@@ -81,6 +82,18 @@ async def get_datastore_directory(
     datastore_id: int = Depends(get_datastore_id),
 ) -> str:
     return db_client.get_datastore(datastore_id).directory
+
+
+@router.patch(
+    "/{datastore_rdn}/configuration",
+    dependencies=[Depends(authorize_datastore_provisioner)],
+)
+async def update_bump_enabled(
+    request: UpdateBumpEnabledRequest,
+    db_client: db.DatabaseClient = Depends(db.get_database_client),
+    datastore_id: int = Depends(get_datastore_id),
+) -> None:
+    db_client.update_bump_enabled(datastore_id, request.bump_enabled)
 
 
 router.include_router(jobs.router, prefix="/{datastore_rdn}/jobs")
