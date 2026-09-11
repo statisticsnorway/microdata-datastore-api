@@ -15,7 +15,9 @@ from datastore_api.api.common.dependencies import (
 from datastore_api.config import environment
 from datastore_api.domain.data import (
     DataReader,
-    generate_data_filter,
+    generate_fixed_filter,
+    generate_time_filter,
+    generate_time_period_filter,
 )
 from datastore_api.domain.data.models import (
     ErrorMessage,
@@ -36,7 +38,9 @@ logger = logging.getLogger()
 def stream_result_event(
     input_query: InputTimePeriodQuery,
     data_reader: Annotated[DataReader, Depends(get_data_reader)],
-    data_filter: Annotated[dataset.Expression, Depends(generate_data_filter)],
+    data_filter: Annotated[
+        dataset.Expression, Depends(generate_time_period_filter)
+    ],
 ) -> PlainTextResponse:
     """
     Create Result set of data with temporality type event,
@@ -57,7 +61,7 @@ def stream_result_event(
 def stream_result_status(
     input_query: InputTimeQuery,
     data_reader: Annotated[DataReader, Depends(get_data_reader)],
-    data_filter: Annotated[dataset.Expression, Depends(generate_data_filter)],
+    data_filter: Annotated[dataset.Expression, Depends(generate_time_filter)],
 ) -> PlainTextResponse:
     """
     Create result set of data with temporality type status,
@@ -80,7 +84,9 @@ def stream_result_status(
 def stream_result_fixed(
     input_query: InputFixedQuery,
     data_reader: Annotated[DataReader, Depends(get_data_reader)],
-    data_filter: Annotated[dataset.Expression, Depends(generate_data_filter)],
+    data_filter: Annotated[
+        dataset.Expression | None, Depends(generate_fixed_filter)
+    ],
 ) -> PlainTextResponse:
     """
     Create result set of data with temporality type fixed,

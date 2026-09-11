@@ -12,7 +12,7 @@ from datastore_api.domain.data import (
     InputFixedQuery,
     UnencryptedDataReader,
     _get_parquet_path,
-    generate_data_filter,
+    generate_fixed_filter,
 )
 
 DATASTORE_DIR = Path("tests/resources/test_datastore")
@@ -86,11 +86,11 @@ def test_read_big_parquet_with_big_pop_and_value_filter(
     payload = InputFixedQuery(
         dataStructureName=DATASET_NAME,
         version=Version.from_str("1.0.0.0"),  # NOSONAR
-        population=[1, 3],
+        population=population_filter,
         includeAttributes=True,
-        values=["001*"],
+        values=value_filter,
     )
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_fixed_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     result = UnencryptedDataReader(
         parquet_path=_get_parquet_path(

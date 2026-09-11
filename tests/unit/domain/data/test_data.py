@@ -19,7 +19,9 @@ from datastore_api.domain.data import (
     EncryptedDataReader,
     UnencryptedDataReader,
     _get_parquet_path,
-    generate_data_filter,
+    generate_fixed_filter,
+    generate_time_filter,
+    generate_time_period_filter,
     select_data_reader,
 )
 from datastore_api.domain.data.models import (
@@ -86,7 +88,7 @@ def fixed_dataset_parquet(scope="module"):
 
 def test_valid_event_request():
     payload = test_resources.VALID_EVENT_QUERY_PERSON_INCOME_ALL
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_time_period_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     file_name = UnencryptedDataReader(
         parquet_path=_get_parquet_path(
@@ -103,7 +105,7 @@ def test_valid_event_request():
 
 def test_valid_event_request_partitioned():
     payload = test_resources.VALID_EVENT_QUERY_TEST_STUDIEPOENG_ALL
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_time_period_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     file_name = UnencryptedDataReader(
         parquet_path=_get_parquet_path(
@@ -120,7 +122,7 @@ def test_valid_event_request_partitioned():
 
 def test_event_request_causing_empty_result():
     payload = test_resources.INVALID_EVENT_QUERY_INVALID_STOP_DATE
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_time_period_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     result = UnencryptedDataReader(
         parquet_path=_get_parquet_path(
@@ -137,7 +139,7 @@ def test_event_request_causing_empty_result():
 
 def test_valid_status_request():
     payload = test_resources.VALID_STATUS_QUERY_PERSON_INCOME_LAST_ROW
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_time_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     file_name = UnencryptedDataReader(
         parquet_path=_get_parquet_path(
@@ -154,7 +156,7 @@ def test_valid_status_request():
 
 def test_invalid_status_request():
     payload = test_resources.INVALID_STATUS_QUERY_NOT_FOUND
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_time_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     with pytest.raises(NotFoundException) as e:
         UnencryptedDataReader(
@@ -172,7 +174,7 @@ def test_invalid_status_request():
 
 def test_valid_fixed_request():
     payload = test_resources.VALID_FIXED_QUERY_PERSON_INCOME_ALL
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_fixed_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     file_name = UnencryptedDataReader(
         parquet_path=_get_parquet_path(
@@ -189,7 +191,7 @@ def test_valid_fixed_request():
 
 def test_invalid_fixed_request():
     payload = test_resources.INVALID_FIXED_QUERY_NOT_FOUND
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_fixed_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     with pytest.raises(NotFoundException) as e:
         UnencryptedDataReader(
@@ -420,7 +422,7 @@ def test_read_parquet_time_with_pop_filter():
 
 def test_read_parquet_with_exact_string_value_filter(fixed_dataset_parquet):
     expected_values = ["0012", "0100"]
-    data_filter = generate_data_filter(
+    data_filter = generate_fixed_filter(
         InputFixedQuery(
             values=expected_values,
             dataStructureName="TEST_FIXED_DATASET",
@@ -446,7 +448,7 @@ def test_read_parquet_with_exact_string_value_filter(fixed_dataset_parquet):
 
 def test_read_parquet_with_wildcard_value_filter(fixed_dataset_parquet):
     expected_values = ["0020", "0025", "2100"]
-    data_filter = generate_data_filter(
+    data_filter = generate_fixed_filter(
         InputFixedQuery(
             values=["002*", "2*"],
             dataStructureName="TEST_FIXED_DATASET",
@@ -481,7 +483,7 @@ def test_read_parquet_with_combined_population_and_value_filter(
         includeAttributes=True,
         values=["001*"],
     )
-    data_filter = generate_data_filter(payload)
+    data_filter = generate_fixed_filter(payload)
     columns = ALL_COLUMNS if payload.includeAttributes else ALL_COLUMNS[:2]
     result_dict = (
         UnencryptedDataReader(
