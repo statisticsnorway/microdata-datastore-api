@@ -194,26 +194,31 @@ def select_data_reader(
     return UnencryptedDataReader(parquet_path=parquet_path, columns=columns)
 
 
-def generate_data_filter(
-    input_query: InputTimePeriodQuery | InputTimeQuery | InputFixedQuery,
+def generate_fixed_filter(
+    input_query: InputFixedQuery,
+) -> dataset.Expression | None:
+    return filters.generate_fixed_filter(
+        population_filter=input_query.population,
+        value_filter=input_query.values,
+    )
+
+
+def generate_time_filter(
+    input_query: InputTimeQuery,
 ) -> dataset.Expression:
-    if isinstance(input_query, InputTimePeriodQuery):
-        return filters.generate_time_period_filter(
-            start=input_query.startDate,
-            stop=input_query.stopDate,
-            population_filter=input_query.population,
-            value_filter=input_query.values,
-        )
-    elif isinstance(input_query, InputTimeQuery):
-        return filters.generate_time_filter(
-            date=input_query.date,
-            population_filter=input_query.population,
-            value_filter=input_query.values,
-        )
-    elif isinstance(input_query, InputFixedQuery):
-        return filters.generate_fixed_filter(
-            population_filter=input_query.population,
-            value_filter=input_query.values,
-        )
-    else:
-        raise ValueError("Unsupported query type")
+    return filters.generate_time_filter(
+        date=input_query.date,
+        population_filter=input_query.population,
+        value_filter=input_query.values,
+    )
+
+
+def generate_time_period_filter(
+    input_query: InputTimePeriodQuery,
+) -> dataset.Expression:
+    return filters.generate_time_period_filter(
+        start=input_query.startDate,
+        stop=input_query.stopDate,
+        population_filter=input_query.population,
+        value_filter=input_query.values,
+    )
