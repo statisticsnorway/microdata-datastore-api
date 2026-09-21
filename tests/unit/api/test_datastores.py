@@ -133,8 +133,8 @@ def test_delete_datastore(client, mock_auth_deps):
 
 
 def test_update_bump_enabled_true(client, mock_db_client):
-    response = client.patch(
-        "/datastores/no.dev.test/configuration",
+    response = client.put(
+        "/datastores/no.dev.test/bump-enabled",
         json={"bumpEnabled": True},
     )
     mock_db_client.update_bump_enabled.assert_called_once_with(1, True)
@@ -142,8 +142,8 @@ def test_update_bump_enabled_true(client, mock_db_client):
 
 
 def test_update_bump_enabled_false(client, mock_db_client):
-    response = client.patch(
-        "/datastores/no.dev.test/configuration",
+    response = client.put(
+        "/datastores/no.dev.test/bump-enabled",
         json={"bumpEnabled": False},
     )
     mock_db_client.update_bump_enabled.assert_called_once_with(1, False)
@@ -151,8 +151,8 @@ def test_update_bump_enabled_false(client, mock_db_client):
 
 
 def test_update_bump_enabled_missing_field(client):
-    response = client.patch(
-        "/datastores/no.dev.test/configuration",
+    response = client.put(
+        "/datastores/no.dev.test/bump-enabled",
         json={},
     )
     assert response.status_code == 400
@@ -162,8 +162,8 @@ def test_update_bump_enabled_datastore_not_found(client, mock_db_client):
     mock_db_client.update_bump_enabled.side_effect = DatastoreNotFoundException(
         "No active datastore found"
     )
-    response = client.patch(
-        "/datastores/no.dev.test/configuration",
+    response = client.put(
+        "/datastores/no.dev.test/bump-enabled",
         json={"bumpEnabled": False},
     )
     assert response.status_code == 404
