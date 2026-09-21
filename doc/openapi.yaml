@@ -31,6 +31,23 @@ paths:
     get:
       summary: Get Datastores
       operationId: get_datastores_datastores_get
+      parameters:
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: user-info
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User-Info
       responses:
         '200':
           description: Successful Response
@@ -39,8 +56,14 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/components/schemas/Datastore'
                 title: Response Get Datastores Datastores Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     post:
       summary: New Datastore
       operationId: new_datastore_datastores_post
@@ -80,6 +103,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/rdns:
+    get:
+      summary: Get Datastores Rdns
+      operationId: get_datastores_rdns_datastores_rdns_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                type: array
+                title: Response Get Datastores Rdns Datastores Rdns Get
   /datastores/{datastore_rdn}:
     get:
       summary: Get Datastore
@@ -185,6 +222,51 @@ paths:
                 type: string
                 title: Response Get Datastore Directory Datastores  Datastore Rdn  Directory
                   Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/bump-enabled:
+    put:
+      summary: Update Bump Enabled
+      operationId: update_bump_enabled_datastores__datastore_rdn__bump_enabled_put
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: authorization
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: user-info
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User-Info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBumpEnabledRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
         '422':
           description: Validation Error
           content:
@@ -937,7 +1019,7 @@ paths:
           application/x-pem-file:
             schema:
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
               title: Public Key Bytes
       responses:
         '200':
@@ -1259,22 +1341,18 @@ components:
         datasetName:
           type: string
           title: Datasetname
-        hasMetadata:
-          type: boolean
-          title: Hasmetadata
-        hasData:
-          type: boolean
-          title: Hasdata
+        operation:
+          type: string
+          title: Operation
         isArchived:
           type: boolean
           title: Isarchived
-          default: false
       additionalProperties: false
       type: object
       required:
       - datasetName
-      - hasMetadata
-      - hasData
+      - operation
+      - isArchived
       title: ImportableDataset
     InputFixedQuery:
       properties:
@@ -1289,6 +1367,16 @@ components:
             type: array
           - type: 'null'
           title: Population
+        values:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Values
         includeAttributes:
           type: boolean
           title: Includeattributes
@@ -1311,6 +1399,16 @@ components:
             type: array
           - type: 'null'
           title: Population
+        values:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Values
         includeAttributes:
           type: boolean
           title: Includeattributes
@@ -1341,6 +1439,16 @@ components:
             type: array
           - type: 'null'
           title: Population
+        values:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Values
         includeAttributes:
           type: boolean
           title: Includeattributes
@@ -1608,6 +1716,7 @@ components:
       - REMOVE
       - ROLLBACK_REMOVE
       - DELETE_ARCHIVE
+      - GENERATE_RSA_KEYS
       - GENERATE_KEYS
       title: Operation
     ReleaseStatus:
@@ -1647,6 +1756,16 @@ components:
       - action
       - datastoreRdn
       title: Target
+    UpdateBumpEnabledRequest:
+      properties:
+        bumpEnabled:
+          type: boolean
+          title: Bumpenabled
+      additionalProperties: false
+      type: object
+      required:
+      - bumpEnabled
+      title: UpdateBumpEnabledRequest
     UpdateJobRequest:
       properties:
         status:
