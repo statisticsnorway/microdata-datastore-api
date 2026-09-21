@@ -84,8 +84,8 @@ async def get_datastore_directory(
     return db_client.get_datastore(datastore_id).directory
 
 
-@router.patch(
-    "/{datastore_rdn}/configuration",
+@router.put(
+    "/{datastore_rdn}/bump-enabled",
     dependencies=[Depends(authorize_datastore_provisioner)],
 )
 async def update_bump_enabled(
