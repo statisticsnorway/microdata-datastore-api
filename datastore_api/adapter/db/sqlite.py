@@ -850,7 +850,12 @@ class SqliteDbClient:
             )
             conn.commit()
             if cursor.rowcount == 0:
-                rdn = self._get_datastore_id_to_rdn_map()[1]
+                rdn = self._get_datastore_id_to_rdn_map().get(datastore_id)
+                if rdn is None:
+                    raise DatastoreNotFoundException(
+                        f"Could not find active datastore "
+                        f"with id: {datastore_id}"
+                    )
                 raise DatastoreNotFoundException(
                     f"Could not find active datastore with rdn: {rdn}"
                 )
