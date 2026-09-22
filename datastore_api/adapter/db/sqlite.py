@@ -865,25 +865,7 @@ class SqliteDbClient:
     ) -> None:
         conn = self._conn()
         try:
-            conn.execute("BEGIN IMMEDIATE")
             cursor = conn.cursor()
-
-            datastore = cursor.execute(
-                """
-                SELECT 1
-                FROM datastore
-                WHERE datastore_id = ?
-                AND deleted_at IS NULL
-                """,
-                (datastore_id,),
-            ).fetchone()
-
-            if datastore is None:
-                raise DatastoreNotFoundException(
-                    "No active datastore found for "
-                    f"datastore_id: {datastore_id}"
-                )
-
             cursor.execute(
                 """
                 UPDATE datastore
@@ -894,6 +876,16 @@ class SqliteDbClient:
                 (bump_enabled, datastore_id),
             )
             conn.commit()
+            if cursor.rowcount == 0:
+                rdn = self._get_datastore_id_to_rdn_map().get(datastore_id)
+                if rdn is None:
+                    raise DatastoreNotFoundException(
+                        f"Could not find active datastore "
+                        f"with id: {datastore_id}"
+                    )
+                raise DatastoreNotFoundException(
+                    f"Could not find active datastore with rdn: {rdn}"
+                )
         except Exception:
             conn.rollback()
             raise
