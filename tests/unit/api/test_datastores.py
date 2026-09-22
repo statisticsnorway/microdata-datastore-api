@@ -11,6 +11,7 @@ from datastore_api.adapter.auth.dependencies import (
 from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.api.common import dependencies
 from datastore_api.api.jobs.models import NewJobResponse
+from datastore_api.common.exceptions import DatastoreNotFoundException
 from datastore_api.main import app
 
 DATASTORE = Datastore(
@@ -129,3 +130,40 @@ def test_delete_datastore(client, mock_auth_deps):
     response = client.delete("/datastores/no.dev.test")
     mock_auth_deps["datastore_provisioner"].assert_called_once()
     assert response.status_code == 200
+
+
+def test_update_bump_enabled_true(client, mock_db_client):
+    response = client.put(
+        "/datastores/no.dev.test/bump-enabled",
+        json={"bumpEnabled": True},
+    )
+    mock_db_client.update_bump_enabled.assert_called_once_with(1, True)
+    assert response.status_code == 200
+
+
+def test_update_bump_enabled_false(client, mock_db_client):
+    response = client.put(
+        "/datastores/no.dev.test/bump-enabled",
+        json={"bumpEnabled": False},
+    )
+    mock_db_client.update_bump_enabled.assert_called_once_with(1, False)
+    assert response.status_code == 200
+
+
+def test_update_bump_enabled_missing_field(client):
+    response = client.put(
+        "/datastores/no.dev.test/bump-enabled",
+        json={},
+    )
+    assert response.status_code == 400
+
+
+def test_update_bump_enabled_datastore_not_found(client, mock_db_client):
+    mock_db_client.update_bump_enabled.side_effect = DatastoreNotFoundException(
+        "No active datastore found"
+    )
+    response = client.put(
+        "/datastores/no.dev.test/bump-enabled",
+        json={"bumpEnabled": False},
+    )
+    assert response.status_code == 404

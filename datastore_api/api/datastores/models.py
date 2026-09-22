@@ -40,3 +40,7 @@ class NewDatastoreRequest(CamelModel, extra="forbid"):
             directory=datastore_dir,
             bump_enabled=self.bump_enabled,
         )
+
+
+class UpdateBumpEnabledRequest(CamelModel, extra="forbid"):
+    bump_enabled: bool

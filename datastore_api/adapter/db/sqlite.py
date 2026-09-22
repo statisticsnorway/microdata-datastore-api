@@ -864,3 +864,35 @@ class SqliteDbClient:
             raise e
         finally:
             conn.close()
+
+    def update_bump_enabled(
+        self, datastore_id: int, bump_enabled: bool
+    ) -> None:
+        conn = self._conn()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE datastore
+                SET bump_enabled = ?
+                WHERE datastore_id = ?
+                AND deleted_at IS NULL
+                """,
+                (bump_enabled, datastore_id),
+            )
+            conn.commit()
+            if cursor.rowcount == 0:
+                rdn = self._get_datastore_id_to_rdn_map().get(datastore_id)
+                if rdn is None:
+                    raise DatastoreNotFoundException(
+                        f"Could not find active datastore "
+                        f"with id: {datastore_id}"
+                    )
+                raise DatastoreNotFoundException(
+                    f"Could not find active datastore with rdn: {rdn}"
+                )
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()

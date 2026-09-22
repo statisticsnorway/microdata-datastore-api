@@ -567,3 +567,39 @@ def test_delete_datastore(existing_datastore):
     )
     with pytest.raises(DatastoreNotFoundException):
         sqlite_client.get_datastore_id_from_rdn(rdn)
+
+
+def test_update_bump_enabled_persists_change():
+    datastore_id = sqlite_client.get_datastore_id_from_rdn("no.dev.test")
+    datastore = sqlite_client.get_datastore(datastore_id)
+    assert datastore.bump_enabled is True
+    sqlite_client.update_bump_enabled(
+        datastore_id=datastore_id,
+        bump_enabled=False,
+    )
+    datastore = sqlite_client.get_datastore(datastore_id)
+    assert datastore.bump_enabled is False
+
+
+def test_update_bump_enabled_enables_datastore():
+    datastore_id = sqlite_client.get_datastore_id_from_rdn("no.dev.test")
+    sqlite_client.update_bump_enabled(
+        datastore_id=datastore_id,
+        bump_enabled=False,
+    )
+    datastore = sqlite_client.get_datastore(datastore_id)
+    assert datastore.bump_enabled is False
+    sqlite_client.update_bump_enabled(
+        datastore_id=datastore_id,
+        bump_enabled=True,
+    )
+    datastore = sqlite_client.get_datastore(datastore_id)
+    assert datastore.bump_enabled is True
+
+
+def test_update_bump_enabled_unknown_datastore():
+    with pytest.raises(DatastoreNotFoundException):
+        sqlite_client.update_bump_enabled(
+            datastore_id=999,
+            bump_enabled=True,
+        )
