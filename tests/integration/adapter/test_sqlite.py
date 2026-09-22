@@ -584,7 +584,7 @@ def test_update_bump_enabled_persists_change():
 def test_update_bump_enabled_enables_datastore():
     datastore_id = sqlite_client.get_datastore_id_from_rdn("no.dev.test")
     sqlite_client.update_bump_enabled(
-        datastore_id=999,
+        datastore_id=datastore_id,
         bump_enabled=False,
     )
     datastore = sqlite_client.get_datastore(datastore_id)
