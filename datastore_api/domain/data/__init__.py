@@ -65,21 +65,19 @@ class UnencryptedDataReader:
         table_filter: dataset.Expression | None,
         *,
         row_cap: int | None = None,
+        head_rows: int | None = None,
     ) -> Table:
-        """
-        Reads and filters an unencrypted parquet file or partition and returns a
-        pyarrow.Table with the requested columns.
-
-        * table_filter: dataset.Expression - filters applied to the table
-        * columns: list[str] - names of the columns to include in the
-        returned table
-        * row_cap: int | None - throws an error if the filtered in rows
-        exceed this number
-        """
         try:
-            table = dataset.dataset(self.parquet_path).to_table(
-                filter=table_filter, columns=self.columns
-            )
+            ds = dataset.dataset(self.parquet_path)
+
+            if head_rows is not None:
+                # Stops scanning as soon as head_rows matching rows are found
+                table = ds.head(
+                    head_rows, filter=table_filter, columns=self.columns
+                )
+            else:
+                table = ds.to_table(filter=table_filter, columns=self.columns)
+
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
@@ -109,6 +107,7 @@ class EncryptedDataReader:
         table_filter: dataset.Expression | None,
         *,
         row_cap: int | None = None,
+        head_rows: int | None = None,
     ) -> Table:
         """
         Reads and filters an encrypted parquet file or partition and returns a
@@ -131,9 +130,16 @@ class EncryptedDataReader:
                 default_fragment_scan_options=scan_options
             )
 
-            table = dataset.dataset(
-                self.parquet_path, format=parquet_format
-            ).to_table(filter=table_filter, columns=self.columns)
+            ds = dataset.dataset(self.parquet_path, format=parquet_format)
+
+            if head_rows is not None:
+                # Stops scanning as soon as head_rows matching rows are found
+                table = ds.head(
+                    head_rows, filter=table_filter, columns=self.columns
+                )
+            else:
+                table = ds.to_table(filter=table_filter, columns=self.columns)
+
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
