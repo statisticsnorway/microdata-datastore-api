@@ -234,8 +234,8 @@ def validate_encryption(
             )
 
         try:
-            data_reader.read_data(None, head_rows=1)
-            read_successfully = True
+            table = data_reader.read_data(None, head_rows=1)
+            read_successfully = table.num_rows == 1
         except Exception:
             read_successfully = False
 
