@@ -233,7 +233,7 @@ def validate_encryption(
             )
 
         try:
-            data_reader.read_data(None)
+            data_reader.read_data(None, head_rows=1)
             read_successfully = True
         except Exception:
             read_successfully = False
