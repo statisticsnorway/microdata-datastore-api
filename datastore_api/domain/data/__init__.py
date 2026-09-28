@@ -45,6 +45,7 @@ class DataReader(Protocol):
         table_filter: dataset.Expression | None,
         *,
         row_cap: int | None = None,
+        head_rows: int | None = None,
     ) -> Table: ...
 
 
