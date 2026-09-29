@@ -248,10 +248,13 @@ def validate_encryption(
                 f"Unexpected reader type: {type(data_reader).__name__}"
             )
 
-        actual_version = datastore_directory.get_version_from_data_path(
-            dataset_name,
-            data_reader.parquet_path,
-        )
+        if version.is_draft():
+            actual_version = "DRAFT"
+        else:
+            actual_version = datastore_directory.get_version_from_data_path(
+                dataset_name,
+                data_reader.parquet_path,
+            )
 
         dataset_encr_stat = DatasetEncryptionStatus(
             data_structure_name=dataset_name,
