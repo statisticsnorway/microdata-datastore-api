@@ -224,6 +224,12 @@ def validate_encryption(
         )
         data_reader = select_data_reader(input_query, datastore_root_dir)
 
+        try:
+            table = data_reader.read_data(None, head_rows=1)
+            read_successfully = table.num_rows == 1
+        except Exception:
+            read_successfully = False
+
         if isinstance(data_reader, EncryptedDataReader):
             reader_type = "encrypted"
         elif isinstance(data_reader, UnencryptedDataReader):
@@ -233,20 +239,9 @@ def validate_encryption(
                 f"Unexpected reader type: {type(data_reader).__name__}"
             )
 
-        try:
-            table = data_reader.read_data(None, head_rows=1)
-            read_successfully = table.num_rows == 1
-        except Exception:
-            read_successfully = False
-
-        parquet_path = _get_parquet_path(
-            version,
-            dataset_name,
-            datastore_root_dir,
-        )
         actual_version = datastore_directory.get_version_from_data_path(
             dataset_name,
-            parquet_path,
+            data_reader.parquet_path,
         )
 
         dataset_encr_stat = DatasetEncryptionStatus(
