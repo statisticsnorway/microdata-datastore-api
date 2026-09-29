@@ -1,7 +1,7 @@
 import string
 from typing import Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_serializer, field_validator
 
 from datastore_api.common.models import Version
 
@@ -94,3 +94,7 @@ class EncryptionStatus(BaseModel):
     datastore_root_dir: str
     requested_version: Version
     datasets: list[DatasetEncryptionStatus]
+
+    @field_serializer("requested_version")
+    def serialize_requested_version(self, version: Version) -> str:
+        return version.to_4_dotted()
