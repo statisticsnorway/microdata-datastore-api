@@ -20,6 +20,7 @@ from datastore_api.common.models import Version
 from datastore_api.domain.data import (
     EncryptedDataReader,
     _get_parquet_path,
+    validate_encryption,
 )
 
 ALL_COLUMNS = ["unit_id", "value", "start_epoch_days", "stop_epoch_days"]
@@ -83,6 +84,22 @@ def encrypted_parquet(tmp_path):
     return tmp_path, table
 
 
+@pytest.fixture
+def encrypted_datastore(encrypted_parquet):
+    root_dir, table = encrypted_parquet
+    datastore_dir = root_dir / "datastore"
+
+    (datastore_dir / "metadata_all__1_0_0.json").write_text(
+        json.dumps({"dataStructures": [{"name": DATASET_NAME}]})
+    )
+
+    (datastore_dir / "encrypted_versions.json").write_text(
+        json.dumps({"versions": ["1.0"]})
+    )
+
+    return root_dir, table
+
+
 def test_encrypted_reader_result_matches_unencrypted(encrypted_parquet):
     root_dir, original_table = encrypted_parquet
     result = _encrypted_reader(root_dir).read_data(None)
@@ -120,3 +137,19 @@ def test_encrypted_reader_wrong_key_raises_value_error(
     )
     with pytest.raises(ValueError, match="Parquet decryption failed"):
         _encrypted_reader(root_dir).read_data(None)
+
+
+def test_validate_encryption(
+    encrypted_datastore,
+):
+    root_dir, _ = encrypted_datastore
+
+    encr_status = validate_encryption(root_dir, VERSION)
+    assert encr_status.datastore_root_dir == str(root_dir)
+    assert encr_status.requested_version == VERSION
+
+    dataset_status = encr_status.datasets[0]
+    assert dataset_status.data_structure_name == DATASET_NAME
+    assert dataset_status.read_successfully is True
+    assert dataset_status.reader == "encrypted"
+    assert dataset_status.actual_version == "1.0"
