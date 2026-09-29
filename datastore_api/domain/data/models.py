@@ -1,4 +1,5 @@
 import string
+from typing import Literal
 
 from pydantic import BaseModel, field_validator
 
@@ -81,3 +82,16 @@ class InputFixedQuery(InputQuery):
 
 class ErrorMessage(BaseModel):
     detail: str
+
+
+class DatasetEncryptionStatus(BaseModel):
+    data_structure_name: str
+    reader: Literal["encrypted", "unencrypted"]
+    read_successfully: bool
+    actual_version: str
+
+
+class EncryptionStatus(BaseModel):
+    datastore_root_dir: str
+    requested_version: Version
+    datasets: list[DatasetEncryptionStatus]
