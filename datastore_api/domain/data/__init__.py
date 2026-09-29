@@ -72,6 +72,8 @@ class UnencryptedDataReader:
             ds = dataset.dataset(self.parquet_path)
 
             if head_rows is not None:
+                if head_rows < 0:
+                    raise ValueError("head_rows must be a positive integer.")
                 # Stops scanning as soon as head_rows matching rows are found
                 table = ds.head(
                     head_rows, filter=table_filter, columns=self.columns
@@ -134,6 +136,8 @@ class EncryptedDataReader:
             ds = dataset.dataset(self.parquet_path, format=parquet_format)
 
             if head_rows is not None:
+                if head_rows < 0:
+                    raise ValueError("head_rows must be a positive integer.")
                 # Stops scanning as soon as head_rows matching rows are found
                 table = ds.head(
                     head_rows, filter=table_filter, columns=self.columns
