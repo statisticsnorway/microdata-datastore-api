@@ -73,7 +73,9 @@ class UnencryptedDataReader:
 
             if head_rows is not None:
                 if head_rows < 0:
-                    raise ValueError("head_rows must be a positive integer.")
+                    raise ValueError(
+                        "head_rows must be a non-negative integer."
+                    )
                 # Stops scanning as soon as head_rows matching rows are found
                 table = ds.head(
                     head_rows, filter=table_filter, columns=self.columns
@@ -137,7 +139,9 @@ class EncryptedDataReader:
 
             if head_rows is not None:
                 if head_rows < 0:
-                    raise ValueError("head_rows must be a positive integer.")
+                    raise ValueError(
+                        "head_rows must be a non-negative integer."
+                    )
                 # Stops scanning as soon as head_rows matching rows are found
                 table = ds.head(
                     head_rows, filter=table_filter, columns=self.columns
@@ -229,10 +233,11 @@ def validate_encryption(
         data_reader = select_data_reader(input_query, datastore_root_dir)
 
         try:
-            table = data_reader.read_data(None, head_rows=1)
-            read_successfully = table.num_rows == 1
-        except Exception:
-            read_successfully = False
+            data_reader.read_data(None, head_rows=1)
+        except Exception as error:
+            err_msg = f"Failed to read dataset {dataset_name}."
+            logger.exception(err_msg)
+            raise ValueError(err_msg) from error
 
         if isinstance(data_reader, EncryptedDataReader):
             reader_type = "encrypted"
@@ -251,7 +256,6 @@ def validate_encryption(
         dataset_encr_stat = DatasetEncryptionStatus(
             data_structure_name=dataset_name,
             reader=reader_type,
-            read_successfully=read_successfully,
             actual_version=actual_version,
         )
         dataset_encr_stats.append(dataset_encr_stat)
