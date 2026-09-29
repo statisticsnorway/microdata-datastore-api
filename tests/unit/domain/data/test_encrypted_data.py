@@ -100,6 +100,44 @@ def encrypted_datastore(encrypted_parquet):
     return root_dir, table
 
 
+@pytest.fixture
+def unencrypted_datastore(tmp_path):
+    table = pyarrow.table(
+        {
+            "unit_id": [1, 2, 3, 4, 5],
+            "value": ["A", "B", "C", "D", "E"],
+            "start_epoch_days": [18262, 18628, 18993, 19358, 19723],
+            "stop_epoch_days": [18627, 18992, 19357, 19722, None],
+        }
+    )
+
+    parquet_dir_name = f"{DATASET_NAME}__{VERSION.to_2_underscored()}"
+    parquet_dir = tmp_path / "data" / DATASET_NAME / parquet_dir_name
+    parquet_dir.mkdir(parents=True)
+
+    dataset.write_dataset(
+        table,
+        parquet_dir,
+        format="parquet",
+        max_rows_per_file=0,
+    )
+
+    datastore_dir = tmp_path / "datastore"
+    datastore_dir.mkdir()
+    (
+        datastore_dir / f"data_versions__{VERSION.to_2_underscored()}.json"
+    ).write_text(json.dumps({DATASET_NAME: parquet_dir_name}))
+
+    (datastore_dir / "metadata_all__1_0_0.json").write_text(
+        json.dumps({"dataStructures": [{"name": DATASET_NAME}]})
+    )
+
+    (datastore_dir / "encrypted_versions.json").write_text(
+        json.dumps({"versions": []})
+    )
+    return tmp_path, table
+
+
 def test_encrypted_reader_result_matches_unencrypted(encrypted_parquet):
     root_dir, original_table = encrypted_parquet
     result = _encrypted_reader(root_dir).read_data(None)
@@ -152,4 +190,20 @@ def test_validate_encryption(
     assert dataset_status.data_structure_name == DATASET_NAME
     assert dataset_status.read_successfully is True
     assert dataset_status.reader == "encrypted"
+    assert dataset_status.actual_version == "1.0"
+
+
+def test_validate_encryption_unencrypted(
+    unencrypted_datastore,
+):
+    root_dir, _ = unencrypted_datastore
+
+    encr_status = validate_encryption(root_dir, VERSION)
+    assert encr_status.datastore_root_dir == str(root_dir)
+    assert encr_status.requested_version == VERSION
+
+    dataset_status = encr_status.datasets[0]
+    assert dataset_status.data_structure_name == DATASET_NAME
+    assert dataset_status.read_successfully is True
+    assert dataset_status.reader == "unencrypted"
     assert dataset_status.actual_version == "1.0"
