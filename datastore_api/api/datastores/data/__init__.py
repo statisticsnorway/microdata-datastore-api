@@ -4,7 +4,7 @@ from typing import Annotated
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import PlainTextResponse
 from pyarrow import dataset
 
@@ -113,9 +113,10 @@ def stream_result_fixed(
     dependencies=[Depends(authorize_api_key)],
 )
 async def encryption_status(
-    version: Version,
+    version: str = Query(...),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
 ) -> EncryptionStatus:
+    parsed_version = Version.from_str(version)
     root_dir = get_datastore_root_dir(database_client, datastore_id)
-    return validate_encryption(root_dir, version)
+    return validate_encryption(root_dir, parsed_version)
