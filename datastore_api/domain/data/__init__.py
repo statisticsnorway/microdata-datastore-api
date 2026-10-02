@@ -28,7 +28,6 @@ from datastore_api.domain.data.models import (
     InputTimePeriodQuery,
     InputTimeQuery,
 )
-from datastore_api.domain.metadata import find_data_structures
 
 logger = logging.getLogger()
 
@@ -200,17 +199,11 @@ def select_data_reader(
 def validate_encryption(
     datastore_root_dir: Path,
     version: Version,
+    dataset_names: list[str],
 ) -> EncryptionStatus:
-    data_structures = find_data_structures(
-        datastore_root_dir=datastore_root_dir,
-        names=[],
-        version=version,
-        include_attributes=False,
-    )
 
     dataset_encr_stats = []
-    for data_structure in data_structures:
-        dataset_name = data_structure["name"]
+    for dataset_name in dataset_names:
         input_query = InputFixedQuery(
             dataStructureName=dataset_name,
             version=version,

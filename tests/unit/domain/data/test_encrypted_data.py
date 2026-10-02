@@ -181,8 +181,8 @@ def test_validate_encryption(
     encrypted_datastore,
 ):
     root_dir, _ = encrypted_datastore
-
-    encr_status = validate_encryption(root_dir, VERSION)
+    dataset_names = [DATASET_NAME]
+    encr_status = validate_encryption(root_dir, VERSION, dataset_names)
     assert encr_status.datastore_root_dir == str(root_dir)
     assert encr_status.requested_version == VERSION
 
@@ -196,8 +196,8 @@ def test_validate_encryption_unencrypted(
     unencrypted_datastore,
 ):
     root_dir, _ = unencrypted_datastore
-
-    encr_status = validate_encryption(root_dir, VERSION)
+    dataset_names = [DATASET_NAME]
+    encr_status = validate_encryption(root_dir, VERSION, dataset_names)
     assert encr_status.datastore_root_dir == str(root_dir)
     assert encr_status.requested_version == VERSION
 
