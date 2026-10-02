@@ -207,9 +207,12 @@ def test_validate_encryption(client, mocker, mock_validate_encryption):
         "datastore_api.api.datastores.data.validate_encryption",
         return_value=mock_validate_encryption,
     )
-    response = client.get(
+    response = client.post(
         "/datastores/no.ssb.test/data/encryption-status",
-        params={"version": "1.0.0.0"},
+        json={
+            "version": "1.0.0.0",
+            "data_structure_names": ["FAKE_NAME"],
+        },
         headers={"x-api-key": "test-key"},
     )
 

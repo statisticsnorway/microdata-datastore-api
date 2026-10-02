@@ -98,3 +98,8 @@ class EncryptionStatus(BaseModel):
     @field_serializer("requested_version")
     def serialize_requested_version(self, version: Version) -> str:
         return version.to_4_dotted()
+
+
+class EncryptionStatusRequest(BaseModel):
+    version: str
+    data_structure_names: list[str]
