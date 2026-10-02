@@ -235,8 +235,11 @@ def validate_encryption(
         try:
             data_reader.read_data(None, head_rows=1)
         except Exception as error:
-            err_msg = f"Failed to read dataset {dataset_name}."
-            logger.exception(err_msg)
+            safe_dataset_name = dataset_name.replace("\r", r"\r").replace(
+                "\n", r"\n"
+            )
+            err_msg = f"Failed to read dataset {safe_dataset_name}."
+            logger.exception("Failed to read dataset %s", safe_dataset_name)
             raise ValueError(err_msg) from error
 
         if isinstance(data_reader, EncryptedDataReader):
