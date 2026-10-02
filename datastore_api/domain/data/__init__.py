@@ -45,7 +45,6 @@ class DataReader(Protocol):
         table_filter: dataset.Expression | None,
         *,
         row_cap: int | None = None,
-        head_rows: int | None = None,
     ) -> Table: ...
 
 
@@ -66,23 +65,21 @@ class UnencryptedDataReader:
         table_filter: dataset.Expression | None,
         *,
         row_cap: int | None = None,
-        head_rows: int | None = None,
     ) -> Table:
+        """
+        Reads and filters an unencrypted parquet file or partition and returns a
+        pyarrow.Table with the requested columns.
+
+        * table_filter: dataset.Expression - filters applied to the table
+        * columns: list[str] - names of the columns to include in the
+        returned table
+        * row_cap: int | None - throws an error if the filtered in rows
+        exceed this number
+        """
         try:
-            ds = dataset.dataset(self.parquet_path)
-
-            if head_rows is not None:
-                if head_rows < 0:
-                    raise ValueError(
-                        "head_rows must be a non-negative integer."
-                    )
-                # Stops scanning as soon as head_rows matching rows are found
-                table = ds.head(
-                    head_rows, filter=table_filter, columns=self.columns
-                )
-            else:
-                table = ds.to_table(filter=table_filter, columns=self.columns)
-
+            table = dataset.dataset(self.parquet_path).to_table(
+                filter=table_filter, columns=self.columns
+            )
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
@@ -112,7 +109,6 @@ class EncryptedDataReader:
         table_filter: dataset.Expression | None,
         *,
         row_cap: int | None = None,
-        head_rows: int | None = None,
     ) -> Table:
         """
         Reads and filters an encrypted parquet file or partition and returns a
@@ -135,20 +131,9 @@ class EncryptedDataReader:
                 default_fragment_scan_options=scan_options
             )
 
-            ds = dataset.dataset(self.parquet_path, format=parquet_format)
-
-            if head_rows is not None:
-                if head_rows < 0:
-                    raise ValueError(
-                        "head_rows must be a non-negative integer."
-                    )
-                # Stops scanning as soon as head_rows matching rows are found
-                table = ds.head(
-                    head_rows, filter=table_filter, columns=self.columns
-                )
-            else:
-                table = ds.to_table(filter=table_filter, columns=self.columns)
-
+            table = dataset.dataset(
+                self.parquet_path, format=parquet_format
+            ).to_table(filter=table_filter, columns=self.columns)
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
@@ -232,8 +217,36 @@ def validate_encryption(
         )
         data_reader = select_data_reader(input_query, datastore_root_dir)
 
+        # Determine the reader type
+        if isinstance(data_reader, EncryptedDataReader):
+            decryption_config = dataset.ParquetDecryptionConfig(
+                make_crypto_factory(),
+                KmsConnectionConfig(),
+                DecryptionConfiguration(),
+            )
+            scan_options = dataset.ParquetFragmentScanOptions(
+                decryption_config=decryption_config
+            )
+            parquet_format = dataset.ParquetFileFormat(
+                default_fragment_scan_options=scan_options
+            )
+
+            ds = dataset.dataset(
+                data_reader.parquet_path, format=parquet_format
+            )
+            reader_type = "encrypted"
+
+        elif isinstance(data_reader, UnencryptedDataReader):
+            ds = dataset.dataset(data_reader.parquet_path)
+            reader_type = "unencrypted"
+        else:
+            raise TypeError(
+                f"Unexpected reader type: {type(data_reader).__name__}"
+            )
+
+        # Read the first row of the dataset
         try:
-            data_reader.read_data(None, head_rows=1)
+            ds.head(1, columns=data_reader.columns)
         except Exception as error:
             safe_dataset_name = dataset_name.replace("\r", r"\r").replace(
                 "\n", r"\n"
@@ -242,15 +255,7 @@ def validate_encryption(
             logger.exception("Failed to read dataset %s", safe_dataset_name)
             raise ValueError(err_msg) from error
 
-        if isinstance(data_reader, EncryptedDataReader):
-            reader_type = "encrypted"
-        elif isinstance(data_reader, UnencryptedDataReader):
-            reader_type = "unencrypted"
-        else:
-            raise TypeError(
-                f"Unexpected reader type: {type(data_reader).__name__}"
-            )
-
+        # Record the dataset version recorded in data path
         if version.is_draft():
             actual_version = "DRAFT"
         else:
