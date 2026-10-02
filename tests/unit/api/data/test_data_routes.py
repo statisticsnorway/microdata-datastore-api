@@ -7,9 +7,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from datastore_api.adapter import db
-from datastore_api.adapter.auth.dependencies import authorize_user
+from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
+    authorize_user,
+)
 from datastore_api.api.common.dependencies import (
     get_data_reader,
+    get_datastore_id,
+)
+from datastore_api.common.models import Version
+from datastore_api.domain.data.models import (
+    DatasetEncryptionStatus,
+    EncryptionStatus,
 )
 from datastore_api.main import app
 
@@ -20,6 +29,21 @@ MOCK_RESULT = pq.read_table("tests/resources/results/mocked_result.parquet")
 @pytest.fixture
 def mock_data_reader():
     return Mock(read_data=Mock(return_value=MOCK_RESULT))
+
+
+@pytest.fixture
+def mock_validate_encryption():
+    return EncryptionStatus(
+        datastore_root_dir="tests/resources/test_datastore",
+        requested_version=Version.from_str("1.0.0.0"),
+        datasets=[
+            DatasetEncryptionStatus(
+                data_structure_name="FAKE_NAME",
+                reader="unencrypted",
+                actual_version="1.0",
+            )
+        ],
+    )
 
 
 @pytest.fixture
@@ -35,6 +59,7 @@ def mock_db_client():
 def mock_auth_deps():
     return {
         "user": Mock(return_value=None),
+        "api_key": Mock(return_value=None),
     }
 
 
@@ -42,7 +67,11 @@ def mock_auth_deps():
 def client(mock_db_client: Mock, mock_auth_deps: dict, mock_data_reader: Mock):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
     app.dependency_overrides[authorize_user] = lambda: mock_auth_deps["user"]()
+    app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
+        "api_key"
+    ]()
     app.dependency_overrides[get_data_reader] = lambda: mock_data_reader
+    app.dependency_overrides[get_datastore_id] = lambda: 1
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -171,3 +200,32 @@ def test_data_stream_requires_dates(
         for error in response.json()["details"]
     )
     mock_data_reader.read_data.assert_not_called()
+
+
+def test_validate_encryption(client, mocker, mock_validate_encryption):
+    mocked_validate = mocker.patch(
+        "datastore_api.api.datastores.data.validate_encryption",
+        return_value=mock_validate_encryption,
+    )
+    response = client.post(
+        "/datastores/no.ssb.test/data/encryption-status",
+        json={
+            "version": "1.0.0.0",
+            "data_structure_names": ["FAKE_NAME"],
+        },
+        headers={"x-api-key": "test-key"},
+    )
+
+    assert response.status_code == 200
+    mocked_validate.assert_called_once()
+    assert response.json() == {
+        "datastore_root_dir": "tests/resources/test_datastore",
+        "requested_version": "1.0.0.0",
+        "datasets": [
+            {
+                "data_structure_name": "FAKE_NAME",
+                "reader": "unencrypted",
+                "actual_version": "1.0",
+            }
+        ],
+    }
