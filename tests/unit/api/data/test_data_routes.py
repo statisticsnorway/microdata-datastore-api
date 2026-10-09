@@ -219,7 +219,7 @@ def test_validate_encryption(client, mocker, mock_validate_encryption):
     mocked_validate.assert_called_once()
     assert response.json() == {
         "datastore_root_dir": "tests/resources/test_datastore",
-        "requested_version": "1.0.0.0",
+        "requested_version": "1.0",
         "datasets": [
             {
                 "data_structure_name": "FAKE_NAME",

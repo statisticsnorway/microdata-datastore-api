@@ -183,8 +183,10 @@ def test_validate_encryption(
     root_dir, _ = encrypted_datastore
     dataset_names = [DATASET_NAME]
     encr_status = validate_encryption(root_dir, VERSION, dataset_names)
-    assert encr_status.datastore_root_dir == str(root_dir)
-    assert encr_status.requested_version == VERSION
+    encr_status_json = encr_status.model_dump()
+
+    assert encr_status_json["datastore_root_dir"] == str(root_dir)
+    assert encr_status_json["requested_version"] == VERSION.to_2_dotted()
 
     dataset_status = encr_status.datasets[0]
     assert dataset_status.data_structure_name == DATASET_NAME
