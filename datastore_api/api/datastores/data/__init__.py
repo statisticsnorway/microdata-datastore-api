@@ -115,7 +115,7 @@ def stream_result_fixed(
     "/encryption-status",
     dependencies=[Depends(authorize_api_key)],
 )
-async def encryption_status(
+def encryption_status(
     request: EncryptionStatusRequest,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     datastore_id: int = Depends(get_datastore_id),
