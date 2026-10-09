@@ -249,13 +249,10 @@ def validate_encryption(
             raise ValueError(err_msg) from error
 
         # Record the dataset version recorded in data path
-        if version.is_draft():
-            actual_version = "DRAFT"
-        else:
-            actual_version = datastore_directory.get_version_from_data_path(
-                dataset_name,
-                data_reader.parquet_path,
-            )
+        actual_version = datastore_directory.get_version_from_data_path(
+            dataset_name,
+            data_reader.parquet_path,
+        )
 
         dataset_encr_stat = DatasetEncryptionStatus(
             data_structure_name=dataset_name,
