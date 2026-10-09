@@ -238,15 +238,7 @@ def validate_encryption(
             )
 
         # Read the first row of the dataset
-        try:
-            ds.head(1, columns=data_reader.columns)
-        except Exception as error:
-            safe_dataset_name = dataset_name.replace("\r", r"\r").replace(
-                "\n", r"\n"
-            )
-            err_msg = f"Failed to read dataset {safe_dataset_name}."
-            logger.exception("Failed to read dataset %s", safe_dataset_name)
-            raise ValueError(err_msg) from error
+        ds.head(1, columns=data_reader.columns)
 
         # Record the dataset encryption information
         dataset_encr_stat = DatasetEncryptionStatus(
