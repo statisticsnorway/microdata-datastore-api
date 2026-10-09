@@ -248,16 +248,10 @@ def validate_encryption(
             logger.exception("Failed to read dataset %s", safe_dataset_name)
             raise ValueError(err_msg) from error
 
-        # Record the dataset version recorded in data path
-        actual_version = datastore_directory.get_version_from_data_path(
-            dataset_name,
-            data_reader.parquet_path,
-        )
-
+        # Record the dataset encryption information
         dataset_encr_stat = DatasetEncryptionStatus(
             data_structure_name=dataset_name,
             reader=reader_type,
-            actual_version=actual_version,
         )
         dataset_encr_stats.append(dataset_encr_stat)
     return EncryptionStatus(

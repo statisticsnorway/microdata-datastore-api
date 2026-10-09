@@ -189,7 +189,6 @@ def test_validate_encryption(
     dataset_status = encr_status.datasets[0]
     assert dataset_status.data_structure_name == DATASET_NAME
     assert dataset_status.reader == "encrypted"
-    assert dataset_status.actual_version == "1.0"
 
 
 def test_validate_encryption_unencrypted(
@@ -204,4 +203,3 @@ def test_validate_encryption_unencrypted(
     dataset_status = encr_status.datasets[0]
     assert dataset_status.data_structure_name == DATASET_NAME
     assert dataset_status.reader == "unencrypted"
-    assert dataset_status.actual_version == "1.0"
