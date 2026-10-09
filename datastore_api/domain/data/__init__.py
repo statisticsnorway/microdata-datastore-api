@@ -22,6 +22,8 @@ from datastore_api.common.exceptions import TooManyRowsException
 from datastore_api.common.models import Version
 from datastore_api.domain.data import filters
 from datastore_api.domain.data.models import (
+    DatasetEncryptionStatus,
+    EncryptionStatus,
     InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
@@ -192,6 +194,63 @@ def select_data_reader(
     if is_encrypted:
         return EncryptedDataReader(parquet_path=parquet_path, columns=columns)
     return UnencryptedDataReader(parquet_path=parquet_path, columns=columns)
+
+
+def validate_encryption(
+    datastore_root_dir: Path,
+    version: Version,
+    dataset_names: list[str],
+) -> EncryptionStatus:
+
+    dataset_encr_stats = []
+    for dataset_name in dataset_names:
+        input_query = InputFixedQuery(
+            dataStructureName=dataset_name,
+            version=version,
+        )
+        data_reader = select_data_reader(input_query, datastore_root_dir)
+
+        # Determine the reader type
+        if isinstance(data_reader, EncryptedDataReader):
+            decryption_config = dataset.ParquetDecryptionConfig(
+                make_crypto_factory(),
+                KmsConnectionConfig(),
+                DecryptionConfiguration(),
+            )
+            scan_options = dataset.ParquetFragmentScanOptions(
+                decryption_config=decryption_config
+            )
+            parquet_format = dataset.ParquetFileFormat(
+                default_fragment_scan_options=scan_options
+            )
+
+            ds = dataset.dataset(
+                data_reader.parquet_path, format=parquet_format
+            )
+            reader_type = "encrypted"
+
+        elif isinstance(data_reader, UnencryptedDataReader):
+            ds = dataset.dataset(data_reader.parquet_path)
+            reader_type = "unencrypted"
+        else:
+            raise TypeError(
+                f"Unexpected reader type: {type(data_reader).__name__}"
+            )
+
+        # Read the first row of the dataset
+        ds.head(1, columns=data_reader.columns)
+
+        # Record the dataset encryption information
+        dataset_encr_stat = DatasetEncryptionStatus(
+            data_structure_name=dataset_name,
+            reader=reader_type,
+        )
+        dataset_encr_stats.append(dataset_encr_stat)
+    return EncryptionStatus(
+        datastore_root_dir=str(datastore_root_dir),
+        requested_version=version,
+        datasets=dataset_encr_stats,
+    )
 
 
 def generate_fixed_filter(

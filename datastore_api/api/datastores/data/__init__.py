@@ -1,5 +1,6 @@
 # pylint: disable=unused-argument
 import logging
+from pathlib import Path
 from typing import Annotated
 
 import pyarrow as pa
@@ -8,18 +9,26 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
 from pyarrow import dataset
 
-from datastore_api.adapter.auth.dependencies import authorize_user
+from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
+    authorize_user,
+)
 from datastore_api.api.common.dependencies import (
     get_data_reader,
+    get_datastore_root_dir,
 )
+from datastore_api.common.models import Version
 from datastore_api.config import environment
 from datastore_api.domain.data import (
     DataReader,
     generate_fixed_filter,
     generate_time_filter,
     generate_time_period_filter,
+    validate_encryption,
 )
 from datastore_api.domain.data.models import (
+    EncryptionStatus,
+    EncryptionStatusRequest,
     ErrorMessage,
     InputFixedQuery,
     InputTimePeriodQuery,
@@ -99,3 +108,18 @@ def stream_result_fixed(
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
+
+
+@router.post(
+    "/encryption-status",
+    dependencies=[Depends(authorize_api_key)],
+)
+def encryption_status(
+    request: EncryptionStatusRequest,
+    datastore_root_dir: Path = Depends(get_datastore_root_dir),
+) -> EncryptionStatus:
+    parsed_version = Version.from_str(request.version)
+    dataset_names = request.data_structure_names
+    return validate_encryption(
+        datastore_root_dir, parsed_version, dataset_names
+    )
