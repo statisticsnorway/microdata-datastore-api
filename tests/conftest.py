@@ -12,6 +12,7 @@ os.environ["DATASTORES_ROOT_DIR"] = "tests/resources/datastores/"
 import pytest
 from fastapi import testclient
 
+from datastore_api.config import environment
 from datastore_api.main import app
 
 
@@ -27,4 +28,13 @@ def pytest_addoption(parser):
         dest="include-big-data",
         default=False,
         help="enable big data testing",
+    )
+
+
+@pytest.fixture
+def allow_tmp_path_as_datastore_root(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        environment,
+        "datastores_root_dir",
+        str(tmp_path),
     )

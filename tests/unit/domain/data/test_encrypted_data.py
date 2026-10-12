@@ -177,6 +177,7 @@ def test_encrypted_reader_wrong_key_raises_value_error(
         _encrypted_reader(root_dir).read_data(None)
 
 
+@pytest.mark.usefixtures("allow_tmp_path_as_datastore_root")
 def test_validate_encryption(
     encrypted_datastore,
 ):
@@ -194,6 +195,7 @@ def test_validate_encryption(
     assert dataset_status.read_successfully is True
 
 
+@pytest.mark.usefixtures("allow_tmp_path_as_datastore_root")
 def test_validate_encryption_unencrypted(
     unencrypted_datastore,
 ):
