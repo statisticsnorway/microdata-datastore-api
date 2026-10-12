@@ -86,7 +86,7 @@ class ErrorMessage(BaseModel):
 
 class DatasetEncryptionStatus(BaseModel):
     data_structure_name: str
-    reader: Literal["encrypted", "unencrypted"]
+    reader: Literal["encrypted", "unencrypted"] | None
     read_successfully: bool
 
 

@@ -204,6 +204,7 @@ def validate_encryption(
 
     dataset_encr_stats = []
     for dataset_name in dataset_names:
+        reader_type = None
         try:
             input_query = InputFixedQuery(
                 dataStructureName=dataset_name,
@@ -225,14 +226,10 @@ def validate_encryption(
                     default_fragment_scan_options=scan_options
                 )
                 reader_type = "encrypted"
-            elif isinstance(data_reader, UnencryptedDataReader):
+            else:
                 parquet_format = None
                 reader_type = "unencrypted"
-                logger.error(f"Found unencrypted dataset: {dataset_name}")
-            else:
-                raise TypeError(
-                    f"Unexpected reader type: {type(data_reader).__name__}"
-                )
+                logger.error("Found unencrypted dataset: %r", dataset_name)
 
             ds = dataset.dataset(
                 data_reader.parquet_path, format=parquet_format
@@ -240,7 +237,7 @@ def validate_encryption(
             ds.head(1, columns=data_reader.columns)
             read_successfully = True
         except Exception:
-            logger.exception(f"Failed to validate dataset {dataset_name}")
+            logger.exception("Failed to validate dataset %r", dataset_name)
             read_successfully = False
 
         dataset_encr_stat = DatasetEncryptionStatus(
