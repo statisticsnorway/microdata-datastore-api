@@ -40,6 +40,7 @@ def mock_validate_encryption():
             DatasetEncryptionStatus(
                 data_structure_name="FAKE_NAME",
                 reader="unencrypted",
+                read_successfully=True,
             )
         ],
     )
@@ -224,6 +225,7 @@ def test_validate_encryption(client, mocker, mock_validate_encryption):
             {
                 "data_structure_name": "FAKE_NAME",
                 "reader": "unencrypted",
+                "read_successfully": True,
             }
         ],
     }

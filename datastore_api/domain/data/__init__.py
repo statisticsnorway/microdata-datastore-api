@@ -204,52 +204,52 @@ def validate_encryption(
 
     dataset_encr_stats = []
     for dataset_name in dataset_names:
-        input_query = InputFixedQuery(
-            dataStructureName=dataset_name,
-            version=version,
-        )
-        data_reader = select_data_reader(input_query, datastore_root_dir)
-
-        # Determine the reader type
-        if isinstance(data_reader, EncryptedDataReader):
-            decryption_config = dataset.ParquetDecryptionConfig(
-                make_crypto_factory(),
-                KmsConnectionConfig(),
-                DecryptionConfiguration(),
-            )
-            scan_options = dataset.ParquetFragmentScanOptions(
-                decryption_config=decryption_config
-            )
-            parquet_format = dataset.ParquetFileFormat(
-                default_fragment_scan_options=scan_options
-            )
-
-            reader_type = "encrypted"
-
-        elif isinstance(data_reader, UnencryptedDataReader):
-            parquet_format = None
-            reader_type = "unencrypted"
-        else:
-            raise TypeError(
-                f"Unexpected reader type: {type(data_reader).__name__}"
-            )
-
         try:
+            input_query = InputFixedQuery(
+                dataStructureName=dataset_name,
+                version=version,
+            )
+            data_reader = select_data_reader(input_query, datastore_root_dir)
+
+            # Determine the reader type
+            if isinstance(data_reader, EncryptedDataReader):
+                decryption_config = dataset.ParquetDecryptionConfig(
+                    make_crypto_factory(),
+                    KmsConnectionConfig(),
+                    DecryptionConfiguration(),
+                )
+                scan_options = dataset.ParquetFragmentScanOptions(
+                    decryption_config=decryption_config
+                )
+                parquet_format = dataset.ParquetFileFormat(
+                    default_fragment_scan_options=scan_options
+                )
+                reader_type = "encrypted"
+            elif isinstance(data_reader, UnencryptedDataReader):
+                parquet_format = None
+                reader_type = "unencrypted"
+                logger.error(f"Found unencrypted dataset: {dataset_name}")
+            else:
+                raise TypeError(
+                    f"Unexpected reader type: {type(data_reader).__name__}"
+                )
+
             ds = dataset.dataset(
                 data_reader.parquet_path, format=parquet_format
             )
             ds.head(1, columns=data_reader.columns)
-        except Exception as error:
-            raise ValueError(
-                f"Failed to read dataset {dataset_name}"
-            ) from error
+            read_successfully = True
+        except Exception:
+            logger.exception(f"Failed to validate dataset {dataset_name}")
+            read_successfully = False
 
-        # Record the dataset encryption information
         dataset_encr_stat = DatasetEncryptionStatus(
             data_structure_name=dataset_name,
             reader=reader_type,
+            read_successfully=read_successfully,
         )
         dataset_encr_stats.append(dataset_encr_stat)
+
     return EncryptionStatus(
         datastore_root_dir=str(datastore_root_dir),
         requested_version=version,
