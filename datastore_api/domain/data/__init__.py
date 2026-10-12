@@ -224,21 +224,25 @@ def validate_encryption(
                 default_fragment_scan_options=scan_options
             )
 
-            ds = dataset.dataset(
-                data_reader.parquet_path, format=parquet_format
-            )
             reader_type = "encrypted"
 
         elif isinstance(data_reader, UnencryptedDataReader):
-            ds = dataset.dataset(data_reader.parquet_path)
+            parquet_format = None
             reader_type = "unencrypted"
         else:
             raise TypeError(
                 f"Unexpected reader type: {type(data_reader).__name__}"
             )
 
-        # Read the first row of the dataset
-        ds.head(1, columns=data_reader.columns)
+        try:
+            ds = dataset.dataset(
+                data_reader.parquet_path, format=parquet_format
+            )
+            ds.head(1, columns=data_reader.columns)
+        except Exception as error:
+            raise ValueError(
+                f"Failed to read dataset {dataset_name}"
+            ) from error
 
         # Record the dataset encryption information
         dataset_encr_stat = DatasetEncryptionStatus(
