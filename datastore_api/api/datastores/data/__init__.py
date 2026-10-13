@@ -1,6 +1,5 @@
 # pylint: disable=unused-argument
 import logging
-from pathlib import Path
 from typing import Annotated
 
 import pyarrow as pa
@@ -9,12 +8,14 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
 from pyarrow import dataset
 
+from datastore_api.adapter import db
 from datastore_api.adapter.auth.dependencies import (
     authorize_api_key,
     authorize_user,
 )
 from datastore_api.api.common.dependencies import (
     get_data_reader,
+    get_datastore_id,
     get_datastore_root_dir,
 )
 from datastore_api.common.models import Version
@@ -116,10 +117,10 @@ def stream_result_fixed(
 )
 def encryption_status(
     request: EncryptionStatusRequest,
-    datastore_root_dir: Path = Depends(get_datastore_root_dir),
+    database_client: db.DatabaseClient = Depends(db.get_database_client),
+    datastore_id: int = Depends(get_datastore_id),
 ) -> EncryptionStatus:
     parsed_version = Version.from_str(request.version)
     dataset_names = request.data_structure_names
-    return validate_encryption(
-        datastore_root_dir, parsed_version, dataset_names
-    )
+    root_dir = get_datastore_root_dir(database_client, datastore_id)
+    return validate_encryption(root_dir, parsed_version, dataset_names)
