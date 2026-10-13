@@ -138,7 +138,12 @@ def get_encrypted_versions(datastore_root_dir: Path) -> list[str]:
 
 
 def validate_path(path: Path) -> Path:
-    """Validate a path wrt. the ``environment.datastores_root_dir``."""
+    """
+    Resolve a path and require it to remain under the configured datastore root.
+
+    Returns the resolved path, or raises ``RuntimeError`` if it is outside
+    ``environment.datastores_root_dir``.
+    """
     resolved_path = path.resolve()
     allowed_root = Path(environment.datastores_root_dir).resolve()
     if not resolved_path.is_relative_to(allowed_root):
