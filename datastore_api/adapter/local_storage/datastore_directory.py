@@ -113,8 +113,9 @@ def get_version_from_data_path(dataset_name: str, data_path: str) -> str:
 
 def get_latest_version(datastore_root_dir: Path) -> Version:
     path = Path(f"{datastore_root_dir}/datastore/datastore_versions.json")
-    validated_path = str(validate_path(path))
-    datastore_versions = json.load(open(validated_path))
+    validated_path = validate_path(path)
+    with validated_path.open(encoding="utf-8") as f:
+        datastore_versions = json.load(f)
     version_list = datastore_versions.get("versions", [])
     return Version.from_str((version_list[0] or {}).get("version", ""))
 
