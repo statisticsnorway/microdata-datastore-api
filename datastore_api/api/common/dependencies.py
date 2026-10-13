@@ -4,6 +4,9 @@ from pathlib import Path
 from fastapi import Depends
 
 from datastore_api.adapter import db
+from datastore_api.adapter.local_storage.datastore_directory import (
+    validate_path,
+)
 from datastore_api.domain.data import DataReader, select_data_reader
 from datastore_api.domain.data.models import (
     InputFixedQuery,
@@ -27,7 +30,9 @@ def get_datastore_root_dir(
     datastore_id: int = Depends(get_datastore_id),
 ) -> Path:
     """Returns the path to the datastore directory"""
-    return Path(database_client.get_datastore(datastore_id).directory)
+    path = Path(database_client.get_datastore(datastore_id).directory)
+    resolved_path = validate_path(path)
+    return resolved_path
 
 
 def get_data_reader(

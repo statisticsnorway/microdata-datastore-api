@@ -7,7 +7,7 @@ os.environ["SQLITE_URL"] = "test.db"
 os.environ["JWT_AUTH"] = "OFF"
 os.environ["JWKS_URL"] = "http://localhost"
 os.environ["SECRETS_FILE"] = "tests/resources/secrets/secrets.json"
-os.environ["DATASTORES_ROOT_DIR"] = "tests/resources/datastores/"
+os.environ["DATASTORES_ROOT_DIR"] = "tests/resources/test_datastore"
 
 import pytest
 from fastapi import testclient
