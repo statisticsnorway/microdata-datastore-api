@@ -84,7 +84,8 @@ def get_data_path_from_data_versions(
     data_versions_file = os.path.join(
         datastore_root_dir, f"datastore/data_versions__{file_version}.json"
     )
-    with open(data_versions_file, encoding="utf-8") as f:
+    resolved_path = str(validate_path(Path(data_versions_file)))
+    with open(resolved_path, encoding="utf-8") as f:
         data_versions = json.load(f)
     if dataset_name not in data_versions:
         raise NotFoundException(
