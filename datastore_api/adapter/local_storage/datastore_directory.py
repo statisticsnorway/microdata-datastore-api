@@ -94,12 +94,13 @@ def get_data_path_from_data_versions(
         )
     file_name = data_versions[dataset_name]
     full_path = f"{datastore_root_dir}/data/{dataset_name}/{file_name}"
-    if not os.path.exists(full_path):
-        logger.error(f"{full_path} does not exist")
+    resolved_full_path = str(validate_path(Path(full_path)))
+    if not os.path.exists(resolved_full_path):
+        logger.error(f"{resolved_full_path} does not exist")
         raise NotFoundException(
             f"No file exists for {dataset_name} in version {version}"
         )
-    return full_path
+    return resolved_full_path
 
 
 def get_version_from_data_path(dataset_name: str, data_path: str) -> str:
