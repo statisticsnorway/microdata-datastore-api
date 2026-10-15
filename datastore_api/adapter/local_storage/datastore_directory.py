@@ -6,7 +6,6 @@ from pathlib import Path
 
 from datastore_api.common.exceptions import NotFoundException
 from datastore_api.common.models import Version
-from datastore_api.config import environment
 
 logger = logging.getLogger()
 
@@ -129,17 +128,3 @@ def get_encrypted_versions(datastore_root_dir: Path) -> list[str]:
 
     encr_version_list = encrypted_versions["versions"]
     return encr_version_list
-
-
-def validate_path(path: Path) -> Path:
-    """
-    Resolve a path and require it to remain under the configured datastore root.
-
-    Returns the resolved path, or raises ``RuntimeError`` if it is outside
-    ``environment.datastores_root_dir``.
-    """
-    resolved_path = path.resolve()
-    allowed_root = Path(environment.datastores_root_dir).resolve()
-    if not resolved_path.is_relative_to(allowed_root):
-        raise RuntimeError("Datastore directory is outside the configured root")
-    return resolved_path
