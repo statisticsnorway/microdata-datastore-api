@@ -500,7 +500,6 @@ def test_read_parquet_with_combined_population_and_value_filter(
     assert result_dict["value"] == expected_values
 
 
-@pytest.mark.usefixtures("allow_tmp_path_as_datastore_root")
 def test_select_data_reader_returns_encrypted_reader(tmp_path):
     datastore_dir = tmp_path / "datastore"
     datastore_dir.mkdir()
@@ -521,7 +520,6 @@ def test_select_data_reader_returns_encrypted_reader(tmp_path):
     assert isinstance(reader, EncryptedDataReader)
 
 
-@pytest.mark.usefixtures("allow_tmp_path_as_datastore_root")
 def test_select_data_reader_returns_unencrypted_reader(
     tmp_path,
 ):
@@ -544,7 +542,6 @@ def test_select_data_reader_returns_unencrypted_reader(
     assert isinstance(reader, UnencryptedDataReader)
 
 
-@pytest.mark.usefixtures("allow_tmp_path_as_datastore_root")
 def test_select_data_reader_returns_unencr_reader_when_no_encr_versions_file(
     tmp_path,
 ):
@@ -564,7 +561,6 @@ def test_select_data_reader_returns_unencr_reader_when_no_encr_versions_file(
     assert isinstance(reader, UnencryptedDataReader)
 
 
-@pytest.mark.usefixtures("allow_tmp_path_as_datastore_root")
 def test_select_data_reader_uses_actual_data_version_not_requested_version(
     tmp_path,
 ):
@@ -593,7 +589,6 @@ def test_select_data_reader_uses_actual_data_version_not_requested_version(
     assert isinstance(reader, EncryptedDataReader)
 
 
-@pytest.mark.usefixtures("allow_tmp_path_as_datastore_root")
 def test_select_data_reader_uses_actual_data_version_when_unencrypted(
     tmp_path,
 ):
