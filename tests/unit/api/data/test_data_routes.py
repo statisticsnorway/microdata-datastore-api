@@ -204,11 +204,11 @@ def test_data_stream_requires_dates(
 
 def test_validate_encryption(client, mocker, mock_validate_encryption):
     mocked_validate = mocker.patch(
-        "datastore_api.api.datastores.data.validate_encryption",
+        "datastore_api.api.datastores.validate_encryption",
         return_value=mock_validate_encryption,
     )
     response = client.post(
-        "/datastores/no.ssb.test/data/encryption-status",
+        "/datastores/no.ssb.test/encryption-status",
         json={
             "version": "1.0.0.0",
             "data_structure_names": ["FAKE_NAME"],
