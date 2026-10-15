@@ -84,8 +84,7 @@ def get_data_path_from_data_versions(
     data_versions_file = os.path.join(
         datastore_root_dir, f"datastore/data_versions__{file_version}.json"
     )
-    resolved_path = str(validate_path(Path(data_versions_file)))
-    with open(resolved_path, encoding="utf-8") as f:
+    with open(data_versions_file, encoding="utf-8") as f:
         data_versions = json.load(f)
     if dataset_name not in data_versions:
         raise NotFoundException(
@@ -94,13 +93,12 @@ def get_data_path_from_data_versions(
         )
     file_name = data_versions[dataset_name]
     full_path = f"{datastore_root_dir}/data/{dataset_name}/{file_name}"
-    resolved_full_path = str(validate_path(Path(full_path)))
-    if not os.path.exists(resolved_full_path):
-        logger.error(f"{resolved_full_path} does not exist")
+    if not os.path.exists(full_path):
+        logger.error(f"{full_path} does not exist")
         raise NotFoundException(
             f"No file exists for {dataset_name} in version {version}"
         )
-    return resolved_full_path
+    return full_path
 
 
 def get_version_from_data_path(dataset_name: str, data_path: str) -> str:
@@ -112,21 +110,17 @@ def get_version_from_data_path(dataset_name: str, data_path: str) -> str:
 
 
 def get_latest_version(datastore_root_dir: Path) -> Version:
-    path = Path(f"{datastore_root_dir}/datastore/datastore_versions.json")
-    validated_path = validate_path(path)
-    with validated_path.open(encoding="utf-8") as f:
-        datastore_versions = json.load(f)
+    datastore_versions = json.load(
+        open(f"{datastore_root_dir}/datastore/datastore_versions.json")
+    )
     version_list = datastore_versions.get("versions", [])
     return Version.from_str((version_list[0] or {}).get("version", ""))
 
 
 def get_encrypted_versions(datastore_root_dir: Path) -> list[str]:
     try:
-        path = Path(datastore_root_dir / "datastore/encrypted_versions.json")
-        encrypted_versions_path = validate_path(path)
-
         with open(
-            encrypted_versions_path,
+            f"{datastore_root_dir}/datastore/encrypted_versions.json",
             encoding="utf-8",
         ) as f:
             encrypted_versions = json.load(f)
