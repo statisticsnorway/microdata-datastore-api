@@ -273,6 +273,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/encryption-status:
+    post:
+      summary: Encryption Status
+      operationId: encryption_status_datastores__datastore_rdn__encryption_status_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EncryptionStatusRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncryptionStatus'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /datastores/{datastore_rdn}/jobs:
     get:
       summary: Get Jobs For Datastore
@@ -790,43 +827,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
           description: Not Found
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /datastores/{datastore_rdn}/data/encryption-status:
-    post:
-      summary: Encryption Status
-      operationId: encryption_status_datastores__datastore_rdn__data_encryption_status_post
-      parameters:
-      - name: datastore_rdn
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Datastore Rdn
-      - name: x-api-key
-        in: header
-        required: false
-        schema:
-          type: string
-          default: X-API-KEY
-          title: X-Api-Key
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EncryptionStatusRequest'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EncryptionStatus'
         '422':
           description: Validation Error
           content:
