@@ -68,7 +68,7 @@ MOCKED_LANGUAGES = [
 
 DATA_STRUCTURES_FILE_PATH = "tests/resources/fixtures/api/data_structures.json"
 METADATA_ALL_FILE_PATH = "tests/resources/fixtures/domain/metadata_all.json"
-DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore").resolve()
+DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore")
 
 
 @pytest.fixture
