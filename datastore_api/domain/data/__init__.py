@@ -22,6 +22,8 @@ from datastore_api.common.exceptions import TooManyRowsException
 from datastore_api.common.models import Version
 from datastore_api.domain.data import filters
 from datastore_api.domain.data.models import (
+    DatasetEncryptionStatus,
+    EncryptionStatus,
     InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
@@ -101,6 +103,22 @@ class EncryptedDataReader:
         self.parquet_path = parquet_path
         self.columns = columns
 
+    def reader_helper(self) -> dataset.Dataset:
+        decryption_config = dataset.ParquetDecryptionConfig(
+            make_crypto_factory(),
+            KmsConnectionConfig(),
+            DecryptionConfiguration(),
+        )
+        scan_options = dataset.ParquetFragmentScanOptions(
+            decryption_config=decryption_config
+        )
+        parquet_format = dataset.ParquetFileFormat(
+            default_fragment_scan_options=scan_options
+        )
+
+        ds = dataset.dataset(self.parquet_path, format=parquet_format)
+        return ds
+
     def read_data(
         self,
         table_filter: dataset.Expression | None,
@@ -116,21 +134,9 @@ class EncryptedDataReader:
         returned table
         """
         try:
-            decryption_config = dataset.ParquetDecryptionConfig(
-                make_crypto_factory(),
-                KmsConnectionConfig(),
-                DecryptionConfiguration(),
-            )
-            scan_options = dataset.ParquetFragmentScanOptions(
-                decryption_config=decryption_config
-            )
-            parquet_format = dataset.ParquetFileFormat(
-                default_fragment_scan_options=scan_options
-            )
+            ds = self.reader_helper()
 
-            table = dataset.dataset(
-                self.parquet_path, format=parquet_format
-            ).to_table(filter=table_filter, columns=self.columns)
+            table = ds.to_table(filter=table_filter, columns=self.columns)
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
@@ -192,6 +198,51 @@ def select_data_reader(
     if is_encrypted:
         return EncryptedDataReader(parquet_path=parquet_path, columns=columns)
     return UnencryptedDataReader(parquet_path=parquet_path, columns=columns)
+
+
+def validate_encryption(
+    datastore_root_dir: Path,
+    version: Version,
+    dataset_names: list[str],
+) -> EncryptionStatus:
+
+    dataset_encr_stats = []
+    for dataset_name in dataset_names:
+        reader_type = None
+        try:
+            input_query = InputFixedQuery(
+                dataStructureName=dataset_name,
+                version=version,
+            )
+            data_reader = select_data_reader(input_query, datastore_root_dir)
+
+            # Determine the reader type
+            if isinstance(data_reader, EncryptedDataReader):
+                ds = data_reader.reader_helper()
+                reader_type = "encrypted"
+            else:
+                ds = dataset.dataset(data_reader.parquet_path, format=None)
+                reader_type = "unencrypted"
+                logger.error("Found unencrypted dataset: %r", dataset_name)
+
+            ds.head(1, columns=data_reader.columns)
+            read_successfully = True
+        except Exception:
+            logger.exception("Failed to validate dataset %r", dataset_name)
+            read_successfully = False
+
+        dataset_encr_stat = DatasetEncryptionStatus(
+            data_structure_name=dataset_name,
+            reader=reader_type,
+            read_successfully=read_successfully,
+        )
+        dataset_encr_stats.append(dataset_encr_stat)
+
+    return EncryptionStatus(
+        datastore_root_dir=str(datastore_root_dir),
+        requested_version=version,
+        datasets=dataset_encr_stats,
+    )
 
 
 def generate_fixed_filter(

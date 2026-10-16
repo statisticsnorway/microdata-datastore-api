@@ -9,9 +9,7 @@ from fastapi.responses import PlainTextResponse
 from pyarrow import dataset
 
 from datastore_api.adapter.auth.dependencies import authorize_user
-from datastore_api.api.common.dependencies import (
-    get_data_reader,
-)
+from datastore_api.api.common.dependencies import get_data_reader
 from datastore_api.config import environment
 from datastore_api.domain.data import (
     DataReader,
