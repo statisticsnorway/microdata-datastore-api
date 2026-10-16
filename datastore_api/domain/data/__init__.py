@@ -103,6 +103,20 @@ class EncryptedDataReader:
         self.parquet_path = parquet_path
         self.columns = columns
 
+    def reader_helper(self) -> dataset.ParquetFileFormat:
+        decryption_config = dataset.ParquetDecryptionConfig(
+            make_crypto_factory(),
+            KmsConnectionConfig(),
+            DecryptionConfiguration(),
+        )
+        scan_options = dataset.ParquetFragmentScanOptions(
+            decryption_config=decryption_config
+        )
+        parquet_format = dataset.ParquetFileFormat(
+            default_fragment_scan_options=scan_options
+        )
+        return parquet_format
+
     def read_data(
         self,
         table_filter: dataset.Expression | None,
@@ -118,17 +132,7 @@ class EncryptedDataReader:
         returned table
         """
         try:
-            decryption_config = dataset.ParquetDecryptionConfig(
-                make_crypto_factory(),
-                KmsConnectionConfig(),
-                DecryptionConfiguration(),
-            )
-            scan_options = dataset.ParquetFragmentScanOptions(
-                decryption_config=decryption_config
-            )
-            parquet_format = dataset.ParquetFileFormat(
-                default_fragment_scan_options=scan_options
-            )
+            parquet_format = self.reader_helper()
 
             table = dataset.dataset(
                 self.parquet_path, format=parquet_format
@@ -214,17 +218,7 @@ def validate_encryption(
 
             # Determine the reader type
             if isinstance(data_reader, EncryptedDataReader):
-                decryption_config = dataset.ParquetDecryptionConfig(
-                    make_crypto_factory(),
-                    KmsConnectionConfig(),
-                    DecryptionConfiguration(),
-                )
-                scan_options = dataset.ParquetFragmentScanOptions(
-                    decryption_config=decryption_config
-                )
-                parquet_format = dataset.ParquetFileFormat(
-                    default_fragment_scan_options=scan_options
-                )
+                parquet_format = data_reader.reader_helper()
                 reader_type = "encrypted"
             else:
                 parquet_format = None
