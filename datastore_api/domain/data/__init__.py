@@ -103,7 +103,7 @@ class EncryptedDataReader:
         self.parquet_path = parquet_path
         self.columns = columns
 
-    def reader_helper(self) -> dataset.ParquetFileFormat:
+    def reader_helper(self) -> dataset.Dataset:
         decryption_config = dataset.ParquetDecryptionConfig(
             make_crypto_factory(),
             KmsConnectionConfig(),
@@ -115,7 +115,9 @@ class EncryptedDataReader:
         parquet_format = dataset.ParquetFileFormat(
             default_fragment_scan_options=scan_options
         )
-        return parquet_format
+
+        ds = dataset.dataset(self.parquet_path, format=parquet_format)
+        return ds
 
     def read_data(
         self,
@@ -132,11 +134,9 @@ class EncryptedDataReader:
         returned table
         """
         try:
-            parquet_format = self.reader_helper()
+            ds = self.reader_helper()
 
-            table = dataset.dataset(
-                self.parquet_path, format=parquet_format
-            ).to_table(filter=table_filter, columns=self.columns)
+            table = ds.to_table(filter=table_filter, columns=self.columns)
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
@@ -218,16 +218,13 @@ def validate_encryption(
 
             # Determine the reader type
             if isinstance(data_reader, EncryptedDataReader):
-                parquet_format = data_reader.reader_helper()
+                ds = data_reader.reader_helper()
                 reader_type = "encrypted"
             else:
-                parquet_format = None
+                ds = dataset.dataset(data_reader.parquet_path, format=None)
                 reader_type = "unencrypted"
                 logger.error("Found unencrypted dataset: %r", dataset_name)
 
-            ds = dataset.dataset(
-                data_reader.parquet_path, format=parquet_format
-            )
             ds.head(1, columns=data_reader.columns)
             read_successfully = True
         except Exception:
