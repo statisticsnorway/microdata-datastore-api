@@ -4,7 +4,8 @@ WORKDIR /app
 COPY pyproject.toml uv.lock /app/
 
 RUN uv python install 3.13 
-RUN uv pip install --system --target=/app/dependencies .
+RUN uv export --locked --no-dev --no-emit-project -o requirements.txt
+RUN uv pip install --system --target=/app/dependencies --only-binary :all: -r requirements.txt
 
 # Create application user 
 RUN groupadd --gid 180291 microdata \
