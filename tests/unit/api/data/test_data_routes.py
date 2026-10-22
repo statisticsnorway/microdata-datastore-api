@@ -15,11 +15,6 @@ from datastore_api.api.common.dependencies import (
     get_data_reader,
     get_datastore_id,
 )
-from datastore_api.common.models import Version
-from datastore_api.domain.data.models import (
-    DatasetEncryptionStatus,
-    EncryptionStatus,
-)
 from datastore_api.main import app
 
 FAKE_RESULT_FILE_NAME = "fake_result_file_name"
@@ -29,21 +24,6 @@ MOCK_RESULT = pq.read_table("tests/resources/results/mocked_result.parquet")
 @pytest.fixture
 def mock_data_reader():
     return Mock(read_data=Mock(return_value=MOCK_RESULT))
-
-
-@pytest.fixture
-def mock_validate_encryption():
-    return EncryptionStatus(
-        datastore_root_dir="tests/resources/test_datastore",
-        requested_version=Version.from_str("1.0.0.0"),
-        datasets=[
-            DatasetEncryptionStatus(
-                data_structure_name="FAKE_NAME",
-                reader="unencrypted",
-                read_successfully=True,
-            )
-        ],
-    )
 
 
 @pytest.fixture
@@ -71,6 +51,24 @@ def client(mock_db_client: Mock, mock_auth_deps: dict, mock_data_reader: Mock):
         "api_key"
     ]()
     app.dependency_overrides[get_data_reader] = lambda: mock_data_reader
+    app.dependency_overrides[get_datastore_id] = lambda: 1
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client_encr(
+    mock_db_client: Mock,
+    mock_auth_deps: dict,
+    encrypted_parquet,
+    encrypted_reader,
+):
+    app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
+    app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
+        "api_key"
+    ]()
+
+    app.dependency_overrides[get_data_reader] = lambda: encrypted_reader
     app.dependency_overrides[get_datastore_id] = lambda: 1
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -202,30 +200,24 @@ def test_data_stream_requires_dates(
     mock_data_reader.read_data.assert_not_called()
 
 
-def test_validate_encryption(client, mocker, mock_validate_encryption):
-    mocked_validate = mocker.patch(
-        "datastore_api.api.datastores.validate_encryption",
-        return_value=mock_validate_encryption,
-    )
-    response = client.post(
-        "/datastores/no.ssb.test/encryption-status",
+def test_validate_encryption(
+    client_encr: TestClient, mock_auth_deps: dict, encrypted_parquet
+):
+
+    response = client_encr.post(
+        "/datastores/no.ssb.test/data/encryption-status",
         json={
             "version": "1.0.0.0",
-            "data_structure_names": ["FAKE_NAME"],
+            "dataStructureName": "TEST_ENCRYPTED_DATASET",
+            "reader_test": "True",
         },
         headers={"x-api-key": "test-key"},
     )
 
     assert response.status_code == 200
-    mocked_validate.assert_called_once()
-    assert response.json() == {
-        "datastore_root_dir": "tests/resources/test_datastore",
-        "requested_version": "1.0",
-        "datasets": [
-            {
-                "data_structure_name": "FAKE_NAME",
-                "reader": "unencrypted",
-                "read_successfully": True,
-            }
-        ],
-    }
+    mock_auth_deps["api_key"].assert_called_once()
+
+    _, table = encrypted_parquet
+    expected = table.slice(0, 1)
+    actual = pq.read_table(pa.BufferReader(response.content))
+    assert actual.equals(expected)
