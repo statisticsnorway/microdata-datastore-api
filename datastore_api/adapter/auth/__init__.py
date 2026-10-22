@@ -145,6 +145,11 @@ def _validate_user_id(decoded_jwt: dict[str, Any]) -> None:
         raise AuthError("No valid user_id")
 
 
+def _validate_datastore_provisioner(user_info: UserInfo) -> None:
+    if user_info.user_id not in secrets.datastore_provisioners:
+        raise AuthError("Forbidden: Not allowed to modify datastore")
+
+
 class AuthClient(Protocol):
     def authorize_jwt(
         self,
@@ -156,6 +161,7 @@ class AuthClient(Protocol):
         rdn: str | None = None,
     ) -> UserInfo | None: ...
     def authorize_api_key(self, x_api_key: str) -> None: ...
+    def authorize_datastore_provisioner(self, user_info: UserInfo) -> None: ...
 
 
 class MicrodataAuthClient:
@@ -205,6 +211,9 @@ class MicrodataAuthClient:
         if x_api_key != secrets.datastore_api_service_key:
             raise AuthError("Invalid API key")
 
+    def authorize_datastore_provisioner(self, user_info: UserInfo) -> None:
+        _validate_datastore_provisioner(user_info)
+
 
 class DisabledAuthClient:
     def authorize_jwt(
@@ -225,6 +234,11 @@ class DisabledAuthClient:
 
     def authorize_api_key(self, x_api_key: str) -> None:
         logger.error("JWT_AUTH is turned off. Not checking API key")
+
+    def authorize_datastore_provisioner(self, user_info: UserInfo) -> None:
+        logger.error(
+            "JWT_AUTH is turned off. Not checking datastore provisioner"
+        )
 
 
 class SkipSignatureAuthClient:
@@ -273,6 +287,9 @@ class SkipSignatureAuthClient:
     def authorize_api_key(self, x_api_key: str) -> None:
         if x_api_key != secrets.datastore_api_service_key:
             raise AuthError("Invalid API key")
+
+    def authorize_datastore_provisioner(self, user_info: UserInfo) -> None:
+        _validate_datastore_provisioner(user_info)
 
 
 def get_auth_client() -> AuthClient:

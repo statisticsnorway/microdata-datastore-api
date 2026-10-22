@@ -11,6 +11,7 @@ from datastore_api.adapter.auth.dependencies import authorize_user
 from datastore_api.api.common.dependencies import (
     get_data_reader,
 )
+from datastore_api.domain.data import EncryptedDataReader
 from datastore_api.main import app
 
 FAKE_RESULT_FILE_NAME = "fake_result_file_name"
@@ -36,6 +37,15 @@ def mock_auth_deps():
     return {
         "user": Mock(return_value=None),
     }
+
+
+@pytest.fixture
+def client_resolving_data_reader(mock_db_client: Mock, mock_auth_deps: dict):
+    """Leaves get_data_reader in place so version resolution is exercised."""
+    app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
+    app.dependency_overrides[authorize_user] = lambda: mock_auth_deps["user"]()
+    yield TestClient(app)
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -171,3 +181,31 @@ def test_data_stream_requires_dates(
         for error in response.json()["details"]
     )
     mock_data_reader.read_data.assert_not_called()
+
+
+def test_data_fixed_stream_draft_version_zero_reads_draft_parquet(
+    client_resolving_data_reader: TestClient, mocker
+):
+    read_data = mocker.patch.object(
+        EncryptedDataReader,
+        "read_data",
+        autospec=True,
+        return_value=MOCK_RESULT,
+    )
+
+    response = client_resolving_data_reader.post(
+        "/datastores/no.ssb.test/data/fixed/stream",
+        json={
+            "version": "0.0.0.0",
+            "dataStructureName": "TEST_PERSON_INCOME",
+        },
+        headers={"Authorization": "******"},
+    )
+
+    assert response.status_code == 200
+    assert pq.read_table(pa.BufferReader(response.content)) == MOCK_RESULT
+    reader = read_data.call_args.args[0]
+    assert reader.parquet_path == (
+        "tests/resources/test_datastore/data/TEST_PERSON_INCOME/"
+        "TEST_PERSON_INCOME__DRAFT.parquet"
+    )

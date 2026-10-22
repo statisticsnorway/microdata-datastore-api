@@ -306,20 +306,65 @@ def test_get_draft_metadata_all(mocker):
     assert "dataStructures" in filtered_metadata
 
 
-def test_get_draft_metadata_all_0_0_0_0(mocker):
-    with open(METADATA_ALL_FILE_PATH, encoding="utf-8") as f:
-        mocked_metadata_all = json.load(f)
-
-    mocker.patch.object(
-        datastore_directory,
-        "get_metadata_all",
-        return_value=mocked_metadata_all,
-    )
-    filtered_metadata = metadata.find_all_metadata(
+def test_get_draft_metadata_all_0_0_0_0():
+    zero_draft = metadata.find_all_metadata(
         Version.from_str("0.0.0.0"), DATASTORE_ROOT_DIR
     )
 
-    assert "dataStructures" in filtered_metadata
+    assert zero_draft == metadata.find_all_metadata(
+        Version.from_str("0.0.0.1608000000"), DATASTORE_ROOT_DIR
+    )
+    assert zero_draft != metadata.find_all_metadata(
+        Version.from_str("1.0.0.0"), DATASTORE_ROOT_DIR
+    )
+
+
+def test_find_data_structures_0_0_0_0():
+    zero_draft = metadata.find_data_structures(
+        DATASTORE_ROOT_DIR,
+        ["TEST_PERSON_HOBBIES"],
+        Version.from_str("0.0.0.0"),
+        True,
+    )
+
+    assert [data_structure["name"] for data_structure in zero_draft] == [
+        "TEST_PERSON_HOBBIES"
+    ]
+    assert zero_draft == metadata.find_data_structures(
+        DATASTORE_ROOT_DIR,
+        ["TEST_PERSON_HOBBIES"],
+        Version.from_str("0.0.0.1608000000"),
+        True,
+    )
+    assert (
+        metadata.find_data_structures(
+            DATASTORE_ROOT_DIR,
+            ["TEST_PERSON_HOBBIES"],
+            Version.from_str("1.0.0.0"),
+            True,
+        )
+        == []
+    )
+
+
+def test_find_all_metadata_skip_code_list_and_missing_values_0_0_0_0():
+    zero_draft = metadata.find_all_metadata_skip_code_list_and_missing_values(
+        Version.from_str("0.0.0.0"), DATASTORE_ROOT_DIR
+    )
+
+    _assert_code_list_and_missing_values(zero_draft["dataStructures"])
+    assert (
+        zero_draft
+        == metadata.find_all_metadata_skip_code_list_and_missing_values(
+            Version.from_str("0.0.0.1608000000"), DATASTORE_ROOT_DIR
+        )
+    )
+    assert (
+        zero_draft
+        != metadata.find_all_metadata_skip_code_list_and_missing_values(
+            Version.from_str("1.0.0.0"), DATASTORE_ROOT_DIR
+        )
+    )
 
 
 def test_get_draft_metadata_all_invalid_draft_version(mocker):

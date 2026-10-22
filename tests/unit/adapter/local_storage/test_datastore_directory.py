@@ -65,7 +65,7 @@ def test_get_partitioned_file_path():
 def test_get_metadata_all_raises_not_found_exception():
     with pytest.raises(NotFoundException):
         datastore_directory.get_metadata_all(
-            Version.from_str("1.0.0.0"), "doesNotExist"
+            Version.from_str("1.0.0.0"), Path("doesNotExist")
         )
 
 
@@ -101,3 +101,24 @@ def test_get_version_from_data_path_partitioned_parquet():
         )
         == "1.0"
     )
+
+
+def test_get_metadata_all_0_0_0_0_resolves_to_current_draft():
+    zero_draft = datastore_directory.get_metadata_all(
+        Version.from_str("0.0.0.0"), DATASTORE_ROOT_DIR
+    )
+
+    assert zero_draft["dataStructures"][0]["name"] == "TEST_PERSON_HOBBIES"
+    assert zero_draft == datastore_directory.get_metadata_all(
+        Version.from_str("0.0.0.1608000000"), DATASTORE_ROOT_DIR
+    )
+    assert zero_draft != datastore_directory.get_metadata_all(
+        Version.from_str("1.0.0.0"), DATASTORE_ROOT_DIR
+    )
+
+
+def test_get_metadata_all_0_0_0_0_raises_not_found_exception():
+    with pytest.raises(NotFoundException):
+        datastore_directory.get_metadata_all(
+            Version.from_str("0.0.0.0"), Path("doesNotExist")
+        )
