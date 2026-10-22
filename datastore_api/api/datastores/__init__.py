@@ -1,6 +1,3 @@
-from pathlib import Path
-from typing import Annotated
-
 from fastapi import APIRouter, Depends
 
 from datastore_api.adapter import db
@@ -10,10 +7,7 @@ from datastore_api.adapter.auth.dependencies import (
 )
 from datastore_api.adapter.db.models import Datastore, UserInfo
 from datastore_api.api import observability
-from datastore_api.api.common.dependencies import (
-    get_datastore_id,
-    get_datastore_root_dir,
-)
+from datastore_api.api.common.dependencies import get_datastore_id
 from datastore_api.api.datastores import (
     data,
     importable_datasets,
@@ -28,12 +22,6 @@ from datastore_api.api.datastores.models import (
     UpdateBumpEnabledRequest,
 )
 from datastore_api.api.jobs.models import NewJobResponse
-from datastore_api.common.models import Version
-from datastore_api.domain.data import validate_encryption
-from datastore_api.domain.data.models import (
-    EncryptionStatus,
-    EncryptionStatusRequest,
-)
 from datastore_api.domain.datastores import (
     create_new_datastore,
 )
@@ -106,21 +94,6 @@ async def update_bump_enabled(
     datastore_id: int = Depends(get_datastore_id),
 ) -> None:
     db_client.update_bump_enabled(datastore_id, request.bump_enabled)
-
-
-@router.post(
-    "/{datastore_rdn}/encryption-status",
-    dependencies=[Depends(authorize_api_key)],
-)
-def encryption_status(
-    request: EncryptionStatusRequest,
-    datastore_root_dir: Annotated[Path, Depends(get_datastore_root_dir)],
-) -> EncryptionStatus:
-    parsed_version = Version.from_str(request.version)
-    dataset_names = request.data_structure_names
-    return validate_encryption(
-        datastore_root_dir, parsed_version, dataset_names
-    )
 
 
 router.include_router(jobs.router, prefix="/{datastore_rdn}/jobs")

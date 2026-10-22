@@ -8,11 +8,15 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
 from pyarrow import dataset
 
-from datastore_api.adapter.auth.dependencies import authorize_user
+from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
+    authorize_user,
+)
 from datastore_api.api.common.dependencies import get_data_reader
 from datastore_api.config import environment
 from datastore_api.domain.data import (
     DataReader,
+    EncryptedDataReader,
     generate_fixed_filter,
     generate_time_filter,
     generate_time_period_filter,
@@ -93,6 +97,41 @@ def stream_result_fixed(
     logger.info(f"Entering /data/fixed/stream with input query: {input_query}")
     result_data = data_reader.read_data(
         data_filter, row_cap=environment.data_row_cap
+    )
+    buffer_stream = pa.BufferOutputStream()
+    pq.write_table(result_data, buffer_stream)
+    return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
+
+
+@router.post(
+    "/encryption-status",
+    dependencies=[Depends(authorize_api_key)],
+)
+def encryption_status(
+    input_query: InputFixedQuery,
+    data_reader: Annotated[DataReader, Depends(get_data_reader)],
+    data_filter: Annotated[
+        dataset.Expression | None, Depends(generate_fixed_filter)
+    ],
+) -> PlainTextResponse:
+    """
+    Assert that a dataset is encrypted through the data reader type, then
+    attempt to read one row of the dataset using the data reader and stream
+    result as response.
+    """
+    logger.info(
+        f"Entering /data/encryption-status with input query: {input_query}"
+    )
+    if not input_query.reader_test:
+        raise ValueError(
+            "/data/encryption-status expects input_query.reader_test yo be True"
+        )
+    if not isinstance(data_reader, EncryptedDataReader):
+        raise ValueError("Non-encrypted data reader detected.")
+    result_data = data_reader.read_data(
+        data_filter,
+        row_cap=environment.data_row_cap,
+        reader_test=input_query.reader_test,
     )
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
