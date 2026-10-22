@@ -1,0 +1,123 @@
+{
+  "dataStore": {
+    "name": "no.ssb.test",
+    "label": "Test data fra SSB",
+    "description": "Syntetiske registerdata som inngår i SSBs test",
+    "languageCode": "no"
+  },
+  "dataStructures": [
+    {
+      "attributeVariables": [
+        {
+          "name": "START",
+          "label": "Startdato",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 5562,
+                "stop": 18579
+              },
+              "description": "Startdato/måletidspunktet for hendelsen",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "dataType": "Instant",
+          "variableRole": "Start"
+        },
+        {
+          "name": "STOP",
+          "label": "Stoppdato",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 5562,
+                "stop": 18579
+              },
+              "description": "Stoppdato/sluttdato for hendelsen",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "dataType": "Instant",
+          "variableRole": "Stop"
+        }
+      ],
+      "identifierVariables": [
+        {
+          "name": "PERSON_ID_1",
+          "label": "Personidentifikator",
+          "dataType": "Long",
+          "representedVariables": [
+            {
+              "validPeriod": {
+                "start": 5562,
+                "stop": 18579
+              },
+              "description": "Identifikator for person",
+              "valueDomain": {
+                "description": "N/A",
+                "unitOfMeasure": "N/A"
+              }
+            }
+          ],
+          "keyType": {
+            "name": "PERSON",
+            "label": "Person",
+            "description": "Statistisk enhet er person (individ, enkeltmenneske)."
+          },
+          "format": "RandomUInt48",
+          "variableRole": "Identifier"
+        }
+      ],
+      "measureVariable": {
+        "name": "TEST_PERSON_HOBBIES",
+        "label": "Hobbyer",
+        "dataType": "String",
+        "representedVariables": [
+          {
+            "description": "Mine hobbyer.",
+            "validPeriod": {
+              "start": 0
+            },
+            "valueDomain": {
+              "codeList": [
+                {
+                  "category": "Sport",
+                  "code": "SPORT"
+                },
+                {
+                  "category": "Musikk",
+                  "code": "MUSIC"
+                },
+                {
+                  "category": "Lesing",
+                  "code": "READING"
+                }
+              ],
+              "missingValues": [
+                "UOPPGITT"
+              ]
+            }
+          }
+        ],
+        "variableRole": "Measure"
+      },
+      "name": "TEST_PERSON_HOBBIES",
+      "populationDescription": "Alle personer med en registrert hobby.",
+      "temporality": "FIXED",
+      "temporalCoverage": {
+        "start": 5562,
+        "stop": 18579
+      },
+      "subjectFields": [
+        "Befolkning"
+      ],
+      "languageCode": "no"
+    }
+  ]
+}

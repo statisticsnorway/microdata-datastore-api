@@ -27,3 +27,17 @@ def test_version():
     with pytest.raises(ValueError) as e:
         Version.from_str("1.2.3.4.5")
     assert "Incorrect version format" in str(e)
+
+
+@pytest.mark.parametrize(
+    "version,expected",
+    [
+        ("0.0.0.0", True),
+        ("0.0.0.1608000000", True),
+        ("1.0.0.0", False),
+        ("0.1.0.0", False),
+        ("0.0.1.0", False),
+    ],
+)
+def test_is_draft(version, expected):
+    assert Version.from_str(version).is_draft() is expected
