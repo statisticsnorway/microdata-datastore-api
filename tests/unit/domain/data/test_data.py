@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pyarrow
 import pytest
-from pyarrow import Table, dataset, parquet
+from pyarrow import dataset, parquet
 
 from datastore_api.adapter.db.models import Datastore
 from datastore_api.common.exceptions import (
@@ -132,7 +132,7 @@ def test_event_request_causing_empty_result():
     ).read_data(
         data_filter,
     )
-    assert isinstance(result, Table)
+    assert isinstance(result, pyarrow.Table)
     assert result.num_columns == 2
     assert result.num_rows == 0
 
@@ -614,3 +614,25 @@ def test_select_data_reader_uses_actual_data_version_when_unencrypted(
     )
     reader = select_data_reader(query, tmp_path)
     assert isinstance(reader, UnencryptedDataReader)
+
+
+def test_get_parquet_path_0_0_0_0_resolves_to_draft_path():
+    test_person_income_draft_path = str(
+        DATASTORE_ROOT_DIR
+        / "data"
+        / "TEST_PERSON_INCOME"
+        / "TEST_PERSON_INCOME__DRAFT.parquet"
+    )
+
+    draft_path = _get_parquet_path(
+        Version.from_str("0.0.0.0"),
+        "TEST_PERSON_INCOME",
+        DATASTORE_ROOT_DIR,
+    )
+
+    assert draft_path == test_person_income_draft_path
+    assert draft_path == _get_parquet_path(
+        Version.from_str("0.0.0.1608000000"),
+        "TEST_PERSON_INCOME",
+        DATASTORE_ROOT_DIR,
+    )
