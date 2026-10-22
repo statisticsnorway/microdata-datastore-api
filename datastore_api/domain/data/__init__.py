@@ -101,22 +101,6 @@ class EncryptedDataReader:
         self.parquet_path = parquet_path
         self.columns = columns
 
-    def reader_helper(self) -> dataset.Dataset:
-        decryption_config = dataset.ParquetDecryptionConfig(
-            make_crypto_factory(),
-            KmsConnectionConfig(),
-            DecryptionConfiguration(),
-        )
-        scan_options = dataset.ParquetFragmentScanOptions(
-            decryption_config=decryption_config
-        )
-        parquet_format = dataset.ParquetFileFormat(
-            default_fragment_scan_options=scan_options
-        )
-
-        ds = dataset.dataset(self.parquet_path, format=parquet_format)
-        return ds
-
     def read_data(
         self,
         table_filter: dataset.Expression | None,
