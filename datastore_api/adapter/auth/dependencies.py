@@ -4,7 +4,7 @@ from datastore_api.adapter import auth
 from datastore_api.adapter.auth import TokenPolicy
 from datastore_api.adapter.db.models import UserInfo
 from datastore_api.common.exceptions import AuthError
-from datastore_api.config import environment, secrets
+from datastore_api.config import environment
 
 DATA_ADMINISTRATOR_ROLE = "role/dataadministrator"
 DATASTORE_PROVISIONER_ROLE = "role/datastoreprovisioner"
@@ -53,8 +53,7 @@ def authorize_datastore_provisioner(
     )
     if not parsed_user_info:
         raise AuthError("Missing user information token")
-    if parsed_user_info.user_id not in secrets.datastore_provisioners:
-        raise AuthError("Forbidden: Not allowed to modify datastore")
+    auth_client.authorize_datastore_provisioner(parsed_user_info)
 
     return parsed_user_info
 
