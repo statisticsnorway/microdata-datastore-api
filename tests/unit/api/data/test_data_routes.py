@@ -219,7 +219,7 @@ def test_validate_encryption(
         json={
             "version": "1.0.0.0",
             "dataStructureName": "TEST_ENCRYPTED_DATASET",
-            "reader_test": "True",
+            "reader_test": True,
         },
         headers={"x-api-key": "test-key"},
     )
