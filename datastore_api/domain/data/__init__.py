@@ -22,8 +22,6 @@ from datastore_api.common.exceptions import TooManyRowsException
 from datastore_api.common.models import Version
 from datastore_api.domain.data import filters
 from datastore_api.domain.data.models import (
-    DatasetEncryptionStatus,
-    EncryptionStatus,
     InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
@@ -214,51 +212,6 @@ def select_data_reader(
     if is_encrypted:
         return EncryptedDataReader(parquet_path=parquet_path, columns=columns)
     return UnencryptedDataReader(parquet_path=parquet_path, columns=columns)
-
-
-def validate_encryption(
-    datastore_root_dir: Path,
-    version: Version,
-    dataset_names: list[str],
-) -> EncryptionStatus:
-
-    dataset_encr_stats = []
-    for dataset_name in dataset_names:
-        reader_type = None
-        try:
-            input_query = InputFixedQuery(
-                dataStructureName=dataset_name,
-                version=version,
-            )
-            data_reader = select_data_reader(input_query, datastore_root_dir)
-
-            # Determine the reader type
-            if isinstance(data_reader, EncryptedDataReader):
-                ds = data_reader.reader_helper()
-                reader_type = "encrypted"
-            else:
-                ds = dataset.dataset(data_reader.parquet_path, format=None)
-                reader_type = "unencrypted"
-                logger.error("Found unencrypted dataset: %r", dataset_name)
-
-            ds.head(1, columns=data_reader.columns)
-            read_successfully = True
-        except Exception:
-            logger.exception("Failed to validate dataset %r", dataset_name)
-            read_successfully = False
-
-        dataset_encr_stat = DatasetEncryptionStatus(
-            data_structure_name=dataset_name,
-            reader=reader_type,
-            read_successfully=read_successfully,
-        )
-        dataset_encr_stats.append(dataset_encr_stat)
-
-    return EncryptionStatus(
-        datastore_root_dir=str(datastore_root_dir),
-        requested_version=version,
-        datasets=dataset_encr_stats,
-    )
 
 
 def generate_fixed_filter(
