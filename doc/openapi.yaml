@@ -273,43 +273,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /datastores/{datastore_rdn}/encryption-status:
-    post:
-      summary: Encryption Status
-      operationId: encryption_status_datastores__datastore_rdn__encryption_status_post
-      parameters:
-      - name: datastore_rdn
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Datastore Rdn
-      - name: x-api-key
-        in: header
-        required: false
-        schema:
-          type: string
-          default: X-API-KEY
-          title: X-Api-Key
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EncryptionStatusRequest'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EncryptionStatus'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /datastores/{datastore_rdn}/jobs:
     get:
       summary: Get Jobs For Datastore
@@ -833,6 +796,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/data/encryption-status:
+    post:
+      summary: Encryption Status
+      description: 'Assert that a dataset is encrypted through the data reader type,
+        then
+
+        attempt to read one row of the dataset using the data reader and stream
+
+        result as response.'
+      operationId: encryption_status_datastores__datastore_rdn__data_encryption_status_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputFixedQuery'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /datastores/{datastore_rdn}/importable-datasets:
     get:
       summary: Get Importable Datasets
@@ -1293,28 +1298,6 @@ components:
       - operation
       - releaseStatus
       title: DataStructureUpdate
-    DatasetEncryptionStatus:
-      properties:
-        data_structure_name:
-          type: string
-          title: Data Structure Name
-        reader:
-          anyOf:
-          - type: string
-            enum:
-            - encrypted
-            - unencrypted
-          - type: 'null'
-          title: Reader
-        read_successfully:
-          type: boolean
-          title: Read Successfully
-      type: object
-      required:
-      - data_structure_name
-      - reader
-      - read_successfully
-      title: DatasetEncryptionStatus
     Datastore:
       properties:
         datastoreId:
@@ -1377,39 +1360,6 @@ components:
       - updateType
       - dataStructureUpdates
       title: DatastoreVersion
-    EncryptionStatus:
-      properties:
-        datastore_root_dir:
-          type: string
-          title: Datastore Root Dir
-        requested_version:
-          type: string
-        datasets:
-          items:
-            $ref: '#/components/schemas/DatasetEncryptionStatus'
-          type: array
-          title: Datasets
-      type: object
-      required:
-      - datastore_root_dir
-      - requested_version
-      - datasets
-      title: EncryptionStatus
-    EncryptionStatusRequest:
-      properties:
-        version:
-          type: string
-          title: Version
-        data_structure_names:
-          items:
-            type: string
-          type: array
-          title: Data Structure Names
-      type: object
-      required:
-      - version
-      - data_structure_names
-      title: EncryptionStatusRequest
     ErrorMessage:
       properties:
         detail:
@@ -1472,6 +1422,10 @@ components:
         includeAttributes:
           type: boolean
           title: Includeattributes
+          default: false
+        reader_test:
+          type: boolean
+          title: Reader Test
           default: false
       type: object
       required:
