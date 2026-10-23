@@ -439,12 +439,43 @@ paths:
                 additionalProperties: true
                 title: Response Get Data Store Datastores  Datastore Rdn  Metadata
                   Data Store Get
-        '422':
-          description: Validation Error
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/metadata/data-structures/status:
     get:
       summary: Get Data Structure Current Status
@@ -472,12 +503,43 @@ paths:
                 additionalProperties: true
                 title: Response Get Data Structure Current Status Datastores  Datastore
                   Rdn  Metadata Data Structures Status Get
-        '422':
-          description: Validation Error
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
     post:
       summary: Get Data Structure Current Status As Post
       operationId: get_data_structure_current_status_as_post_datastores__datastore_rdn__metadata_data_structures_status_post
@@ -508,12 +570,52 @@ paths:
                   - type: 'null'
                 title: Response Get Data Structure Current Status As Post Datastores  Datastore
                   Rdn  Metadata Data Structures Status Post
-        '422':
-          description: Validation Error
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.
+
+
+            REQUEST_PARSE_ERROR (102): An error occurred when parsing the request
+            payload.'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
+                REQUEST_PARSE_ERROR:
+                  value:
+                    type: REQUEST_PARSE_ERROR
+                    code: 102
+                    message: An error occurred when parsing the request payload.
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/metadata/data-structures:
     get:
       summary: Get Data Structures
@@ -567,12 +669,52 @@ paths:
                   additionalProperties: true
                 title: Response Get Data Structures Datastores  Datastore Rdn  Metadata
                   Data Structures Get
-        '422':
-          description: Validation Error
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.
+
+
+            INVALID_DRAFT_VERSION (107): Requested draft version does not match the
+            current draft. The data object contains requested_draft_version and current_draft_version.'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
+                INVALID_DRAFT_VERSION:
+                  value:
+                    type: INVALID_DRAFT_VERSION
+                    code: 107
+                    message: Requested draft version does not match the current draft.
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/metadata/all-data-structures:
     get:
       summary: Get All Data Structures Ever
@@ -595,12 +737,43 @@ paths:
                   type: string
                 title: Response Get All Data Structures Ever Datastores  Datastore
                   Rdn  Metadata All Data Structures Get
-        '422':
-          description: Validation Error
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/metadata/all:
     get:
       summary: Get All Metadata
@@ -652,12 +825,52 @@ paths:
                 additionalProperties: true
                 title: Response Get All Metadata Datastores  Datastore Rdn  Metadata
                   All Get
-        '422':
-          description: Validation Error
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.
+
+
+            INVALID_DRAFT_VERSION (107): Requested draft version does not match the
+            current draft. The data object contains requested_draft_version and current_draft_version.'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
+                INVALID_DRAFT_VERSION:
+                  value:
+                    type: INVALID_DRAFT_VERSION
+                    code: 107
+                    message: Requested draft version does not match the current draft.
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/data/event/stream:
     post:
       summary: Stream Result Event
@@ -692,18 +905,64 @@ paths:
           content:
             application/json:
               schema: {}
-        '404':
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.
+
+
+            REQUEST_PARSE_ERROR (102): An error occurred when parsing the request
+            payload.'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
+                REQUEST_PARSE_ERROR:
+                  value:
+                    type: REQUEST_PARSE_ERROR
+                    code: 102
+                    message: An error occurred when parsing the request payload.
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-          description: Not Found
-        '422':
-          description: Validation Error
+        '401':
+          description: 'AUTHENTICATION_FAILURE (104): The provided JWT was not accepted'
           content:
             application/json:
+              examples:
+                AUTHENTICATION_FAILURE:
+                  value:
+                    type: AUTHENTICATION_FAILURE
+                    code: 104
+                    message: The provided JWT was not accepted
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/data/status/stream:
     post:
       summary: Stream Result Status
@@ -738,18 +997,75 @@ paths:
           content:
             application/json:
               schema: {}
-        '404':
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.
+
+
+            REQUEST_PARSE_ERROR (102): An error occurred when parsing the request
+            payload.
+
+
+            ROW_LIMIT_EXCEEDED (106): This import would produce a dataset containing
+            more rows than the row_limit. The data object contains row_limit (configured
+            maximum) and row_count (actual result size)'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
+                REQUEST_PARSE_ERROR:
+                  value:
+                    type: REQUEST_PARSE_ERROR
+                    code: 102
+                    message: An error occurred when parsing the request payload.
+                ROW_LIMIT_EXCEEDED:
+                  value:
+                    type: ROW_LIMIT_EXCEEDED
+                    code: 106
+                    message: This import would produce a dataset containing more rows
+                      than the row_limit.
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-          description: Not Found
-        '422':
-          description: Validation Error
+        '401':
+          description: 'AUTHENTICATION_FAILURE (104): The provided JWT was not accepted'
           content:
             application/json:
+              examples:
+                AUTHENTICATION_FAILURE:
+                  value:
+                    type: AUTHENTICATION_FAILURE
+                    code: 104
+                    message: The provided JWT was not accepted
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/data/fixed/stream:
     post:
       summary: Stream Result Fixed
@@ -784,18 +1100,75 @@ paths:
           content:
             application/json:
               schema: {}
-        '404':
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.
+
+
+            REQUEST_PARSE_ERROR (102): An error occurred when parsing the request
+            payload.
+
+
+            ROW_LIMIT_EXCEEDED (106): This import would produce a dataset containing
+            more rows than the row_limit. The data object contains row_limit (configured
+            maximum) and row_count (actual result size)'
           content:
             application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
+                REQUEST_PARSE_ERROR:
+                  value:
+                    type: REQUEST_PARSE_ERROR
+                    code: 102
+                    message: An error occurred when parsing the request payload.
+                ROW_LIMIT_EXCEEDED:
+                  value:
+                    type: ROW_LIMIT_EXCEEDED
+                    code: 106
+                    message: This import would produce a dataset containing more rows
+                      than the row_limit.
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-          description: Not Found
-        '422':
-          description: Validation Error
+        '401':
+          description: 'AUTHENTICATION_FAILURE (104): The provided JWT was not accepted'
           content:
             application/json:
+              examples:
+                AUTHENTICATION_FAILURE:
+                  value:
+                    type: AUTHENTICATION_FAILURE
+                    code: 104
+                    message: The provided JWT was not accepted
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          content:
+            application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/importable-datasets:
     get:
       summary: Get Importable Datasets
@@ -1320,12 +1693,28 @@ components:
       title: DatastoreVersion
     ErrorMessage:
       properties:
-        detail:
+        type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Type
+        code:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Code
+        message:
           type: string
-          title: Detail
+          title: Message
+        data:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Data
       type: object
       required:
-      - detail
+      - message
       title: ErrorMessage
     HTTPValidationError:
       properties:

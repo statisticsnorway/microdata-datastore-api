@@ -54,8 +54,19 @@ setup_logging(app)
 if environment.stack == "dev":
     import yaml
 
+    schema = app.openapi()
+    for path, operations in schema["paths"].items():
+        if path.startswith(
+            (
+                "/datastores/{datastore_rdn}/data/",
+                "/datastores/{datastore_rdn}/metadata/",
+            )
+        ):
+            for operation in operations.values():
+                operation.get("responses", {}).pop("422", None)
+
     with open("doc/openapi.yaml", "w") as f:
-        yaml.dump(app.openapi(), f, sort_keys=False)
+        yaml.dump(schema, f, sort_keys=False)
 
 
 if __name__ == "__main__":

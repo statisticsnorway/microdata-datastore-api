@@ -8,9 +8,21 @@ from datastore_api.api.datastores.metadata.models import (
     NameParam,
     get_metadata_query,
 )
+from datastore_api.api.error_contract import (
+    DATA_NOT_FOUND,
+    INVALID_DRAFT_VERSION,
+    REQUEST_PARSE_ERROR,
+    REQUEST_VALIDATION_ERROR,
+    SYSTEM_ERROR,
+    document_error_responses,
+)
 from datastore_api.domain import metadata
 
-router = APIRouter()
+router = APIRouter(
+    responses=document_error_responses(
+        REQUEST_VALIDATION_ERROR, DATA_NOT_FOUND, SYSTEM_ERROR
+    )
+)
 
 
 @router.get("/data-store")
@@ -30,7 +42,12 @@ def get_data_structure_current_status(
     )
 
 
-@router.post("/data-structures/status")
+@router.post(
+    "/data-structures/status",
+    responses=document_error_responses(
+        REQUEST_VALIDATION_ERROR, REQUEST_PARSE_ERROR
+    ),
+)
 def get_data_structure_current_status_as_post(
     body: NameParam, datastore_root_dir: Path = Depends(get_datastore_root_dir)
 ) -> dict[str, dict | None]:
@@ -39,7 +56,12 @@ def get_data_structure_current_status_as_post(
     )
 
 
-@router.get("/data-structures")
+@router.get(
+    "/data-structures",
+    responses=document_error_responses(
+        REQUEST_VALIDATION_ERROR, INVALID_DRAFT_VERSION
+    ),
+)
 def get_data_structures(
     query: MetadataQuery = Depends(get_metadata_query),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
@@ -60,7 +82,12 @@ def get_all_data_structures_ever(
     return metadata.find_all_data_structures_ever(datastore_root_dir)
 
 
-@router.get("/all")
+@router.get(
+    "/all",
+    responses=document_error_responses(
+        REQUEST_VALIDATION_ERROR, INVALID_DRAFT_VERSION
+    ),
+)
 def get_all_metadata(
     query: MetadataQuery = Depends(get_metadata_query),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),

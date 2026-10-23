@@ -80,4 +80,7 @@ class InputFixedQuery(InputQuery):
 
 
 class ErrorMessage(BaseModel):
-    detail: str
+    type: str | None = None
+    code: int | None = None
+    message: str
+    data: dict | None = None

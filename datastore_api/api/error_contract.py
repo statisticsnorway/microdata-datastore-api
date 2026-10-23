@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
+from datastore_api.domain.data.models import ErrorMessage
+
 
 @dataclass(frozen=True)
 class ErrorDefinition:
@@ -93,3 +95,41 @@ def contract_error_response(
 
 def message_response(status_code: int, message: str) -> JSONResponse:
     return JSONResponse(status_code=status_code, content={"message": message})
+
+
+def document_error_responses(*errors: ErrorDefinition) -> dict:
+    """Document applicable errors, grouped by their HTTP status."""
+    responses = {}
+    for error in errors:
+        response = responses.setdefault(
+            error.http_status,
+            {
+                "model": ErrorMessage,
+                "description": "",
+                "content": {"application/json": {"examples": {}}},
+            },
+        )
+        example = {
+            "type": error.type,
+            "code": error.code,
+            "message": error.message,
+        }
+        response["content"]["application/json"]["examples"][error.type] = {
+            "value": example
+        }
+        if response["description"]:
+            response["description"] += "\n\n"
+        response["description"] += (
+            f"{error.type} ({error.code}): {error.message}"
+        )
+        if error == ROW_LIMIT_EXCEEDED:
+            response["description"] += (
+                " The data object contains row_limit (configured maximum) "
+                "and row_count (actual result size)"
+            )
+        elif error == INVALID_DRAFT_VERSION:
+            response["description"] += (
+                " The data object contains requested_draft_version and "
+                "current_draft_version."
+            )
+    return responses

@@ -12,6 +12,15 @@ from datastore_api.adapter.auth.dependencies import authorize_user
 from datastore_api.api.common.dependencies import (
     get_data_reader,
 )
+from datastore_api.api.error_contract import (
+    AUTHENTICATION_FAILURE,
+    DATA_NOT_FOUND,
+    REQUEST_PARSE_ERROR,
+    REQUEST_VALIDATION_ERROR,
+    ROW_LIMIT_EXCEEDED,
+    SYSTEM_ERROR,
+    document_error_responses,
+)
 from datastore_api.config import environment
 from datastore_api.domain.data import (
     DataReader,
@@ -20,19 +29,25 @@ from datastore_api.domain.data import (
     generate_time_period_filter,
 )
 from datastore_api.domain.data.models import (
-    ErrorMessage,
     InputFixedQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
 )
 
-router = APIRouter()
+router = APIRouter(
+    responses=document_error_responses(
+        REQUEST_VALIDATION_ERROR,
+        REQUEST_PARSE_ERROR,
+        AUTHENTICATION_FAILURE,
+        DATA_NOT_FOUND,
+        SYSTEM_ERROR,
+    )
+)
 logger = logging.getLogger()
 
 
 @router.post(
     "/event/stream",
-    responses={404: {"model": ErrorMessage}},
     dependencies=[Depends(authorize_user)],
 )
 def stream_result_event(
@@ -55,7 +70,9 @@ def stream_result_event(
 
 @router.post(
     "/status/stream",
-    responses={404: {"model": ErrorMessage}},
+    responses=document_error_responses(
+        REQUEST_VALIDATION_ERROR, REQUEST_PARSE_ERROR, ROW_LIMIT_EXCEEDED
+    ),
     dependencies=[Depends(authorize_user)],
 )
 def stream_result_status(
@@ -78,7 +95,9 @@ def stream_result_status(
 
 @router.post(
     "/fixed/stream",
-    responses={404: {"model": ErrorMessage}},
+    responses=document_error_responses(
+        REQUEST_VALIDATION_ERROR, REQUEST_PARSE_ERROR, ROW_LIMIT_EXCEEDED
+    ),
     dependencies=[Depends(authorize_user)],
 )
 def stream_result_fixed(
