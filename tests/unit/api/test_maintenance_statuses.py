@@ -83,7 +83,7 @@ def test_set_maintenance_status_with_no_msg(client, mock_db_client):
     )
     mock_db_client.set_maintenance_status.assert_not_called()
     assert response.status_code == 400
-    assert response.json().get("details") is not None
+    assert response.json().get("message") is not None
 
 
 def test_set_maintenance_status_with_invalid_paused(client, mock_db_client):
@@ -93,7 +93,7 @@ def test_set_maintenance_status_with_invalid_paused(client, mock_db_client):
     )
     mock_db_client.set_maintenance_status.assert_not_called()
     assert response.status_code == 400
-    assert response.json().get("details") is not None
+    assert response.json().get("message") is not None
 
 
 def test_get_maintenance_status(client, mock_db_client):

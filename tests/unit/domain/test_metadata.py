@@ -383,6 +383,8 @@ def test_get_draft_metadata_all_invalid_draft_version(mocker):
         )
 
     assert "Requested draft version" in str(e)
+    assert e.value.requested_draft_version == "0.0.0.2"
+    assert e.value.current_draft_version == "0.0.0.1608000000"
 
 
 def _assert_code_list_and_missing_values(metadata_all):

@@ -29,4 +29,8 @@ def test_invalid_auth_token_returns_401(client: TestClient):
     )
 
     assert response.status_code == 401
-    assert response.json() == {"message": "Unauthorized"}
+    assert response.json() == {
+        "type": "AUTHENTICATION_FAILURE",
+        "code": 104,
+        "message": "The provided JWT was not accepted",
+    }

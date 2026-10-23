@@ -229,6 +229,8 @@ def test_read_parquet_exceeding_row_cap_raises_exception():
             row_cap=5,
         )
     assert str(e.value) == "Rows exceed maximum cap of 5"
+    assert e.value.row_limit == 5
+    assert e.value.row_count == 9
 
 
 def test_read_parquet_no_filter():

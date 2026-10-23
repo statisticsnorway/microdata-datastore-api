@@ -1,5 +1,6 @@
 import pytest
 
+from datastore_api.common.exceptions import RequestValidationException
 from datastore_api.domain.data.filters import (
     generate_fixed_filter,
     generate_population_filter,
@@ -56,10 +57,10 @@ def test_generate_value_filter():
     assert "starts_with" in expr_str
     assert "is_in" in expr_str
 
-    with pytest.raises(ValueError):
+    with pytest.raises(RequestValidationException):
         generate_value_filter(value_filter=["*"])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(RequestValidationException):
         generate_value_filter(value_filter=["A*B"])
 
 

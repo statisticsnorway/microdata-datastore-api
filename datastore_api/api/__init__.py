@@ -111,8 +111,10 @@ def _include_middleware(app: FastAPI) -> None:
             DatastoreNotFoundException,
             DatastoreRdnMissingException,
             PublicKeyNotFoundException,
-            NotFoundException,
         ) as exc:
+            logger.warning(exc, exc_info=True)
+            return message_response(404, str(exc))
+        except (NotFoundException,) as exc:
             logger.warning(exc, exc_info=True)
             return contract_error_response(DATA_NOT_FOUND)
         except AuthError as exc:

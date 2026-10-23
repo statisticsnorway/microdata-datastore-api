@@ -178,7 +178,7 @@ def test_data_stream_requires_dates(
     assert response.status_code == 400
     assert any(
         error["loc"] == ["body", missing_field]
-        for error in response.json()["details"]
+        for error in response.json()["data"]["errors"]
     )
     mock_data_reader.read_data.assert_not_called()
 
