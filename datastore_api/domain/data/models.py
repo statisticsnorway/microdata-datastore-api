@@ -76,7 +76,7 @@ class InputTimeQuery(InputQuery):
 
 
 class InputFixedQuery(InputQuery):
-    reader_test: bool = False
+    pass
 
 
 class ErrorMessage(BaseModel):

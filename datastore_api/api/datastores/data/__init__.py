@@ -122,16 +122,12 @@ def encryption_status(
     logger.info(
         f"Entering /data/encryption-status with input query: {input_query}"
     )
-    if not input_query.reader_test:
-        raise ValueError(
-            "/data/encryption-status expects input_query.reader_test yo be True"
-        )
     if not isinstance(data_reader, EncryptedDataReader):
         raise ValueError("Non-encrypted data reader detected.")
     result_data = data_reader.read_data(
         data_filter,
         row_cap=environment.data_row_cap,
-        reader_test=input_query.reader_test,
+        reader_test=True,
     )
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
