@@ -13,6 +13,7 @@ from datastore_api.adapter.auth.dependencies import (
     authorize_user,
 )
 from datastore_api.api.common.dependencies import get_data_reader
+from datastore_api.common.exceptions import UnexpectedDataReaderException
 from datastore_api.config import environment
 from datastore_api.domain.data import (
     DataReader,
@@ -123,7 +124,9 @@ def encryption_status(
         f"Entering /data/encryption-status with input query: {input_query}"
     )
     if not isinstance(data_reader, EncryptedDataReader):
-        raise ValueError("Non-encrypted data reader detected.")
+        raise UnexpectedDataReaderException(
+            "Non-encrypted data reader detected."
+        )
     result_data = data_reader.read_data(
         data_filter,
         row_cap=environment.data_row_cap,
