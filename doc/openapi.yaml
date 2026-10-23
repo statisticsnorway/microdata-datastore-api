@@ -1423,10 +1423,6 @@ components:
           type: boolean
           title: Includeattributes
           default: false
-        reader_test:
-          type: boolean
-          title: Reader Test
-          default: false
       type: object
       required:
       - dataStructureName
