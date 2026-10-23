@@ -4,18 +4,9 @@ from pathlib import Path
 import pyarrow
 import pytest
 from pyarrow import dataset
-from pyarrow.parquet.encryption import (
-    CryptoFactory,
-    EncryptionConfiguration,
-    KmsConnectionConfig,
-)
+from pyarrow.parquet.encryption import CryptoFactory
 
-from datastore_api.adapter.kms_client import (
-    COLUMN_KEY_ID,
-    FOOTER_KEY_ID,
-    InMemoryKmsClient,
-    make_crypto_factory,
-)
+from datastore_api.adapter.kms_client import InMemoryKmsClient
 from datastore_api.common.models import Version
 from datastore_api.domain.data import (
     EncryptedDataReader,
@@ -27,31 +18,6 @@ DATASET_NAME = "TEST_ENCRYPTED_DATASET"
 VERSION = Version.from_str("1.0.0.0")  # NOSONAR
 
 
-def _write_encrypted_parquet(table: pyarrow.Table, output_dir: Path) -> None:
-    encryption_configuration = EncryptionConfiguration(
-        footer_key=FOOTER_KEY_ID,
-        column_keys={COLUMN_KEY_ID: ALL_COLUMNS},
-        encryption_algorithm="AES_GCM_V1",
-        double_wrapping=True,
-        plaintext_footer=False,
-        data_key_length_bits=256,
-    )
-    encryption_config = dataset.ParquetEncryptionConfig(
-        make_crypto_factory(), KmsConnectionConfig(), encryption_configuration
-    )
-    parquet_format = dataset.ParquetFileFormat()
-    write_options = parquet_format.make_write_options(
-        encryption_config=encryption_config
-    )
-    dataset.write_dataset(
-        table,
-        output_dir,
-        format=parquet_format,
-        file_options=write_options,
-        max_rows_per_file=0,
-    )
-
-
 def _encrypted_reader(root_dir: Path) -> EncryptedDataReader:
     return EncryptedDataReader(
         parquet_path=_get_parquet_path(VERSION, DATASET_NAME, root_dir),
@@ -60,7 +26,7 @@ def _encrypted_reader(root_dir: Path) -> EncryptedDataReader:
 
 
 @pytest.fixture
-def encrypted_parquet(tmp_path):
+def unencrypted_datastore(tmp_path):
     table = pyarrow.table(
         {
             "unit_id": [1, 2, 3, 4, 5],
@@ -69,9 +35,17 @@ def encrypted_parquet(tmp_path):
             "stop_epoch_days": [18627, 18992, 19357, 19722, None],
         }
     )
+
     parquet_dir_name = f"{DATASET_NAME}__{VERSION.to_2_underscored()}"
     parquet_dir = tmp_path / "data" / DATASET_NAME / parquet_dir_name
     parquet_dir.mkdir(parents=True)
+
+    dataset.write_dataset(
+        table,
+        parquet_dir,
+        format="parquet",
+        max_rows_per_file=0,
+    )
 
     datastore_dir = tmp_path / "datastore"
     datastore_dir.mkdir()
@@ -79,7 +53,13 @@ def encrypted_parquet(tmp_path):
         datastore_dir / f"data_versions__{VERSION.to_2_underscored()}.json"
     ).write_text(json.dumps({DATASET_NAME: parquet_dir_name}))
 
-    _write_encrypted_parquet(table, parquet_dir)
+    (datastore_dir / "metadata_all__1_0_0.json").write_text(
+        json.dumps({"dataStructures": [{"name": DATASET_NAME}]})
+    )
+
+    (datastore_dir / "encrypted_versions.json").write_text(
+        json.dumps({"versions": []})
+    )
     return tmp_path, table
 
 

@@ -7,9 +7,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from datastore_api.adapter import db
-from datastore_api.adapter.auth.dependencies import authorize_user
+from datastore_api.adapter.auth.dependencies import (
+    authorize_api_key,
+    authorize_user,
+)
 from datastore_api.api.common.dependencies import (
     get_data_reader,
+    get_datastore_id,
 )
 from datastore_api.domain.data import EncryptedDataReader
 from datastore_api.main import app
@@ -36,6 +40,7 @@ def mock_db_client():
 def mock_auth_deps():
     return {
         "user": Mock(return_value=None),
+        "api_key": Mock(return_value=None),
     }
 
 
@@ -52,7 +57,29 @@ def client_resolving_data_reader(mock_db_client: Mock, mock_auth_deps: dict):
 def client(mock_db_client: Mock, mock_auth_deps: dict, mock_data_reader: Mock):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
     app.dependency_overrides[authorize_user] = lambda: mock_auth_deps["user"]()
+    app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
+        "api_key"
+    ]()
     app.dependency_overrides[get_data_reader] = lambda: mock_data_reader
+    app.dependency_overrides[get_datastore_id] = lambda: 1
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client_encr(
+    mock_db_client: Mock,
+    mock_auth_deps: dict,
+    encrypted_parquet,
+    encrypted_reader,
+):
+    app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
+    app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
+        "api_key"
+    ]()
+
+    app.dependency_overrides[get_data_reader] = lambda: encrypted_reader
+    app.dependency_overrides[get_datastore_id] = lambda: 1
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -181,6 +208,28 @@ def test_data_stream_requires_dates(
         for error in response.json()["details"]
     )
     mock_data_reader.read_data.assert_not_called()
+
+
+def test_validate_encryption(
+    client_encr: TestClient, mock_auth_deps: dict, encrypted_parquet
+):
+
+    response = client_encr.post(
+        "/datastores/no.ssb.test/data/encryption-status",
+        json={
+            "version": "1.0.0.0",
+            "dataStructureName": "TEST_ENCRYPTED_DATASET",
+        },
+        headers={"x-api-key": "test-key"},
+    )
+
+    assert response.status_code == 200
+    mock_auth_deps["api_key"].assert_called_once()
+
+    _, table = encrypted_parquet
+    expected = table.slice(0, 1)
+    actual = pq.read_table(pa.BufferReader(response.content))
+    assert actual.equals(expected)
 
 
 def test_data_fixed_stream_draft_version_zero_reads_draft_parquet(

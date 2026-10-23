@@ -106,6 +106,7 @@ class EncryptedDataReader:
         table_filter: dataset.Expression | None,
         *,
         row_cap: int | None = None,
+        reader_test: bool = False,
     ) -> Table:
         """
         Reads and filters an encrypted parquet file or partition and returns a
@@ -127,10 +128,13 @@ class EncryptedDataReader:
             parquet_format = dataset.ParquetFileFormat(
                 default_fragment_scan_options=scan_options
             )
+            ds = dataset.dataset(self.parquet_path, format=parquet_format)
 
-            table = dataset.dataset(
-                self.parquet_path, format=parquet_format
-            ).to_table(filter=table_filter, columns=self.columns)
+            if reader_test:
+                # return early just one row here if it is a reader test
+                table = ds.head(1, filter=table_filter, columns=self.columns)
+                return table
+            table = ds.to_table(filter=table_filter, columns=self.columns)
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
