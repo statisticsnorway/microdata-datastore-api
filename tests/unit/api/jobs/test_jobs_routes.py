@@ -193,7 +193,7 @@ def test_update_job_bad_request(client, mock_db_client):
     )
     mock_db_client.update_target.assert_not_called()
     assert response.status_code == 400
-    assert response.json().get("details") is not None
+    assert response.json().get("message") is not None
 
 
 # -------- RDN ---------

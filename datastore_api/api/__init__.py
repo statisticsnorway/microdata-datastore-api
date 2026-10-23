@@ -27,6 +27,7 @@ from datastore_api.api.error_contract import (
 )
 from datastore_api.common.exceptions import (
     AuthError,
+    DataNotFoundException,
     DatastoreExistsException,
     DatastoreNotFoundException,
     DatastorePathExistsException,
@@ -107,16 +108,17 @@ def _include_middleware(app: FastAPI) -> None:
         ) as exc:
             logger.warning(exc, exc_info=True)
             return message_response(400, str(exc))
+        except DataNotFoundException as exc:
+            logger.warning(exc, exc_info=True)
+            return contract_error_response(DATA_NOT_FOUND)
         except (
             DatastoreNotFoundException,
             DatastoreRdnMissingException,
+            NotFoundException,
             PublicKeyNotFoundException,
         ) as exc:
             logger.warning(exc, exc_info=True)
             return message_response(404, str(exc))
-        except (NotFoundException,) as exc:
-            logger.warning(exc, exc_info=True)
-            return contract_error_response(DATA_NOT_FOUND)
         except AuthError as exc:
             logger.warning(exc, exc_info=True)
             return contract_error_response(AUTHENTICATION_FAILURE)

@@ -1,6 +1,9 @@
 class NotFoundException(Exception): ...
 
 
+class DataNotFoundException(NotFoundException): ...
+
+
 class InvalidStorageFormatException(Exception): ...
 
 
