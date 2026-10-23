@@ -1,6 +1,7 @@
-from fastapi import HTTPException, Query, status
+from fastapi import Query
 from pydantic import BaseModel
 
+from datastore_api.common.exceptions import RequestValidationException
 from datastore_api.common.models import Version
 
 
@@ -35,7 +36,4 @@ def get_metadata_query(
             skip_code_lists=skip_code_lists,
         )
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        )
+        raise RequestValidationException(str(e)) from e
