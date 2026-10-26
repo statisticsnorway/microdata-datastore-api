@@ -1,7 +1,5 @@
-import json
 from pathlib import Path
 
-import pyarrow
 import pytest
 from pyarrow import dataset
 from pyarrow.parquet.encryption import CryptoFactory
@@ -23,44 +21,6 @@ def _encrypted_reader(root_dir: Path) -> EncryptedDataReader:
         parquet_path=_get_parquet_path(VERSION, DATASET_NAME, root_dir),
         columns=ALL_COLUMNS,
     )
-
-
-@pytest.fixture
-def unencrypted_datastore(tmp_path):
-    table = pyarrow.table(
-        {
-            "unit_id": [1, 2, 3, 4, 5],
-            "value": ["A", "B", "C", "D", "E"],
-            "start_epoch_days": [18262, 18628, 18993, 19358, 19723],
-            "stop_epoch_days": [18627, 18992, 19357, 19722, None],
-        }
-    )
-
-    parquet_dir_name = f"{DATASET_NAME}__{VERSION.to_2_underscored()}"
-    parquet_dir = tmp_path / "data" / DATASET_NAME / parquet_dir_name
-    parquet_dir.mkdir(parents=True)
-
-    dataset.write_dataset(
-        table,
-        parquet_dir,
-        format="parquet",
-        max_rows_per_file=0,
-    )
-
-    datastore_dir = tmp_path / "datastore"
-    datastore_dir.mkdir()
-    (
-        datastore_dir / f"data_versions__{VERSION.to_2_underscored()}.json"
-    ).write_text(json.dumps({DATASET_NAME: parquet_dir_name}))
-
-    (datastore_dir / "metadata_all__1_0_0.json").write_text(
-        json.dumps({"dataStructures": [{"name": DATASET_NAME}]})
-    )
-
-    (datastore_dir / "encrypted_versions.json").write_text(
-        json.dumps({"versions": []})
-    )
-    return tmp_path, table
 
 
 def test_encrypted_reader_result_matches_unencrypted(encrypted_parquet):

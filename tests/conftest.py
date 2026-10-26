@@ -108,19 +108,3 @@ def encrypted_parquet(tmp_path):
 
     _write_encrypted_parquet(table, parquet_dir)
     return tmp_path, table
-
-
-@pytest.fixture
-def encrypted_datastore(encrypted_parquet):
-    root_dir, table = encrypted_parquet
-    datastore_dir = root_dir / "datastore"
-
-    (datastore_dir / "metadata_all__1_0_0.json").write_text(
-        json.dumps({"dataStructures": [{"name": DATASET_NAME}]})
-    )
-
-    (datastore_dir / "encrypted_versions.json").write_text(
-        json.dumps({"versions": ["1.0"]})
-    )
-
-    return root_dir, table
