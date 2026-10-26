@@ -66,12 +66,10 @@ def client(mock_db_client: Mock, mock_auth_deps: dict, mock_data_reader: Mock):
 
 @pytest.fixture
 def client_encr(
-    mock_db_client: Mock,
     mock_auth_deps: dict,
     encrypted_parquet,
     encrypted_reader,
 ):
-    app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
     app.dependency_overrides[authorize_api_key] = lambda: mock_auth_deps[
         "api_key"
     ]()
