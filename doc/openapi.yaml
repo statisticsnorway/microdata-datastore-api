@@ -689,6 +689,9 @@ paths:
                     type: INVALID_DRAFT_VERSION
                     code: 107
                     message: Requested draft version does not match the current draft.
+                    data:
+                      requested_draft_version: 0.0.0.1608000000
+                      current_draft_version: 0.0.0.1609000000
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
         '404':
@@ -845,6 +848,9 @@ paths:
                     type: INVALID_DRAFT_VERSION
                     code: 107
                     message: Requested draft version does not match the current draft.
+                    data:
+                      requested_draft_version: 0.0.0.1608000000
+                      current_draft_version: 0.0.0.1609000000
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
         '404':
@@ -1028,6 +1034,9 @@ paths:
                     code: 106
                     message: This import would produce a dataset containing more rows
                       than the row_limit.
+                    data:
+                      row_limit: 20000
+                      row_count: 20100
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
         '401':
@@ -1131,6 +1140,9 @@ paths:
                     code: 106
                     message: This import would produce a dataset containing more rows
                       than the row_limit.
+                    data:
+                      row_limit: 20000
+                      row_count: 20100
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
         '401':
@@ -1694,14 +1706,10 @@ components:
     ErrorMessage:
       properties:
         type:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
           title: Type
         code:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
           title: Code
         message:
           type: string
@@ -1714,6 +1722,8 @@ components:
           title: Data
       type: object
       required:
+      - type
+      - code
       - message
       title: ErrorMessage
     HTTPValidationError:

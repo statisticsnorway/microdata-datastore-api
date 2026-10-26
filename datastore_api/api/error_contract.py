@@ -123,11 +123,16 @@ def document_error_responses(*errors: ErrorDefinition) -> dict:
             f"{error.type} ({error.code}): {error.message}"
         )
         if error == ROW_LIMIT_EXCEEDED:
+            example["data"] = {"row_limit": 20000, "row_count": 20100}
             response["description"] += (
                 " The data object contains row_limit (configured maximum) "
                 "and row_count (actual result size)"
             )
         elif error == INVALID_DRAFT_VERSION:
+            example["data"] = {
+                "requested_draft_version": "0.0.0.1608000000",
+                "current_draft_version": "0.0.0.1609000000",
+            }
             response["description"] += (
                 " The data object contains requested_draft_version and "
                 "current_draft_version."
