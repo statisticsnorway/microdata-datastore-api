@@ -13,7 +13,6 @@ from datastore_api.adapter.auth.dependencies import (
 )
 from datastore_api.api.common.dependencies import (
     get_data_reader,
-    get_datastore_id,
 )
 from datastore_api.domain.data import EncryptedDataReader
 from datastore_api.main import app
@@ -61,7 +60,6 @@ def client(mock_db_client: Mock, mock_auth_deps: dict, mock_data_reader: Mock):
         "api_key"
     ]()
     app.dependency_overrides[get_data_reader] = lambda: mock_data_reader
-    app.dependency_overrides[get_datastore_id] = lambda: 1
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -79,7 +77,6 @@ def client_encr(
     ]()
 
     app.dependency_overrides[get_data_reader] = lambda: encrypted_reader
-    app.dependency_overrides[get_datastore_id] = lambda: 1
     yield TestClient(app)
     app.dependency_overrides.clear()
 
