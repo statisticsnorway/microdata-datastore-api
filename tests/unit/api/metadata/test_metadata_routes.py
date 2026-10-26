@@ -88,6 +88,68 @@ def client(mock_db_client: Mock):
     app.dependency_overrides.clear()
 
 
+def test_metadata_status_malformed_json(client):
+    response = client.post(
+        "/datastores/no.ssb.test/metadata/data-structures/status",
+        content='{"names":',
+        headers={"Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "type": "REQUEST_PARSE_ERROR",
+        "code": 102,
+        "message": "An error occurred when parsing the request payload.",
+    }
+
+
+def test_metadata_invalid_version(client):
+    response = client.get(
+        "/datastores/no.ssb.test/metadata/all", params={"version": "invalid"}
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "type": "REQUEST_VALIDATION_ERROR",
+        "code": 101,
+        "message": "The request payload does not match the required format.",
+    }
+
+
+@pytest.mark.parametrize("endpoint", ["all", "data-structures"])
+def test_metadata_invalid_draft_version(client, endpoint):
+    response = client.get(
+        f"/datastores/no.ssb.test/metadata/{endpoint}",
+        params={"version": "0.0.0.1", "names": "TEST_PERSON_INCOME"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "type": "INVALID_DRAFT_VERSION",
+        "code": 107,
+        "message": "Requested draft version does not match the current draft.",
+        "data": {
+            "requested_draft_version": "0.0.0.1",
+            "current_draft_version": "0.0.0.1608000000",
+        },
+    }
+
+
+@pytest.mark.parametrize("endpoint", ["all", "data-structures"])
+def test_metadata_unknown_version(client, endpoint):
+    response = client.get(
+        f"/datastores/no.ssb.test/metadata/{endpoint}",
+        params={"version": "999.0.0.0", "names": "TEST_PERSON_INCOME"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "type": "DATA_NOT_FOUND",
+        "code": 105,
+        "message": "No data exists for this payload.",
+    }
+
+
 def test_get_data_store(client, mocker, mock_db_client):
     spy = mocker.patch.object(
         metadata,
