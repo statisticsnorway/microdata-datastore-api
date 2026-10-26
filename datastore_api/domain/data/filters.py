@@ -1,4 +1,4 @@
-from pyarrow import compute, dataset
+from pyarrow import ArrowInvalid, ArrowTypeError, compute, dataset
 
 from datastore_api.common.exceptions import RequestValidationException
 
@@ -73,11 +73,16 @@ def generate_fixed_filter(
 def generate_population_filter(
     population_filter: list | None = None,
 ) -> dataset.Expression | None:
-    return (
-        dataset.field("unit_id").isin(population_filter)
-        if population_filter
-        else None
-    )
+    try:
+        return (
+            dataset.field("unit_id").isin(population_filter)
+            if population_filter
+            else None
+        )
+    except (ArrowInvalid, ArrowTypeError) as e:
+        raise RequestValidationException(
+            f"Invalid population filter: {e}"
+        ) from e
 
 
 def _build_wildcard_expression(value: str) -> dataset.Expression:
