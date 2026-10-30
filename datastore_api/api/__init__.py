@@ -31,6 +31,7 @@ from datastore_api.common.exceptions import (
     PublicKeyNotFoundException,
     RequestValidationException,
     TooManyRowsException,
+    UnexpectedDataReaderException,
 )
 
 logger = logging.getLogger()
@@ -107,6 +108,9 @@ def _include_middleware(app: FastAPI) -> None:
         except DatastoreSetupException as exc:
             logger.error(exc, exc_info=True)
             return JSONResponse(status_code=500, content={"message": str(exc)})
+        except UnexpectedDataReaderException as exc:
+            logger.warning(exc, exc_info=True)
+            return JSONResponse(status_code=409, content={"message": str(exc)})
 
     @app.middleware("http")
     async def add_language_header(
