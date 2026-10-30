@@ -4,7 +4,10 @@ import pytest
 from pyarrow import dataset
 from pyarrow.parquet.encryption import CryptoFactory
 
-from datastore_api.adapter.kms_client import InMemoryKmsClient
+from datastore_api.adapter.kms_client import (
+    InMemoryKmsClient,
+)
+from datastore_api.common.exceptions import InvalidStorageFormatException
 from datastore_api.common.models import Version
 from datastore_api.domain.data import (
     EncryptedDataReader,
@@ -41,7 +44,7 @@ def test_encrypted_reader_with_filter(encrypted_parquet):
     }
 
 
-def test_encrypted_reader_wrong_key_raises_value_error(
+def test_encrypted_reader_wrong_key_raises_invalid_storage_format_exception(
     encrypted_parquet, monkeypatch
 ):
     root_dir, _ = encrypted_parquet
@@ -58,5 +61,7 @@ def test_encrypted_reader_wrong_key_raises_value_error(
     monkeypatch.setattr(
         "datastore_api.domain.data.make_crypto_factory", wrong_crypto_factory
     )
-    with pytest.raises(ValueError, match="Parquet decryption failed"):
+    with pytest.raises(
+        InvalidStorageFormatException, match="Parquet decryption failed"
+    ):
         _encrypted_reader(root_dir).read_data(None)

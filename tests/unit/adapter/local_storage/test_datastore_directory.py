@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from datastore_api.adapter.local_storage import datastore_directory
-from datastore_api.common.exceptions import NotFoundException
+from datastore_api.common.exceptions import DataNotFoundException
 from datastore_api.common.models import Version
 
 TEST_DIR = Path("tests/resources/test_datastore").resolve()
@@ -63,14 +63,14 @@ def test_get_partitioned_file_path():
 
 
 def test_get_metadata_all_raises_not_found_exception():
-    with pytest.raises(NotFoundException):
+    with pytest.raises(DataNotFoundException):
         datastore_directory.get_metadata_all(
             Version.from_str("1.0.0.0"), Path("doesNotExist")
         )
 
 
 def test_get_data_path_from_data_versions_bad_name_raises_not_found_exception():
-    with pytest.raises(NotFoundException):
+    with pytest.raises(DataNotFoundException):
         datastore_directory.get_data_path_from_data_versions(
             "BAD_TEST_STUDIEPOENG",
             Version.from_str("1.0.0.0"),
@@ -78,10 +78,12 @@ def test_get_data_path_from_data_versions_bad_name_raises_not_found_exception():
         )
 
 
-def test_get_data_path_from_data_versions_bad_ver_raises_file_not_found_error():
-    with pytest.raises(FileNotFoundError):
+def test_get_data_path_from_data_versions_bad_ver_raises_data_not_found():
+    with pytest.raises(DataNotFoundException):
         datastore_directory.get_data_path_from_data_versions(
-            "TEST_STUDIEPOENG", Version.from_str("0.0.0.0"), DATASTORE_ROOT_DIR
+            "TEST_STUDIEPOENG",
+            Version.from_str("999.0.0.0"),
+            DATASTORE_ROOT_DIR,
         )
 
 
@@ -118,7 +120,7 @@ def test_get_metadata_all_0_0_0_0_resolves_to_current_draft():
 
 
 def test_get_metadata_all_0_0_0_0_raises_not_found_exception():
-    with pytest.raises(NotFoundException):
+    with pytest.raises(DataNotFoundException):
         datastore_directory.get_metadata_all(
             Version.from_str("0.0.0.0"), Path("doesNotExist")
         )

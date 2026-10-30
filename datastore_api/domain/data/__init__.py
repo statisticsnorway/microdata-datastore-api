@@ -18,7 +18,11 @@ from datastore_api.adapter.local_storage import (
 from datastore_api.adapter.local_storage.datastore_directory import (
     get_encrypted_versions,
 )
-from datastore_api.common.exceptions import TooManyRowsException
+from datastore_api.common.exceptions import (
+    InvalidStorageFormatException,
+    RequestValidationException,
+    TooManyRowsException,
+)
 from datastore_api.common.models import Version
 from datastore_api.domain.data import filters
 from datastore_api.domain.data.models import (
@@ -80,11 +84,11 @@ class UnencryptedDataReader:
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
-                    f"Rows exceed maximum cap of {row_cap}"
+                    row_limit=row_cap, row_count=table.num_rows
                 )
             return table
         except ArrowTypeError as e:
-            raise ValueError(
+            raise RequestValidationException(
                 f"Filter value type does not match dataset column type: {e}"
             ) from e
 
@@ -138,15 +142,17 @@ class EncryptedDataReader:
             logger.info(f"Number of rows in result set: {table.num_rows}")
             if row_cap and table.num_rows > row_cap:
                 raise TooManyRowsException(
-                    f"Rows exceed maximum cap of {row_cap}"
+                    row_limit=row_cap, row_count=table.num_rows
                 )
             return table
         except ArrowTypeError as e:
-            raise ValueError(
+            raise RequestValidationException(
                 f"Filter value type does not match dataset column type: {e}"
             ) from e
         except (ArrowInvalid, InvalidTag) as e:
-            raise ValueError(f"Parquet decryption failed: {e}") from e
+            raise InvalidStorageFormatException(
+                f"Parquet decryption failed: {e}"
+            ) from e
 
 
 def _get_parquet_path(

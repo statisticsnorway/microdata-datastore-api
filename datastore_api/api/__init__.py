@@ -1,8 +1,7 @@
 import logging
 from typing import Awaitable, Callable
 
-from fastapi import FastAPI, Request, Response, status
-from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -14,8 +13,21 @@ from datastore_api.api import (
     maintenance_statuses,
     observability,
 )
+from datastore_api.api.error_contract import (
+    AUTHENTICATION_FAILURE,
+    DATA_NOT_FOUND,
+    INVALID_DRAFT_VERSION,
+    PATH_NOT_FOUND,
+    REQUEST_PARSE_ERROR,
+    REQUEST_VALIDATION_ERROR,
+    ROW_LIMIT_EXCEEDED,
+    SYSTEM_ERROR,
+    contract_error_response,
+    message_response,
+)
 from datastore_api.common.exceptions import (
     AuthError,
+    DataNotFoundException,
     DatastoreExistsException,
     DatastoreNotFoundException,
     DatastorePathExistsException,
@@ -66,51 +78,62 @@ def _include_middleware(app: FastAPI) -> None:
             return await call_next(request)
         except InvalidDraftVersionException as exc:
             logger.warning(exc, exc_info=True)
-            return JSONResponse(content={"message": str(exc)}, status_code=404)
+            return contract_error_response(
+                INVALID_DRAFT_VERSION,
+                data={
+                    "requested_draft_version": exc.requested_draft_version,
+                    "current_draft_version": exc.current_draft_version,
+                },
+            )
+        except TooManyRowsException as exc:
+            logger.warning(exc, exc_info=True)
+            return contract_error_response(
+                ROW_LIMIT_EXCEEDED,
+                data={
+                    "row_limit": exc.row_limit,
+                    "row_count": exc.row_count,
+                },
+            )
         except RequestValidationException as exc:
             logger.warning(exc, exc_info=True)
-            return JSONResponse(content={"message": str(exc)}, status_code=400)
+            return contract_error_response(REQUEST_VALIDATION_ERROR)
         except InvalidStorageFormatException as exc:
             logger.exception(exc)
-            return JSONResponse(
-                content={"message": "Invalid storage format"}, status_code=500
-            )
+            return contract_error_response(SYSTEM_ERROR)
         except (
             ValidationError,
             ValueError,
             JobExistsException,
             NameValidationError,
             PublicKeyInvalidException,
-            TooManyRowsException,
         ) as exc:
             logger.warning(exc, exc_info=True)
-            return JSONResponse(status_code=400, content={"message": str(exc)})
+            return message_response(400, str(exc))
+        except DataNotFoundException as exc:
+            logger.warning(exc, exc_info=True)
+            return contract_error_response(DATA_NOT_FOUND)
         except (
             DatastoreNotFoundException,
             DatastoreRdnMissingException,
-            PublicKeyNotFoundException,
             NotFoundException,
+            PublicKeyNotFoundException,
         ) as exc:
             logger.warning(exc, exc_info=True)
-            return JSONResponse(status_code=404, content={"message": str(exc)})
+            return message_response(404, str(exc))
         except AuthError as exc:
             logger.warning(exc, exc_info=True)
-            return JSONResponse(
-                status_code=401, content={"message": "Unauthorized"}
-            )
+            return contract_error_response(AUTHENTICATION_FAILURE)
         except (
             DatastoreExistsException,
             DatastorePathExistsException,
             PublicKeyAlreadyExistsException,
+            UnexpectedDataReaderException,
         ) as exc:
             logger.warning(exc, exc_info=True)
-            return JSONResponse(status_code=409, content={"message": str(exc)})
+            return message_response(409, str(exc))
         except DatastoreSetupException as exc:
             logger.error(exc, exc_info=True)
-            return JSONResponse(status_code=500, content={"message": str(exc)})
-        except UnexpectedDataReaderException as exc:
-            logger.warning(exc, exc_info=True)
-            return JSONResponse(status_code=409, content={"message": str(exc)})
+            return contract_error_response(SYSTEM_ERROR)
 
     @app.middleware("http")
     async def add_language_header(
@@ -135,32 +158,27 @@ def _include_exception_handlers(app: FastAPI) -> None:
         _req: Request, exc: RequestValidationError
     ) -> JSONResponse:
         logger.exception(exc)
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=jsonable_encoder(
-                {"message": "Bad Request", "details": exc.errors()}
-            ),
+        errors = exc.errors()
+        if any(error.get("type") == "json_invalid" for error in errors):
+            return contract_error_response(REQUEST_PARSE_ERROR)
+        return contract_error_response(
+            REQUEST_VALIDATION_ERROR, data={"errors": errors}
         )
 
     @app.exception_handler(HTTPException)
     def handle_http_exception(
         _req: Request, exc: HTTPException
     ) -> JSONResponse:
+        if exc.status_code == 400:
+            logger.warning(exc, exc_info=True)
+            return contract_error_response(REQUEST_VALIDATION_ERROR)
         if exc.status_code == 404:
             logger.warning(exc, exc_info=True)
-            return JSONResponse(
-                content={"message": "Not found"}, status_code=404
-            )
+            return contract_error_response(PATH_NOT_FOUND)
         logger.exception(exc)
-        return JSONResponse(
-            status_code=500,
-            content={"message": "Internal Server Error"},
-        )
+        return contract_error_response(SYSTEM_ERROR)
 
     @app.exception_handler(Exception)
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:
         logger.exception(exc, exc_info=True)
-        return JSONResponse(
-            status_code=500,
-            content=jsonable_encoder({"message": "Internal Server Error"}),
-        )
+        return contract_error_response(SYSTEM_ERROR)

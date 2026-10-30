@@ -14,6 +14,7 @@ from datastore_api.adapter.auth.dependencies import (
 from datastore_api.api.common.dependencies import (
     get_data_reader,
 )
+from datastore_api.common.exceptions import TooManyRowsException
 from datastore_api.domain.data import EncryptedDataReader
 from datastore_api.main import app
 
@@ -77,6 +78,83 @@ def client_encr(
     app.dependency_overrides[get_data_reader] = lambda: encrypted_reader
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+def test_data_stream_malformed_json(client, mock_data_reader):
+    response = client.post(
+        "/datastores/no.ssb.test/data/fixed/stream",
+        content='{"version":',
+        headers={"Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "type": "REQUEST_PARSE_ERROR",
+        "code": 102,
+        "message": "An error occurred when parsing the request payload.",
+    }
+    mock_data_reader.read_data.assert_not_called()
+
+
+@pytest.mark.parametrize("temporality", ["fixed", "status", "event"])
+def test_data_stream_unknown_version(client_resolving_data_reader, temporality):
+    response = client_resolving_data_reader.post(
+        f"/datastores/no.ssb.test/data/{temporality}/stream",
+        json={
+            "version": "999.0.0.0",
+            "dataStructureName": "TEST_PERSON_INCOME",
+            "date": 0,
+            "startDate": 0,
+            "stopDate": 0,
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "type": "DATA_NOT_FOUND",
+        "code": 105,
+        "message": "No data exists for this payload.",
+    }
+
+
+@pytest.mark.parametrize("temporality", ["fixed", "status"])
+def test_data_stream_row_limit_exceeded(client, mock_data_reader, temporality):
+    mock_data_reader.read_data.side_effect = TooManyRowsException(
+        row_limit=1000, row_count=1001
+    )
+    response = client.post(
+        f"/datastores/no.ssb.test/data/{temporality}/stream",
+        json={
+            "version": "1.0.0.0",
+            "dataStructureName": "FAKE_NAME",
+            "date": 0,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "type": "ROW_LIMIT_EXCEEDED",
+        "code": 106,
+        "message": (
+            "This import would produce a dataset containing more rows "
+            "than the row_limit."
+        ),
+        "data": {"row_limit": 1000, "row_count": 1001},
+    }
+
+
+def test_data_stream_unknown_dataset(client_resolving_data_reader):
+    response = client_resolving_data_reader.post(
+        "/datastores/no.ssb.test/data/fixed/stream",
+        json={"version": "1.0.0.0", "dataStructureName": "MISSING_DATASET"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "type": "DATA_NOT_FOUND",
+        "code": 105,
+        "message": "No data exists for this payload.",
+    }
 
 
 def test_data_event_stream_result(client: TestClient, mock_auth_deps: dict):
@@ -200,7 +278,7 @@ def test_data_stream_requires_dates(
     assert response.status_code == 400
     assert any(
         error["loc"] == ["body", missing_field]
-        for error in response.json()["details"]
+        for error in response.json()["data"]["errors"]
     )
     mock_data_reader.read_data.assert_not_called()
 

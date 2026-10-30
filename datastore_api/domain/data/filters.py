@@ -1,4 +1,6 @@
-from pyarrow import compute, dataset
+from pyarrow import ArrowInvalid, ArrowTypeError, compute, dataset
+
+from datastore_api.common.exceptions import RequestValidationException
 
 
 def generate_time_period_filter(
@@ -71,21 +73,26 @@ def generate_fixed_filter(
 def generate_population_filter(
     population_filter: list | None = None,
 ) -> dataset.Expression | None:
-    return (
-        dataset.field("unit_id").isin(population_filter)
-        if population_filter
-        else None
-    )
+    try:
+        return (
+            dataset.field("unit_id").isin(population_filter)
+            if population_filter
+            else None
+        )
+    except (ArrowInvalid, ArrowTypeError) as e:
+        raise RequestValidationException(
+            f"Invalid population filter: {e}"
+        ) from e
 
 
 def _build_wildcard_expression(value: str) -> dataset.Expression:
     if value.count("*") != 1 or len(value) < 2:
-        raise ValueError("Only one '*' is allowed in value")
+        raise RequestValidationException("Only one '*' is allowed in value")
     if not value.endswith("*"):
-        raise ValueError("Wildcard '*' must be at the end")
+        raise RequestValidationException("Wildcard '*' must be at the end")
     prefix = value[:-1]
     if not prefix:
-        raise ValueError(
+        raise RequestValidationException(
             "Wildcard '*' must be preceded by at least one character"
         )
     return compute.starts_with(  # type: ignore[attr-defined]

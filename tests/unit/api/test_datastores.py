@@ -105,7 +105,11 @@ def test_unhandled_exception_returns_500(client, monkeypatch):
     response = client.post("/datastores", json=NEW_DATASTORE_REQUEST)
 
     assert response.status_code == 500
-    assert response.json() == {"message": "Internal Server Error"}
+    assert response.json() == {
+        "type": "SYSTEM_ERROR",
+        "code": 202,
+        "message": "An unexpected system error occured.",
+    }
 
 
 def test_get_datastores_rdns(client):

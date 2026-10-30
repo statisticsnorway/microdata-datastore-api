@@ -50,12 +50,24 @@ app = FastAPI(title="Datastore API", version="1.0.0")
 setup_api(app)
 setup_logging(app)
 
+# Consumer validation errors return 400, not FastAPI's default 422.
+schema = app.openapi()
+for path, operations in schema["paths"].items():
+    if path.startswith(
+        (
+            "/datastores/{datastore_rdn}/data/",
+            "/datastores/{datastore_rdn}/metadata/",
+        )
+    ):
+        for operation in operations.values():
+            operation.get("responses", {}).pop("422", None)
+
 # update OpenAPI docs
 if environment.stack == "dev":
     import yaml
 
     with open("doc/openapi.yaml", "w") as f:
-        yaml.dump(app.openapi(), f, sort_keys=False)
+        yaml.dump(schema, f, sort_keys=False)
 
 
 if __name__ == "__main__":
