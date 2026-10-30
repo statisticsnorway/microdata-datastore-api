@@ -1169,13 +1169,18 @@ paths:
                     message: No data exists for this payload.
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-          description: Not Found
-        '422':
-          description: Validation Error
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
           content:
             application/json:
+              examples:
+                SYSTEM_ERROR:
+                  value:
+                    type: SYSTEM_ERROR
+                    code: 202
+                    message: An unexpected system error occured.
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorMessage'
   /datastores/{datastore_rdn}/data/encryption-status:
     post:
       summary: Encryption Status
@@ -1212,8 +1217,54 @@ paths:
           content:
             application/json:
               schema: {}
-        '422':
-          description: Validation Error
+        '400':
+          description: 'REQUEST_VALIDATION_ERROR (101): The request payload does not
+            match the required format.
+
+
+            REQUEST_PARSE_ERROR (102): An error occurred when parsing the request
+            payload.'
+          content:
+            application/json:
+              examples:
+                REQUEST_VALIDATION_ERROR:
+                  value:
+                    type: REQUEST_VALIDATION_ERROR
+                    code: 101
+                    message: The request payload does not match the required format.
+                REQUEST_PARSE_ERROR:
+                  value:
+                    type: REQUEST_PARSE_ERROR
+                    code: 102
+                    message: An error occurred when parsing the request payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: 'AUTHENTICATION_FAILURE (104): The provided JWT was not accepted'
+          content:
+            application/json:
+              examples:
+                AUTHENTICATION_FAILURE:
+                  value:
+                    type: AUTHENTICATION_FAILURE
+                    code: 104
+                    message: The provided JWT was not accepted
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: 'DATA_NOT_FOUND (105): No data exists for this payload.'
+          content:
+            application/json:
+              examples:
+                DATA_NOT_FOUND:
+                  value:
+                    type: DATA_NOT_FOUND
+                    code: 105
+                    message: No data exists for this payload.
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
           content:
             application/json:
               examples:
