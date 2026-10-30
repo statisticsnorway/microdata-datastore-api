@@ -1169,8 +1169,51 @@ paths:
                     message: No data exists for this payload.
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-        '500':
-          description: 'SYSTEM_ERROR (202): An unexpected system error occured.'
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /datastores/{datastore_rdn}/data/encryption-status:
+    post:
+      summary: Encryption Status
+      description: 'Assert that a dataset is encrypted through the data reader type,
+        then
+
+        attempt to read one row of the dataset using the data reader and stream
+
+        result as response.'
+      operationId: encryption_status_datastores__datastore_rdn__data_encryption_status_post
+      parameters:
+      - name: datastore_rdn
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Datastore Rdn
+      - name: x-api-key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: X-API-KEY
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputFixedQuery'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
           content:
             application/json:
               examples:

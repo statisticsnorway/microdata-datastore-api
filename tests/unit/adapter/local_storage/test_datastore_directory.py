@@ -6,7 +6,7 @@ from datastore_api.adapter.local_storage import datastore_directory
 from datastore_api.common.exceptions import DataNotFoundException
 from datastore_api.common.models import Version
 
-TEST_DIR = "tests/resources/test_datastore"
+TEST_DIR = Path("tests/resources/test_datastore").resolve()
 TEST_DATA_DIR = f"{TEST_DIR}/data"
 TEST_PERSON_INCOME_PATH = (
     f"{TEST_DATA_DIR}/TEST_PERSON_INCOME/TEST_PERSON_INCOME"
@@ -18,7 +18,7 @@ TEST_STUDIEPOENG_PATH_1_0 = (
 )
 
 
-DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore")
+DATASTORE_ROOT_DIR = Path("tests/resources/test_datastore").resolve()
 
 
 def test_get_file_path():

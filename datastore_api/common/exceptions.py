@@ -64,6 +64,9 @@ class PublicKeyInvalidException(Exception): ...
 class StartUpException(Exception): ...
 
 
+class UnexpectedDataReaderException(Exception): ...
+
+
 class TooManyRowsException(Exception):
     def __init__(self, row_limit: int, row_count: int) -> None:
         self.row_limit = row_limit

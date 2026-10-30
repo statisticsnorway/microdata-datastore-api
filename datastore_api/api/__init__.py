@@ -43,6 +43,7 @@ from datastore_api.common.exceptions import (
     PublicKeyNotFoundException,
     RequestValidationException,
     TooManyRowsException,
+    UnexpectedDataReaderException,
 )
 
 logger = logging.getLogger()
@@ -126,6 +127,7 @@ def _include_middleware(app: FastAPI) -> None:
             DatastoreExistsException,
             DatastorePathExistsException,
             PublicKeyAlreadyExistsException,
+            UnexpectedDataReaderException,
         ) as exc:
             logger.warning(exc, exc_info=True)
             return message_response(409, str(exc))
