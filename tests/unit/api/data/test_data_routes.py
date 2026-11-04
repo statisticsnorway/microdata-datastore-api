@@ -202,6 +202,46 @@ def test_data_fixed_stream_result(client: TestClient, mock_auth_deps: dict):
     assert pq.read_table(reader) == MOCK_RESULT
 
 
+def test_data_fixed_rows_count(client, mock_data_reader, mock_auth_deps):
+    mock_data_reader.read_data_row_count.return_value = 50_000_000
+    response = client.post(
+        "/datastores/no.ssb.test/data/fixed/rows-count",
+        json={
+            "version": "1.0.0.0",
+            "dataStructureName": "FAKE_NAME",
+            "population": [1],
+            "values": ["A"],
+            "includeAttributes": True,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"rowsCount": 50_000_000}
+    mock_auth_deps["user"].assert_called_once()
+    mock_data_reader.read_data_row_count.assert_called_once_with()
+    mock_data_reader.read_data.assert_not_called()
+
+
+def test_data_status_rows_count(client, mock_data_reader, mock_auth_deps):
+    mock_data_reader.read_data_row_count.return_value = 50_000_000
+    response = client.post(
+        "/datastores/no.ssb.test/data/status/rows-count",
+        json={
+            "version": "1.0.0.0",
+            "dataStructureName": "FAKE_NAME",
+            "date": 10,
+            "population": [999],
+            "values": ["excluded"],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"rowsCount": 50_000_000}
+    mock_auth_deps["user"].assert_called_once()
+    mock_data_reader.read_data_row_count.assert_called_once_with(date=10)
+    mock_data_reader.read_data.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "temporality, expected_ids, filtered_ids",
     [

@@ -154,3 +154,33 @@ def encryption_status(
     buffer_stream = pa.BufferOutputStream()
     pq.write_table(result_data, buffer_stream)
     return PlainTextResponse(buffer_stream.getvalue().to_pybytes())
+
+
+@router.post(
+    "/fixed/rows-count",
+    dependencies=[Depends(authorize_user)],
+)
+def rows_count_fixed(
+    input_query: InputFixedQuery,
+    data_reader: Annotated[DataReader, Depends(get_data_reader)],
+) -> dict[str, int]:
+    """
+    Return the total row count from Parquet metadata,
+    without applying filters.
+    """
+    return {"rowsCount": data_reader.read_data_row_count()}
+
+
+@router.post(
+    "/status/rows-count",
+    dependencies=[Depends(authorize_user)],
+)
+def rows_count_status(
+    input_query: InputTimeQuery,
+    data_reader: Annotated[DataReader, Depends(get_data_reader)],
+) -> dict[str, int]:
+    """
+    Return the row count for the requested year from Parquet metadata,
+    without applying filters.
+    """
+    return {"rowsCount": data_reader.read_data_row_count(date=input_query.date)}
