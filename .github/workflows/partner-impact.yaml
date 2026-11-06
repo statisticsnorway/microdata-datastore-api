@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
-      - name: Detect sensitive changes
+      - name: Detect changes taht may impacting external partners
         id: detect
         run: |
           set -euo pipefail
