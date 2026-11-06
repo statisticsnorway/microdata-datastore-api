@@ -149,7 +149,6 @@ def _validate_version(version: Version, datastore_root_dir: Path) -> None:
             datastore_root_dir
         )
         if draft_version["version"] != version.to_4_dotted():
-            ###
             raise InvalidDraftVersionException(
                 requested_draft_version=version.to_4_dotted(),
                 current_draft_version=draft_version["version"],
