@@ -33,12 +33,14 @@ jobs:
           hits=""
 
           env_files=$(echo "$files" | grep -E '^(datastore_api/config/|Dockerfile$|.*\.env|.*docker-compose)' || true)
-          secret_files=$(echo "$files" | grep -E '(^|/)secrets[^/]*$' || true)
+          secret_files=$(echo "$files" | grep -E '(^|/)secrets(/|[^/]*$)' || true)
+          endpoint_files=$(echo "$files" | grep -E '^datastore_api/(api/datastores/(data|metadata)/|domain/(data/|metadata\.py$))' || true)
           env_lines=$(echo "$diff" | grep -E '^[+-][^+-].*(os\.environ|os\.getenv|secrets_file\[)' || true)
           endpoint_lines=$(echo "$diff" | grep -E '^[+-][^+-].*"[^"]*/(data|metadata)(/|"|\?)' || true)
 
           [ -n "$env_files" ]      && hits+="### Environment configuration files"$'\n'"$env_files"$'\n\n'
           [ -n "$secret_files" ]   && hits+="### Secrets files"$'\n'"$secret_files"$'\n\n'
+          [ -n "$endpoint_files" ] && hits+="### /data or /metadata handler and domain files"$'\n'"$endpoint_files"$'\n\n'
           [ -n "$env_lines" ]      && hits+="### Environment variable or secret usage"$'\n```diff\n'"$env_lines"$'\n```\n\n'
           [ -n "$endpoint_lines" ] && hits+="### /data or /metadata endpoints"$'\n```diff\n'"$endpoint_lines"$'\n```\n\n'
 
@@ -48,7 +50,7 @@ jobs:
               echo
               echo "$hits"
             } >> "$GITHUB_STEP_SUMMARY"
-            for f in $env_files $secret_files; do
+            for f in $env_files $secret_files $endpoint_files; do
               echo "::warning file=$f::Change may affect external partners"
             done
             echo "flagged=true" >> "$GITHUB_OUTPUT"
