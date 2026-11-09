@@ -44,8 +44,16 @@ def test_encrypted_reader_with_filter(encrypted_parquet):
     }
 
 
+def test_encrypted_reader_row_count(encrypted_parquet):
+    root_dir, original_table = encrypted_parquet
+    reader = _encrypted_reader(root_dir)
+
+    assert reader.read_data_row_count() == original_table.num_rows
+
+
+@pytest.mark.parametrize("count_rows", [False, True])
 def test_encrypted_reader_wrong_key_raises_invalid_storage_format_exception(
-    encrypted_parquet, monkeypatch
+    encrypted_parquet, monkeypatch, count_rows
 ):
     root_dir, _ = encrypted_parquet
     wrong_key_hex = "0" * 64
@@ -64,4 +72,8 @@ def test_encrypted_reader_wrong_key_raises_invalid_storage_format_exception(
     with pytest.raises(
         InvalidStorageFormatException, match="Parquet decryption failed"
     ):
-        _encrypted_reader(root_dir).read_data(None)
+        reader = _encrypted_reader(root_dir)
+        if count_rows:
+            reader.read_data_row_count()
+        else:
+            reader.read_data(None)

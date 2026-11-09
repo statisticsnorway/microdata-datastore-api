@@ -7,6 +7,8 @@ from datastore_api.adapter import db
 from datastore_api.domain.data import DataReader, select_data_reader
 from datastore_api.domain.data.models import (
     InputFixedQuery,
+    InputRowCountQuery,
+    InputRowCountTimeQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
 )
@@ -31,7 +33,13 @@ def get_datastore_root_dir(
 
 
 def get_data_reader(
-    input_query: InputTimePeriodQuery | InputTimeQuery | InputFixedQuery,
+    input_query: (
+        InputTimePeriodQuery
+        | InputTimeQuery
+        | InputFixedQuery
+        | InputRowCountQuery
+        | InputRowCountTimeQuery
+    ),
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> DataReader:
     return select_data_reader(input_query, datastore_root_dir)

@@ -5,12 +5,9 @@ from pydantic import BaseModel, field_validator
 from datastore_api.common.models import Version
 
 
-class InputQuery(BaseModel):
+class InputDataStructureQuery(BaseModel):
     dataStructureName: str
     version: Version
-    population: list | None = None
-    values: list[str] | list[int] | None = None
-    includeAttributes: bool = False
 
     @field_validator("dataStructureName")
     @classmethod
@@ -31,6 +28,12 @@ class InputQuery(BaseModel):
         if isinstance(version, Version):
             return version
         raise ValueError(f"'{version}' is not a valid semantic version.")
+
+
+class InputQuery(InputDataStructureQuery):
+    population: list | None = None
+    values: list[str] | list[int] | None = None
+    includeAttributes: bool = False
 
     @field_validator("values")
     @classmethod
@@ -77,6 +80,21 @@ class InputTimeQuery(InputQuery):
 
 class InputFixedQuery(InputQuery):
     pass
+
+
+class InputRowCountQuery(InputDataStructureQuery):
+    def __str__(self) -> str:
+        return (
+            f"dataStructureName='{self.dataStructureName}' "
+            f"version='{str(self.version)}'"
+        )
+
+
+class InputRowCountTimeQuery(InputRowCountQuery):
+    date: int
+
+    def __str__(self) -> str:
+        return super().__str__() + f" date={self.date}"
 
 
 class ErrorMessage(BaseModel):
