@@ -33,6 +33,8 @@ from datastore_api.domain.data import (
 )
 from datastore_api.domain.data.models import (
     InputFixedQuery,
+    InputRowCountQuery,
+    InputRowCountTimeQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
 )
@@ -161,13 +163,15 @@ def encryption_status(
     dependencies=[Depends(authorize_user)],
 )
 def rows_count_fixed(
-    input_query: InputFixedQuery,
+    input_query: InputRowCountQuery,
     data_reader: Annotated[DataReader, Depends(get_data_reader)],
 ) -> dict[str, int]:
     """
-    Return the total row count from Parquet metadata,
-    without applying filters.
+    Return the total row count from Parquet metadata.
     """
+    logger.info(
+        f"Entering /data/fixed/rows-count with input query: {input_query}"
+    )
     return {"rowsCount": data_reader.read_data_row_count()}
 
 
@@ -176,11 +180,13 @@ def rows_count_fixed(
     dependencies=[Depends(authorize_user)],
 )
 def rows_count_status(
-    input_query: InputTimeQuery,
+    input_query: InputRowCountTimeQuery,
     data_reader: Annotated[DataReader, Depends(get_data_reader)],
 ) -> dict[str, int]:
     """
-    Return the row count for the requested year from Parquet metadata,
-    without applying filters.
+    Return the row count for the requested year from Parquet metadata.
     """
+    logger.info(
+        f"Entering /data/status/rows-count with input query: {input_query}"
+    )
     return {"rowsCount": data_reader.read_data_row_count(date=input_query.date)}

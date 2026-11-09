@@ -30,6 +30,8 @@ from datastore_api.common.models import Version
 from datastore_api.domain.data import filters
 from datastore_api.domain.data.models import (
     InputFixedQuery,
+    InputRowCountQuery,
+    InputRowCountTimeQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
 )
@@ -229,10 +231,20 @@ def _get_row_count_paths(parquet_path: str, date: int | None) -> list[str]:
 
 
 def select_data_reader(
-    input_query: InputTimePeriodQuery | InputTimeQuery | InputFixedQuery,
+    input_query: (
+        InputTimePeriodQuery
+        | InputTimeQuery
+        | InputFixedQuery
+        | InputRowCountQuery
+        | InputRowCountTimeQuery
+    ),
     datastore_root_dir: Path,
 ) -> DataReader:
-    columns = ALL_COLUMNS if input_query.includeAttributes else ALL_COLUMNS[:2]
+    columns = (
+        ALL_COLUMNS
+        if getattr(input_query, "includeAttributes", False)
+        else ALL_COLUMNS[:2]
+    )
     parquet_path = _get_parquet_path(
         input_query.version,
         input_query.dataStructureName,

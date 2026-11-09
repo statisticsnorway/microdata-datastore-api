@@ -209,9 +209,6 @@ def test_data_fixed_rows_count(client, mock_data_reader, mock_auth_deps):
         json={
             "version": "1.0.0.0",
             "dataStructureName": "FAKE_NAME",
-            "population": [1],
-            "values": ["A"],
-            "includeAttributes": True,
         },
     )
 
@@ -230,8 +227,6 @@ def test_data_status_rows_count(client, mock_data_reader, mock_auth_deps):
             "version": "1.0.0.0",
             "dataStructureName": "FAKE_NAME",
             "date": 10,
-            "population": [999],
-            "values": ["excluded"],
         },
     )
 
