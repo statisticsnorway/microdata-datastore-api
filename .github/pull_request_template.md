@@ -6,7 +6,6 @@
 
 <!-- Highlight important technical or user-facing details. -->
 
-
 ## Checklist
 
 - [ ] Updated relevant documentation.
@@ -18,13 +17,6 @@
 
 - [ ] No impact on external partners.
 - [ ] External partners may be affected (complete the details below).
-
-### Impact and coordination
-
-<!-- Delete this subsection if there is no partner impact. -->
-- **Affected partners:**
-- **What changes for them:**
-- **Communication or coordination needed:**
 
 ## Related issue
 
