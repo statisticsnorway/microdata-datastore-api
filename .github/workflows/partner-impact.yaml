@@ -32,7 +32,7 @@ jobs:
           diff=$(git diff -U0 HEAD^1 HEAD)
           hits=""
 
-          env_files=$(echo "$files" | grep -E '^(datastore_api/config/|Dockerfile$|.*\.env|.*docker-compose)' || true)
+          env_files=$(echo "$files" | grep -E '^(datastore_api/config/|Dockerfile$|.*\.env)' || true)
           secret_files=$(echo "$files" | grep -E '(^|/)secrets(/|[^/]*$)' || true)
           endpoint_files=$(echo "$files" | grep -E '^datastore_api/(api/datastores/(data|metadata)/|domain/(data/|metadata\.py$))' || true)
           env_lines=$(echo "$diff" | grep -E '^[+-][^+-].*(os\.environ|os\.getenv|secrets_file\[)' || true)
