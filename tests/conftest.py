@@ -16,6 +16,7 @@ import pyarrow
 import pytest
 from fastapi import testclient
 from pyarrow import dataset
+from pyarrow import parquet as pq
 from pyarrow.parquet.encryption import (
     EncryptionConfiguration,
     KmsConnectionConfig,
@@ -29,6 +30,7 @@ from datastore_api.adapter.kms_client import (
 from datastore_api.common.models import Version
 from datastore_api.domain.data import (
     EncryptedDataReader,
+    UnencryptedDataReader,
     _get_parquet_path,
 )
 from datastore_api.main import app
@@ -108,3 +110,32 @@ def encrypted_parquet(tmp_path):
 
     _write_encrypted_parquet(table, parquet_dir)
     return tmp_path, table
+
+
+@pytest.fixture(
+    params=[UnencryptedDataReader, EncryptedDataReader],
+    ids=["plain", "encrypted"],
+)
+def partitioned_parquet(tmp_path, request):
+    reader_type = request.param
+    path = tmp_path / "status"
+    tables = []
+    for year, date, rows in [(2020, 18262, 3), (2021, 18628, 2)]:
+        table = pyarrow.table(
+            {
+                "unit_id": list(range(rows)),
+                "value": ["A"] * rows,
+                "start_epoch_days": [date] * rows,
+                "stop_epoch_days": [date] * rows,
+            }
+        )
+        partition = path / f"start_year={year}"
+        partition.mkdir(parents=True)
+        if reader_type is EncryptedDataReader:
+            _write_encrypted_parquet(table, partition)
+        else:
+            pq.write_table(
+                table, partition / "part-0.parquet", row_group_size=1
+            )
+        tables.append(table)
+    return path, pyarrow.concat_tables(tables), reader_type

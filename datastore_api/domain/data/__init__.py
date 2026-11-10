@@ -1,9 +1,12 @@
 import logging
+from datetime import date as calendar_date
+from datetime import timedelta
 from pathlib import Path
 from typing import Protocol
 
 from cryptography.exceptions import InvalidTag
 from pyarrow import ArrowInvalid, ArrowTypeError, Table, dataset
+from pyarrow import parquet as pq
 from pyarrow.parquet.encryption import (
     DecryptionConfiguration,
     KmsConnectionConfig,
@@ -27,6 +30,8 @@ from datastore_api.common.models import Version
 from datastore_api.domain.data import filters
 from datastore_api.domain.data.models import (
     InputFixedQuery,
+    InputRowCountQuery,
+    InputRowCountTimeQuery,
     InputTimePeriodQuery,
     InputTimeQuery,
 )
@@ -48,6 +53,8 @@ class DataReader(Protocol):
         row_cap: int | None = None,
     ) -> Table: ...
 
+    def read_data_row_count(self, date: int | None = None) -> int: ...
+
 
 class UnencryptedDataReader:
     parquet_path: str
@@ -60,6 +67,13 @@ class UnencryptedDataReader:
     ) -> None:
         self.parquet_path = parquet_path
         self.columns = columns
+
+    def read_data_row_count(self, date: int | None = None) -> int:
+        """Count rows using only Parquet footer metadata."""
+        return sum(
+            pq.read_metadata(path).num_rows
+            for path in _get_row_count_paths(self.parquet_path, date)
+        )
 
     def read_data(
         self,
@@ -104,6 +118,26 @@ class EncryptedDataReader:
     ) -> None:
         self.parquet_path = parquet_path
         self.columns = columns
+
+    def read_data_row_count(self, date: int | None = None) -> int:
+        """Count rows using only encrypted Parquet footer metadata."""
+        paths = _get_row_count_paths(self.parquet_path, date)
+        try:
+            decryption_properties = (
+                make_crypto_factory().file_decryption_properties(
+                    KmsConnectionConfig(), DecryptionConfiguration()
+                )
+            )
+            return sum(
+                pq.read_metadata(
+                    path, decryption_properties=decryption_properties
+                ).num_rows
+                for path in paths
+            )
+        except (ArrowInvalid, InvalidTag) as e:
+            raise InvalidStorageFormatException(
+                f"Parquet decryption failed: {e}"
+            ) from e
 
     def read_data(
         self,
@@ -181,11 +215,36 @@ def _get_parquet_path(
     return parquet_path
 
 
+def _get_row_count_paths(parquet_path: str, date: int | None) -> list[str]:
+    path = Path(parquet_path)
+    if date is not None:
+        year = (calendar_date(1970, 1, 1) + timedelta(days=date)).year
+        path /= f"start_year={year}"
+    if path.is_file():
+        return [str(path)]
+    paths = [str(file) for file in path.rglob("*.parquet")]
+    if not paths and path.is_dir():
+        raise InvalidStorageFormatException(
+            f"No Parquet files found in directory: {path}"
+        )
+    return paths
+
+
 def select_data_reader(
-    input_query: InputTimePeriodQuery | InputTimeQuery | InputFixedQuery,
+    input_query: (
+        InputTimePeriodQuery
+        | InputTimeQuery
+        | InputFixedQuery
+        | InputRowCountQuery
+        | InputRowCountTimeQuery
+    ),
     datastore_root_dir: Path,
 ) -> DataReader:
-    columns = ALL_COLUMNS if input_query.includeAttributes else ALL_COLUMNS[:2]
+    columns = (
+        ALL_COLUMNS
+        if getattr(input_query, "includeAttributes", False)
+        else ALL_COLUMNS[:2]
+    )
     parquet_path = _get_parquet_path(
         input_query.version,
         input_query.dataStructureName,
