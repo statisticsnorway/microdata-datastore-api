@@ -1,0 +1,72 @@
+name: Partner impact check
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened, edited]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  detect-partner-impact:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Detect changes that may impact external partners
+        id: detect
+        run: |
+          set -euo pipefail
+          files=$(git diff --name-only HEAD^1 HEAD)
+          diff=$(git diff -U0 HEAD^1 HEAD)
+          hits=""
+
+          env_files=$(echo "$files" | grep -E '^(datastore_api/config/|Dockerfile$|.*\.env)' || true)
+          secret_files=$(echo "$files" | grep -E '(^|/)secrets(/|[^/]*$)' || true)
+          endpoint_files=$(echo "$files" | grep -E '^datastore_api/(api/datastores/(data|metadata)/|domain/(data/|metadata\.py$))' || true)
+          env_lines=$(echo "$diff" | grep -E '^[+-][^+-].*(os\.environ|os\.getenv|secrets_file\[)' || true)
+          endpoint_lines=$(echo "$diff" | grep -E '^[+-][^+-].*"[^"]*/(data|metadata)(/|"|\?)' || true)
+
+          [ -n "$env_files" ]      && hits+="### Environment configuration files"$'\n'"$env_files"$'\n\n'
+          [ -n "$secret_files" ]   && hits+="### Secrets files"$'\n'"$secret_files"$'\n\n'
+          [ -n "$endpoint_files" ] && hits+="### /data or /metadata handler and domain files"$'\n'"$endpoint_files"$'\n\n'
+          [ -n "$env_lines" ]      && hits+="### Environment variable or secret usage"$'\n```diff\n'"$env_lines"$'\n```\n\n'
+          [ -n "$endpoint_lines" ] && hits+="### /data or /metadata endpoints"$'\n```diff\n'"$endpoint_lines"$'\n```\n\n'
+
+          if [ -n "$hits" ]; then
+            {
+              echo "## Possible external partner impact"
+              echo
+              echo "$hits"
+            } >> "$GITHUB_STEP_SUMMARY"
+            for f in $env_files $secret_files $endpoint_files; do
+              echo "::warning file=$f::Change may affect external partners"
+            done
+            echo "flagged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No partner-sensitive changes detected." >> "$GITHUB_STEP_SUMMARY"
+            echo "flagged=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Require partner impact assessment
+        if: steps.detect.outputs.flagged == 'true'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if echo "$PR_BODY" | grep -qiE '^- \[x\] (No impact on external partners|External partners may be affected)'; then
+            echo "Partner impact assessment completed."
+          else
+            echo "::error::This PR touches partner-sensitive code. Complete the 'External partner impact' section in the PR description."
+            exit 1
+          fi
