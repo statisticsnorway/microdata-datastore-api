@@ -27,6 +27,7 @@ from datastore_api.api.error_contract import (
 )
 from datastore_api.common.exceptions import (
     AuthError,
+    AuthProviderUnavailableException,
     DataNotFoundException,
     DatastoreExistsException,
     DatastoreNotFoundException,
@@ -131,7 +132,10 @@ def _include_middleware(app: FastAPI) -> None:
         ) as exc:
             logger.warning(exc, exc_info=True)
             return message_response(409, str(exc))
-        except DatastoreSetupException as exc:
+        except (
+            DatastoreSetupException,
+            AuthProviderUnavailableException,
+        ) as exc:
             logger.error(exc, exc_info=True)
             return contract_error_response(SYSTEM_ERROR)
 
@@ -151,13 +155,15 @@ def _include_exception_handlers(app: FastAPI) -> None:
     the application.
     FastAPI initial pydantic validations are also done before hitting any
     middleware so they are dealt with here.
+    Sync handlers run in a threadpool where sys.exc_info() is empty, so the
+    exception must be passed explicitly as exc_info to log its traceback.
     """
 
     @app.exception_handler(RequestValidationError)
     def handle_pydantic_query_error(
         _req: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        logger.exception(exc)
+        logger.exception(exc, exc_info=exc)
         errors = exc.errors()
         if any(error.get("type") == "json_invalid" for error in errors):
             return contract_error_response(REQUEST_PARSE_ERROR)
@@ -170,15 +176,15 @@ def _include_exception_handlers(app: FastAPI) -> None:
         _req: Request, exc: HTTPException
     ) -> JSONResponse:
         if exc.status_code == 400:
-            logger.warning(exc, exc_info=True)
+            logger.warning(exc, exc_info=exc)
             return contract_error_response(REQUEST_VALIDATION_ERROR)
         if exc.status_code == 404:
-            logger.warning(exc, exc_info=True)
+            logger.warning(exc, exc_info=exc)
             return contract_error_response(PATH_NOT_FOUND)
-        logger.exception(exc)
+        logger.exception(exc, exc_info=exc)
         return contract_error_response(SYSTEM_ERROR)
 
     @app.exception_handler(Exception)
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:
-        logger.exception(exc, exc_info=True)
+        logger.exception(exc, exc_info=exc)
         return contract_error_response(SYSTEM_ERROR)

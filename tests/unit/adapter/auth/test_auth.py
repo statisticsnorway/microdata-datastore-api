@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 import pytest
+from jwt.exceptions import PyJWKClientConnectionError
 
 from datastore_api.adapter.auth import (
     AuthClient,
@@ -12,7 +13,10 @@ from datastore_api.adapter.auth.dependencies import (
     DATA_ADMINISTRATOR_ROLE,
     valid_aud_jobs,
 )
-from datastore_api.common.exceptions import AuthError
+from datastore_api.common.exceptions import (
+    AuthError,
+    AuthProviderUnavailableException,
+)
 from tests.resources import test_resources
 from tests.utils.util import encode_jwt_payload, generate_rsa_key_pairs
 
@@ -235,6 +239,29 @@ def test_auth_missing_token(auth_client):
             authorization_token=None,
         )
     assert "Unauthorized. No token was provided" in str(e)
+
+
+def test_auth_jwks_endpoint_unavailable():
+    auth_client = MicrodataAuthClient()
+
+    def _raise_connection_error(jwt_token):
+        raise PyJWKClientConnectionError(
+            'Fail to fetch data from the url, err: "HTTP Error 502"'
+        )
+
+    auth_client.jwks_client.get_signing_key_from_jwt = _raise_connection_error  # type: ignore
+    token = encode_jwt_payload(
+        test_resources.valid_jwt_payload, JWT_PRIVATE_KEY
+    )
+    with pytest.raises(AuthProviderUnavailableException) as e:
+        auth_client.authorize_jwt(
+            required_aud=valid_aud_jobs,
+            decode_policy=ACCREDITATION_TOKEN_POLICY,
+            required_role=DATA_ADMINISTRATOR_ROLE,
+            authorization_token=token,
+            rdn="no.ssb.fdb",
+        )
+    assert "HTTP Error 502" in str(e)
 
 
 def test_decoding_signing_key():
