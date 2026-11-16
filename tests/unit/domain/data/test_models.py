@@ -175,7 +175,8 @@ def test_population_to_string():
         "version='1.0.0.0' "
         "population='<length: 3>' "
         "values='<length: 0>' "
-        "includeAttributes=False"
+        "includeAttributes=False "
+        "disableRowCap=False"
     )
     assert actual.population == data["population"]
 
@@ -194,6 +195,7 @@ def test_population_to_string_input_time_query():
         "population='<length: 3>' "
         "values='<length: 0>' "
         "includeAttributes=False "
+        "disableRowCap=False "
         "date=1900"
     )
     assert actual.population == data["population"]

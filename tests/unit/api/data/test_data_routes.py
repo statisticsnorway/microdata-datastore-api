@@ -15,6 +15,7 @@ from datastore_api.api.common.dependencies import (
     get_data_reader,
 )
 from datastore_api.common.exceptions import TooManyRowsException
+from datastore_api.config import environment
 from datastore_api.domain.data import EncryptedDataReader
 from datastore_api.main import app
 
@@ -141,6 +142,32 @@ def test_data_stream_row_limit_exceeded(client, mock_data_reader, temporality):
         ),
         "data": {"row_limit": 1000, "row_count": 1001},
     }
+
+
+@pytest.mark.parametrize("temporality", ["fixed", "status"])
+@pytest.mark.parametrize(
+    "disable_row_cap, expected_row_cap",
+    [(False, environment.data_row_cap), (True, None)],
+)
+def test_data_stream_disable_row_cap(
+    client, mock_data_reader, temporality, disable_row_cap, expected_row_cap
+):
+    response = client.post(
+        f"/datastores/no.ssb.test/data/{temporality}/stream",
+        json={
+            "version": "1.0.0.0",
+            "dataStructureName": "FAKE_NAME",
+            "date": 0,
+            "population": [1, 2, 3],
+            "disableRowCap": disable_row_cap,
+        },
+    )
+
+    assert response.status_code == 200
+    assert (
+        mock_data_reader.read_data.call_args.kwargs["row_cap"]
+        == expected_row_cap
+    )
 
 
 def test_data_stream_unknown_dataset(client_resolving_data_reader):
