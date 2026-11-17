@@ -34,7 +34,7 @@ valid_aud_provision = (
 
 def authorize_api_key(
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
-    api_key: str = Header("X-API-KEY", alias="x-api-key"),
+    api_key: str = Header(..., alias="x-api-key"),
 ) -> None:
     auth_client.authorize_api_key(api_key)
 
