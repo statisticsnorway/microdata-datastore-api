@@ -34,6 +34,7 @@ class InputQuery(InputDataStructureQuery):
     population: list | None = None
     values: list[str] | list[int] | None = None
     includeAttributes: bool = False
+    disableRowCap: bool = False
 
     @field_validator("values")
     @classmethod
@@ -56,7 +57,8 @@ class InputQuery(InputDataStructureQuery):
             + f"version='{str(self.version)}' "
             + f"population='<length: {len(self.population or [])}>' "
             + f"values='<length: {len(self.values or [])}>' "
-            + f"includeAttributes={self.includeAttributes}"
+            + f"includeAttributes={self.includeAttributes} "
+            + f"disableRowCap={self.disableRowCap}"
         )
 
 

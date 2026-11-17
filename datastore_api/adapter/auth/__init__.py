@@ -10,11 +10,16 @@ from jwt.exceptions import (
     ImmatureSignatureError,
     InvalidAudienceError,
     InvalidSignatureError,
+    PyJWKClientConnectionError,
 )
 from jwt.types import Options
 
 from datastore_api.adapter.db.models import UserInfo
-from datastore_api.common.exceptions import AuthError, InternalServerError
+from datastore_api.common.exceptions import (
+    AuthError,
+    AuthProviderUnavailableException,
+    InternalServerError,
+)
 from datastore_api.config import environment, secrets
 
 logger = logging.getLogger()
@@ -171,7 +176,12 @@ class MicrodataAuthClient:
         self.jwks_client = PyJWKClient(environment.jwks_url, lifespan=3000)
 
     def _get_signing_key(self, jwt_token: str) -> PyJWK:
-        return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
+        try:
+            return self.jwks_client.get_signing_key_from_jwt(jwt_token).key
+        except PyJWKClientConnectionError as e:
+            raise AuthProviderUnavailableException(
+                f"Could not fetch signing keys from {self.jwks_client.uri}: {e}"
+            ) from e
 
     def authorize_jwt(
         self,

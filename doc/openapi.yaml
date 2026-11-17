@@ -2064,6 +2064,10 @@ components:
           type: boolean
           title: Includeattributes
           default: false
+        disableRowCap:
+          type: boolean
+          title: Disablerowcap
+          default: false
       type: object
       required:
       - dataStructureName
@@ -2124,6 +2128,10 @@ components:
           type: boolean
           title: Includeattributes
           default: false
+        disableRowCap:
+          type: boolean
+          title: Disablerowcap
+          default: false
         startDate:
           type: integer
           title: Startdate
@@ -2163,6 +2171,10 @@ components:
         includeAttributes:
           type: boolean
           title: Includeattributes
+          default: false
+        disableRowCap:
+          type: boolean
+          title: Disablerowcap
           default: false
         date:
           type: integer
