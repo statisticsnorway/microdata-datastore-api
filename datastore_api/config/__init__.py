@@ -26,7 +26,7 @@ def _initialize_environment() -> Environment:
     stack = os.environ["STACK"]
     if jwt_auth not in ["FULL", "SKIP_SIGNATURE", "OFF"]:
         raise ValueError(f"Invalid value for JWT_AUTH: {jwt_auth}")
-    if jwt_auth != "FULL" and stack != "dev":
+    if jwt_auth != "FULL" and stack not in ["dev", "test"]:
         raise StartUpException(
             "JWT_AUT!='FULL' is only allowed when STACK='dev'."
         )
