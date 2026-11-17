@@ -208,10 +208,9 @@ paths:
           title: Datastore Rdn
       - name: x-api-key
         in: header
-        required: false
+        required: true
         schema:
           type: string
-          default: X-API-KEY
           title: X-Api-Key
       responses:
         '200':
@@ -1200,10 +1199,9 @@ paths:
           title: Datastore Rdn
       - name: x-api-key
         in: header
-        required: false
+        required: true
         schema:
           type: string
-          default: X-API-KEY
           title: X-Api-Key
       requestBody:
         required: true
@@ -1677,10 +1675,9 @@ paths:
           title: Datastore Rdn
       - name: x-api-key
         in: header
-        required: false
+        required: true
         schema:
           type: string
-          default: X-API-KEY
           title: X-Api-Key
       requestBody:
         required: true
@@ -1733,10 +1730,9 @@ paths:
       parameters:
       - name: x-api-key
         in: header
-        required: false
+        required: true
         schema:
           type: string
-          default: X-API-KEY
           title: X-Api-Key
       requestBody:
         required: true
@@ -1811,10 +1807,9 @@ paths:
           title: Ignorecompleted
       - name: x-api-key
         in: header
-        required: false
+        required: true
         schema:
           type: string
-          default: X-API-KEY
           title: X-Api-Key
       responses:
         '200':
@@ -1845,10 +1840,9 @@ paths:
           title: Job Id
       - name: x-api-key
         in: header
-        required: false
+        required: true
         schema:
           type: string
-          default: X-API-KEY
           title: X-Api-Key
       responses:
         '200':
@@ -1875,10 +1869,9 @@ paths:
           title: Job Id
       - name: x-api-key
         in: header
-        required: false
+        required: true
         schema:
           type: string
-          default: X-API-KEY
           title: X-Api-Key
       requestBody:
         required: true
