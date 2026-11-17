@@ -3,6 +3,8 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 
+from datastore_api.common.exceptions import StartUpException
+
 
 @dataclass
 class Environment:
@@ -21,14 +23,19 @@ class Environment:
 
 def _initialize_environment() -> Environment:
     jwt_auth = os.environ.get("JWT_AUTH", "FULL")
+    stack = os.environ["STACK"]
     if jwt_auth not in ["FULL", "SKIP_SIGNATURE", "OFF"]:
         raise ValueError(f"Invalid value for JWT_AUTH: {jwt_auth}")
+    if stack != "FULL" and jwt_auth is False:
+        raise StartUpException(
+            "JWT_AUT!='FULL' is only allowed when STACK='dev'."
+        )
     return Environment(
         docker_host_name=os.environ["DOCKER_HOST_NAME"],
         commit_id=os.environ["COMMIT_ID"],
         sqlite_url=os.environ["SQLITE_URL"],
         jwks_url=os.environ["JWKS_URL"],
-        stack=os.environ["STACK"],
+        stack=stack,
         jwt_auth=jwt_auth,
         data_row_cap=int(os.environ.get("DATA_ROW_CAP", 100_000_000)),
         secrets_file=os.environ["SECRETS_FILE"],
