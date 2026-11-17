@@ -28,7 +28,8 @@ def _initialize_environment() -> Environment:
         raise ValueError(f"Invalid value for JWT_AUTH: {jwt_auth}")
     if jwt_auth != "FULL" and stack not in ["dev", "test"]:
         raise StartUpException(
-            "JWT_AUT!='FULL' is only allowed when STACK='dev'."
+            f"JWT_AUTH =='{jwt_auth}' is only allowed when STACK='dev' "
+            "or STACK='test'."
         )
     return Environment(
         docker_host_name=os.environ["DOCKER_HOST_NAME"],
