@@ -1,3 +1,4 @@
+import hmac
 import logging
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -155,6 +156,13 @@ def _validate_datastore_provisioner(user_info: UserInfo) -> None:
         raise AuthError("Forbidden: Not allowed to modify datastore")
 
 
+def _api_key_matches(x_api_key: str) -> bool:
+    return hmac.compare_digest(
+        x_api_key.encode("utf-8"),
+        secrets.datastore_api_service_key.encode("utf-8"),
+    )
+
+
 class AuthClient(Protocol):
     def authorize_jwt(
         self,
@@ -218,7 +226,7 @@ class MicrodataAuthClient:
             raise e
 
     def authorize_api_key(self, x_api_key: str) -> None:
-        if x_api_key != secrets.datastore_api_service_key:
+        if not _api_key_matches(x_api_key):
             raise AuthError("Invalid API key")
 
     def authorize_datastore_provisioner(self, user_info: UserInfo) -> None:
@@ -295,7 +303,7 @@ class SkipSignatureAuthClient:
             raise e
 
     def authorize_api_key(self, x_api_key: str) -> None:
-        if x_api_key != secrets.datastore_api_service_key:
+        if not _api_key_matches(x_api_key):
             raise AuthError("Invalid API key")
 
     def authorize_datastore_provisioner(self, user_info: UserInfo) -> None:
