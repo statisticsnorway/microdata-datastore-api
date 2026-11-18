@@ -188,6 +188,3 @@ def _include_exception_handlers(app: FastAPI) -> None:
     def handle_generic_exception(_req: Request, exc: Exception) -> JSONResponse:
         logger.exception(exc, exc_info=exc)
         return contract_error_response(SYSTEM_ERROR)
-
-
-# change for testing the partner impact workflow. Remove after testing

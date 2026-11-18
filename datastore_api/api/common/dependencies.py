@@ -43,6 +43,3 @@ def get_data_reader(
     datastore_root_dir: Path = Depends(get_datastore_root_dir),
 ) -> DataReader:
     return select_data_reader(input_query, datastore_root_dir)
-
-
-# change for testing the partner impact workflow. Remove after testing
