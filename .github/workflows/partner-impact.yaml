@@ -1,0 +1,38 @@
+name: Assess partner impact
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - Dockerfile
+      - "**/*.env"
+      - datastore_api/config/__init__.py
+      - datastore_api/main.py
+      - datastore_api/api/__init__.py
+      - datastore_api/api/datastores/__init__.py
+      - datastore_api/api/datastores/data/**
+      - datastore_api/api/datastores/metadata/**
+      - datastore_api/domain/data/**
+      - datastore_api/domain/metadata.py
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  detect-partner-impact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require partner impact assessment
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if echo "$PR_BODY" | grep -qiE '^- \[x\] (No impact on external partners|External partners may be affected)'; then
+            echo "Partner impact assessment completed."
+          else
+            echo "::error::This PR touches partner-sensitive code. Complete the 'External partner impact' section in the PR description."
+            exit 1
+          fi
