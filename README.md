@@ -34,7 +34,7 @@ uv run python datastore_api/main.py
 ### Authentication configuration
 `JWT_AUTH` defaults to `FULL`, enabling full JWT authentication.
 
-Use `JWT_AUTH=OFF` or `JWT_AUTH=SKIP_SIGNATURE` only for local development with `STACK=dev`, as shown above.
+Use `JWT_AUTH=OFF` or `JWT_AUTH=SKIP_SIGNATURE` only for local development with `STACK=dev` or `STACK=test`.
 The application refuses to start unless `JWT_AUTH=FULL` when `STACK` is anything
 other than `dev`. For all other stacks, set `JWT_AUTH=FULL` or leave it unset.
 
