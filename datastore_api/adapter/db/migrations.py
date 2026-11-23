@@ -10,7 +10,7 @@ logger = logging.getLogger()
 
 
 def _file_hash(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashlib.md5(path.read_bytes(), usedforsecurity=False).hexdigest()
 
 
 def _parse_migration_date(filename: str) -> date:
