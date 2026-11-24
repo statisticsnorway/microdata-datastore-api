@@ -12,7 +12,7 @@ class Environment:
     commit_id: str
     sqlite_url: str
     jwks_url: str
-    stack: str
+    stack: Literal["prod"] | Literal["qa"] | Literal["dev"] | Literal["test"]
     jwt_auth: Literal["FULL"] | Literal["SKIP_SIGNATURE"] | Literal["OFF"]
     data_row_cap: int
     secrets_file: str
@@ -26,11 +26,10 @@ def _initialize_environment() -> Environment:
     stack = os.environ["STACK"]
     if jwt_auth not in ["FULL", "SKIP_SIGNATURE", "OFF"]:
         raise ValueError(f"Invalid value for JWT_AUTH: {jwt_auth}")
-    if jwt_auth != "FULL" and stack not in ["dev", "test"]:
-        raise StartUpException(
-            f"JWT_AUTH =='{jwt_auth}' is only allowed when STACK='dev' "
-            "or STACK='test'."
-        )
+    if stack not in ["prod", "qa", "dev", "test"]:
+        raise ValueError(f"Invalid value for STACK: {stack}")
+    if jwt_auth != "FULL" and stack in ["prod", "qa"]:
+        raise StartUpException("JWT_AUTH must be 'FULL' in prod and qa.")
     return Environment(
         docker_host_name=os.environ["DOCKER_HOST_NAME"],
         commit_id=os.environ["COMMIT_ID"],
