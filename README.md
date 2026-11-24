@@ -31,6 +31,12 @@ DATASTORES_ROOT_DIR=tests/resources \
 uv run python datastore_api/main.py
 ```
 
+### Authentication configuration
+`JWT_AUTH` defaults to `FULL`, enabling full JWT authentication.
+
+Use `JWT_AUTH=OFF` or `JWT_AUTH=SKIP_SIGNATURE` only for local development with `STACK=dev` or `STACK=test`.
+The application refuses to start unless `JWT_AUTH=FULL` when `STACK` is `qa` or `prod`. These environments should always have full auth on.
+
 ## Migrations
 The application uses file-based SQLite migrations to manage schema changes.
 Migrations are executed on application startup.

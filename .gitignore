@@ -195,3 +195,4 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 /test.db
+.DS_Store
