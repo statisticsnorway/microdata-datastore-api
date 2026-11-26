@@ -40,3 +40,45 @@ def test_invalid_new_jobs_requests():
     for job in INVALID_JOB_REQUESTS["jobs"]:
         with pytest.raises((ValidationError, TypeError)):
             NewJobRequest(**job)
+
+
+@pytest.mark.parametrize(
+    "target",
+    ["MY_DATASET", "DATASTORE", "A", "DATASET_2", "A1_B2_C3"],
+)
+def test_valid_target_names(target: str):
+    job_request = NewJobRequest(operation="ADD", target=target)
+    assert job_request.target == target
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "",
+        "my_dataset",
+        "My_Dataset",
+        "_MY_DATASET",
+        "1_MY_DATASET",
+        "MY-DATASET",
+        "MY DATASET",
+        "MY.DATASET",
+        "../MY_DATASET",
+        "MY_DATASET/",
+        "MY_DATASÆT",
+        "MY_DATASET;DROP",
+    ],
+)
+def test_invalid_target_names(target: str):
+    with pytest.raises(TypeError, match="contains invalid characters"):
+        NewJobRequest(operation="ADD", target=target)
+
+
+def test_invalid_target_name_validated_for_all_operations():
+    with pytest.raises(TypeError, match="contains invalid characters"):
+        NewJobRequest(
+            operation="SET_STATUS", target="bad target", release_status="DRAFT"
+        )
+    with pytest.raises(TypeError, match="contains invalid characters"):
+        NewJobRequest(
+            operation="REMOVE", target="bad/target", description="remove"
+        )
