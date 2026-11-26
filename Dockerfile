@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:0.13.7-trixie-slim@sha256:f6da342fe598dc462a7e6f61e7b3bf7fc84e381467efbdf29ccc1d32f2fc68a4 AS builder
+FROM ghcr.io/astral-sh/uv:0.13.10-trixie-slim@sha256:8b48445a9a356d395bc87d0cc15d6a65e91e67424562f6de9fdcd6205ac3f040 AS builder
 
 WORKDIR /app
 COPY pyproject.toml uv.lock /app/
@@ -12,7 +12,7 @@ RUN groupadd --gid 180291 microdata \
     && useradd --uid 180291 --gid microdata microdata
 
 # Production image
-FROM gcr.io/distroless/python3-debian13:nonroot@sha256:c3ed2b61f3c4e410685565ceb3c818197b552832521b39d53eca5d2d9d0dc1e1
+FROM gcr.io/distroless/python3-debian13:nonroot@sha256:72de1dda9d4c52c370e2ef2d93c28e3e1a8193c92058b7dfa42bace38a83d114
 ARG COMMIT_ID
 ENV COMMIT_ID=$COMMIT_ID
 
