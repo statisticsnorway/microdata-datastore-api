@@ -494,7 +494,7 @@ def test_read_parquet_with_string_value_filter_on_int_column_raises_exception(
             version=Version.from_str("1.0.0.0"),  # NOSONAR
         )
     )
-    reader = UnencryptedDataReader(
+    reader = EncryptedDataReader(
         parquet_path=str(path),
         columns=ALL_COLUMNS[:2],
     )
