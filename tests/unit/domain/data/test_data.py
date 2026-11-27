@@ -12,6 +12,7 @@ from pyarrow import dataset, parquet
 from datastore_api.adapter.db.models import Datastore
 from datastore_api.common.exceptions import (
     NotFoundException,
+    RequestValidationException,
     TooManyRowsException,
 )
 from datastore_api.common.models import Version
@@ -472,6 +473,38 @@ def test_read_parquet_with_wildcard_value_filter(fixed_dataset_parquet):
         .to_pydict()
     )
     assert sorted(result_dict["value"]) == expected_values
+
+
+def test_read_parquet_with_string_value_filter_on_int_column_raises_exception(
+    tmp_path,
+):
+    table = pyarrow.table(
+        {
+            "unit_id": [1, 2, 3],
+            "value": [2015, 2016, 2017],
+        }
+    )
+    path = tmp_path / "data.parquet"
+    parquet.write_table(table, path)
+
+    data_filter = generate_fixed_filter(
+        InputFixedQuery(
+            values=["2015"],
+            dataStructureName="TEST_FIXED_DATASET_INT_VALUE",
+            version=Version.from_str("1.0.0.0"),  # NOSONAR
+        )
+    )
+    reader = EncryptedDataReader(
+        parquet_path=str(path),
+        columns=ALL_COLUMNS[:2],
+    )
+    with pytest.raises(RequestValidationException) as e:
+        reader.read_data(
+            data_filter,
+        )
+    assert "Filter value type does not match dataset column type" in str(
+        e.value
+    )
 
 
 def test_read_parquet_with_combined_population_and_value_filter(
