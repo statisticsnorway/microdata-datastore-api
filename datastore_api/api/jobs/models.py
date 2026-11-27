@@ -1,3 +1,4 @@
+import string
 from datetime import datetime
 from typing import List, Optional
 
@@ -15,6 +16,26 @@ from datastore_api.adapter.db.models import (
 from datastore_api.common.models import CamelModel
 
 
+def _validate_target_name(target_name: str) -> None:
+    """
+    Validates that the name of the target only contains valid
+    characters (uppercase A-Z, numbers 0-9 and _), and only
+    starts with uppercase A-Z.
+    """
+    invalid_leading_characters = string.digits + "_"
+    valid_characters = string.ascii_uppercase + string.digits + "_"
+    if (
+        not target_name
+        or target_name[0] in invalid_leading_characters
+        or not all(character in valid_characters for character in target_name)
+    ):
+        raise TypeError(
+            f'"{target_name}" contains invalid characters. '
+            'Please use only uppercase A-Z, numbers 0-9 or "_", '
+            'and do not start with a number or "_"'
+        )
+
+
 class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
     operation: Operation
     target: str
@@ -26,6 +47,7 @@ class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
 
     @model_validator(mode="after")
     def check_command_type(self: "NewJobRequest") -> "NewJobRequest":
+        _validate_target_name(self.target)
         operation = self.operation
         if operation in ["REMOVE", "BUMP"]:
             if self.description is None:
