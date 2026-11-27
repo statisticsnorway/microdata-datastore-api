@@ -19,7 +19,7 @@ from datastore_api.common.models import CamelModel
 def _validate_target_name(target_name: str) -> None:
     """
     Validates that the name of the target only contains valid
-    characters (uppercase A-Z, numbers 0-9 and _), and only 
+    characters (uppercase A-Z, numbers 0-9 and _), and only
     starts with uppercase A-Z.
     """
     invalid_leading_characters = string.digits + "_"
