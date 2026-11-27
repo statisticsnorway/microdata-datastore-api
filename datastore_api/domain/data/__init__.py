@@ -5,7 +5,13 @@ from pathlib import Path
 from typing import Protocol
 
 from cryptography.exceptions import InvalidTag
-from pyarrow import ArrowInvalid, ArrowTypeError, Table, dataset
+from pyarrow import (
+    ArrowInvalid,
+    ArrowNotImplementedError,
+    ArrowTypeError,
+    Table,
+    dataset,
+)
 from pyarrow import parquet as pq
 from pyarrow.parquet.encryption import (
     DecryptionConfiguration,
@@ -101,7 +107,7 @@ class UnencryptedDataReader:
                     row_limit=row_cap, row_count=table.num_rows
                 )
             return table
-        except ArrowTypeError as e:
+        except (ArrowTypeError, ArrowNotImplementedError) as e:
             raise RequestValidationException(
                 f"Filter value type does not match dataset column type: {e}"
             ) from e
@@ -179,7 +185,7 @@ class EncryptedDataReader:
                     row_limit=row_cap, row_count=table.num_rows
                 )
             return table
-        except ArrowTypeError as e:
+        except (ArrowTypeError, ArrowNotImplementedError) as e:
             raise RequestValidationException(
                 f"Filter value type does not match dataset column type: {e}"
             ) from e
